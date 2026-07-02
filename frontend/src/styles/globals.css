@@ -100,3 +100,11 @@ h1, h2, h3, h4, h5, h6, .font-display {
 html {
   transition: background-color var(--transition-normal), color var(--transition-normal);
 }
+
+/* Utility Classes */
+@media (min-width: 1025px) {
+  .lg-hidden { display: none !important; }
+}
+@media (max-width: 1024px) {
+  .lg-hidden-text { display: none !important; }
+}

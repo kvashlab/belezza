@@ -27,9 +27,9 @@ export default function Login() {
     resolver: zodResolver(loginSchema)
   });
 
-  const onSubmit = async () => {
+  const onSubmit = async (data: LoginForm) => {
     try {
-      await login();
+      await login({ email: data.email, password: data.password });
       addToast({ type: 'success', title: 'Login realizado com sucesso!' });
       // Redirecionamento acontece no wrapper ProtectedRoute ou aqui
       router.push('/dashboard'); 
