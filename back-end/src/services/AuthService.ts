@@ -60,4 +60,38 @@ export class AuthService {
 
     return { user: { id: user.id, email: user.email, name: user.name, role: user.role }, token };
   }
+
+  async googleLogin(data: any) {
+    const { email, name, role } = data;
+
+    let user = await prisma.user.findUnique({ where: { email } });
+
+    if (!user) {
+      // Create user with a dummy password since they use Google SSO
+      const hashedPassword = await bcrypt.hash(Math.random().toString(36).slice(-10), 10);
+      user = await prisma.user.create({
+        data: {
+          email,
+          password: hashedPassword,
+          name: name || 'Google User',
+          role: role || 'CLIENT',
+        },
+      });
+
+      if (user.role === 'CLIENT') {
+        await prisma.clientProfile.create({ data: { userId: user.id } });
+      } else if (user.role === 'PROFESSIONAL') {
+        await prisma.professionalProfile.create({
+          data: {
+            userId: user.id,
+            username: `pro_${user.id.substring(0, 6)}`,
+          },
+        });
+      }
+    }
+
+    const token = jwt.sign({ id: user.id, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
+
+    return { user: { id: user.id, email: user.email, name: user.name, role: user.role }, token };
+  }
 }

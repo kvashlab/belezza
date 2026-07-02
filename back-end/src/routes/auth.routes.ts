@@ -7,5 +7,6 @@ const authController = new AuthController();
 // Fix context issues with bind or arrow functions
 router.post('/register', (req, res) => authController.register(req, res));
 router.post('/login', (req, res) => authController.login(req, res));
+router.post('/google', (req, res) => authController.googleLogin(req, res));
 
 export default router;

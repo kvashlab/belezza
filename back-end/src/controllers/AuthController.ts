@@ -42,4 +42,13 @@ export class AuthController {
       res.status(401).json({ error: error.message });
     }
   }
+
+  async googleLogin(req: Request, res: Response) {
+    try {
+      const result = await authService.googleLogin(req.body);
+      res.json(result);
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  }
 }

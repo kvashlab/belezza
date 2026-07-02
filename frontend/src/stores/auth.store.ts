@@ -7,6 +7,8 @@ interface AuthStore {
   role: 'client' | 'professional' | null;
   isAuthenticated: boolean;
   login: (credentials: any) => Promise<void>;
+  register: (data: any) => Promise<void>;
+  googleLogin: (data: any) => Promise<void>;
   logout: () => void;
 }
 
@@ -29,7 +31,46 @@ export const useAuthStore = create<AuthStore>((set) => ({
       }
 
       set({ user: data.user, role: data.user.role.toLowerCase(), isAuthenticated: true });
-      // In a real app, save data.token to localStorage/cookies here
+      localStorage.setItem('@belezza:token', data.token);
+    } catch (error) {
+      throw error;
+    }
+  },
+  register: async (credentials: any) => {
+    try {
+      const response = await fetch('http://localhost:3333/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(credentials),
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Erro ao realizar cadastro');
+      }
+
+      set({ user: data.user, role: data.user.role.toLowerCase(), isAuthenticated: true });
+      localStorage.setItem('@belezza:token', data.token);
+    } catch (error) {
+      throw error;
+    }
+  },
+  googleLogin: async (credentials: any) => {
+    try {
+      const response = await fetch('http://localhost:3333/api/auth/google', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(credentials),
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Erro ao realizar login com Google');
+      }
+
+      set({ user: data.user, role: data.user.role.toLowerCase(), isAuthenticated: true });
       localStorage.setItem('@belezza:token', data.token);
     } catch (error) {
       throw error;
