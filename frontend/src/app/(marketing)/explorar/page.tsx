@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Search, Map as MapIcon, List } from 'lucide-react';
 import { ProfessionalCard } from '@/components/shared/ProfessionalCard';
-import { ServiceCategory } from '@/types/professional.types';
+
 import { Button } from '@/components/ui/Button';
 import { Select } from '@/components/ui/Select';
 import styles from './styles.module.css';

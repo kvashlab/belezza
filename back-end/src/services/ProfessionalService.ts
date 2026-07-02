@@ -52,6 +52,7 @@ export class ProfessionalService {
         services: true,
         workingHours: true,
         portfolio: true,
+        teamMembers: true,
         reviews: { include: { client: { include: { user: true } } } }
       }
     });

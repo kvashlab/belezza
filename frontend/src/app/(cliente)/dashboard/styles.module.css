@@ -108,12 +108,15 @@
   text-align: center;
   cursor: pointer;
   transition: all var(--transition-fast);
+  position: relative;
+  z-index: 1;
 }
 
 .actionCard:hover {
   border-color: var(--color-primary-300);
   box-shadow: var(--shadow-sm);
   transform: translateY(-2px);
+  z-index: 10;
 }
 
 .actionIcon {

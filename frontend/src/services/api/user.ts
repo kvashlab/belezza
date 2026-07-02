@@ -9,10 +9,19 @@ const getHeaders = () => {
 };
 
 export const updateProfile = async (data: any) => {
+  const isFormData = data instanceof FormData;
+  const headers: any = {
+    'Authorization': `Bearer ${localStorage.getItem('@belezza:token')}`
+  };
+  
+  if (!isFormData) {
+    headers['Content-Type'] = 'application/json';
+  }
+
   const res = await fetch(`${API_URL}/me`, {
     method: 'PUT',
-    headers: getHeaders(),
-    body: JSON.stringify(data),
+    headers,
+    body: isFormData ? data : JSON.stringify(data),
   });
   if (!res.ok) {
     const error = await res.json();

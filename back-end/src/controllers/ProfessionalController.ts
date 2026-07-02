@@ -71,12 +71,25 @@ export class ProfessionalController {
   async updateProfile(req: AuthRequest, res: Response) {
     try {
       if (req.user?.role !== 'PROFESSIONAL') return res.status(403).json({ error: 'Acesso negado.' });
-      const data = updateProfileSchema.parse(req.body);
+      
+      let avatarUrl = req.body.avatar;
+      if (req.file) {
+        const { uploadFileToSupabase } = require('../config/supabase');
+        avatarUrl = await uploadFileToSupabase(req.file, `avatars/prof_${req.user.id}_${Date.now()}.jpg`);
+      }
+
+      const bodyData = { ...req.body };
+      if (avatarUrl) bodyData.avatar = avatarUrl;
+      if (bodyData.lat) bodyData.lat = parseFloat(bodyData.lat);
+      if (bodyData.lng) bodyData.lng = parseFloat(bodyData.lng);
+      if (bodyData.requireDeposit !== undefined) bodyData.requireDeposit = bodyData.requireDeposit === 'true';
+
+      const data = updateProfileSchema.parse(bodyData);
       const updated = await professionalService.updateProfile(req.user.id, data);
       res.json(updated);
     } catch (error: any) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ error: error.errors.map(e => e.message).join(', ') });
+        return res.status(400).json({ error: (error as any).errors.map((e: any) => e.message).join(', ') });
       }
       res.status(400).json({ error: error.message });
     }
@@ -90,7 +103,7 @@ export class ProfessionalController {
       res.status(201).json(service);
     } catch (error: any) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ error: error.errors.map(e => e.message).join(', ') });
+        return res.status(400).json({ error: (error as any).errors.map((e: any) => e.message).join(', ') });
       }
       res.status(400).json({ error: error.message });
     }
@@ -115,7 +128,7 @@ export class ProfessionalController {
       res.json(updated);
     } catch (error: any) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ error: error.errors.map(e => e.message).join(', ') });
+        return res.status(400).json({ error: (error as any).errors.map((e: any) => e.message).join(', ') });
       }
       res.status(400).json({ error: error.message });
     }
@@ -140,7 +153,7 @@ export class ProfessionalController {
       res.json(updated);
     } catch (error: any) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ error: error.errors.map(e => e.message).join(', ') });
+        return res.status(400).json({ error: (error as any).errors.map((e: any) => e.message).join(', ') });
       }
       res.status(400).json({ error: error.message });
     }
@@ -193,7 +206,18 @@ export class ProfessionalController {
   async addPortfolioPhoto(req: AuthRequest, res: Response) {
     try {
       if (req.user?.role !== 'PROFESSIONAL') return res.status(403).json({ error: 'Acesso negado.' });
-      const photo = await professionalService.addPortfolioPhoto(req.user.id, req.body);
+      
+      let photoUrl = req.body.url;
+      if (req.file) {
+        const { uploadFileToSupabase } = require('../config/supabase');
+        photoUrl = await uploadFileToSupabase(req.file, `portfolio/prof_${req.user.id}_${Date.now()}.jpg`);
+      }
+      if (!photoUrl) return res.status(400).json({ error: 'Nenhuma foto fornecida.' });
+
+      const bodyData = { ...req.body, url: photoUrl };
+      if (bodyData.isBeforeAfter !== undefined) bodyData.isBeforeAfter = bodyData.isBeforeAfter === 'true';
+
+      const photo = await professionalService.addPortfolioPhoto(req.user.id, bodyData);
       res.status(201).json(photo);
     } catch (error: any) {
       res.status(400).json({ error: error.message });

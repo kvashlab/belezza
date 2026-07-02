@@ -17,6 +17,7 @@ export const metadata: Metadata = {
 import { BottomNavigation } from "@/components/layout/BottomNavigation";
 
 import { AppInitializer } from "@/components/shared/AppInitializer";
+import { SocketProvider } from "@/providers/SocketProvider";
 
 export default function RootLayout({
   children,
@@ -26,10 +27,12 @@ export default function RootLayout({
   return (
     <html lang="pt-BR" className={jakarta.variable}>
       <body>
-        <AppInitializer />
-        {children}
-        <BottomNavigation />
-        <ToastContainer />
+        <SocketProvider>
+          <AppInitializer />
+          {children}
+          <BottomNavigation />
+          <ToastContainer />
+        </SocketProvider>
       </body>
     </html>
   );

@@ -79,7 +79,7 @@ export default function Cadastro() {
           redirectTo: `${window.location.origin}/auth/callback`
         }
       });
-    } catch (err) {
+    } catch {
       addToast({ type: 'error', title: 'Erro', message: 'Não foi possível conectar ao Google.' });
     }
   };

@@ -71,36 +71,38 @@ export default function PortfolioPage() {
         const ctx = canvas.getContext('2d');
         ctx?.drawImage(img, 0, 0, width, height);
         
-        const base64 = canvas.toDataURL('image/jpeg', 0.8);
+        canvas.toBlob(async (blob) => {
+          if (!blob) return;
+          const newFile = new File([blob], 'portfolio.jpg', { type: 'image/jpeg' });
+          const formData = new FormData();
+          formData.append('photo', newFile);
+          formData.append('description', 'Nova foto do portfólio');
+          formData.append('isBeforeAfter', 'false');
 
-        setIsUploading(true);
-        try {
-          const token = localStorage.getItem('@belezza:token');
-          const res = await fetch('http://localhost:3333/api/professionals/portfolio', {
-            method: 'POST',
-            headers: { 
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${token}` 
-            },
-            body: JSON.stringify({ 
-              url: base64,
-              description: 'Nova foto do portfólio',
-              isBeforeAfter: false
-            })
-          });
+          setIsUploading(true);
+          try {
+            const token = localStorage.getItem('@belezza:token');
+            const res = await fetch('http://localhost:3333/api/professionals/portfolio', {
+              method: 'POST',
+              headers: { 
+                Authorization: `Bearer ${token}` 
+              },
+              body: formData
+            });
 
-          if (res.ok) {
-            addToast({ type: 'success', title: 'Sucesso', message: 'Foto adicionada!' });
-            fetchPortfolio();
-          } else {
-            const err = await res.json();
-            addToast({ type: 'error', title: 'Erro', message: err.error || 'Falha ao adicionar foto.' });
+            if (res.ok) {
+              addToast({ type: 'success', title: 'Sucesso', message: 'Foto adicionada!' });
+              fetchPortfolio();
+            } else {
+              const err = await res.json();
+              addToast({ type: 'error', title: 'Erro', message: err.error || 'Falha ao adicionar foto.' });
+            }
+          } catch (error) {
+            addToast({ type: 'error', title: 'Erro', message: 'Falha no upload.' });
+          } finally {
+            setIsUploading(false);
           }
-        } catch (error) {
-          addToast({ type: 'error', title: 'Erro', message: 'Falha no upload.' });
-        } finally {
-          setIsUploading(false);
-        }
+        }, 'image/jpeg', 0.8);
       };
       img.src = event.target?.result as string;
     };

@@ -22,7 +22,16 @@ export class UserController {
       const userId = req.user?.id;
       if (!userId) return res.status(401).json({ error: 'Unauthorized' });
 
-      const user = await userService.updateMe(userId, req.body);
+      let avatarUrl = req.body.avatar;
+      if (req.file) {
+        const { uploadFileToSupabase } = require('../config/supabase');
+        avatarUrl = await uploadFileToSupabase(req.file, `avatars/client_${userId}_${Date.now()}.jpg`);
+      }
+
+      const bodyData = { ...req.body };
+      if (avatarUrl) bodyData.avatar = avatarUrl;
+
+      const user = await userService.updateMe(userId, bodyData);
       res.json(user);
     } catch (error: any) {
       res.status(400).json({ error: error.message });

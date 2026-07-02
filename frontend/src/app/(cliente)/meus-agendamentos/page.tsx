@@ -50,7 +50,7 @@ export default function MeusAgendamentosPage() {
         addToast({ type: 'success', title: 'Sucesso', message: 'Status atualizado!' });
         fetchAppointments();
       }
-    } catch (e) {
+    } catch {
       addToast({ type: 'error', title: 'Erro', message: 'Falha ao atualizar status.' });
     }
   };

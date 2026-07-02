@@ -62,7 +62,7 @@ export default function PerfilProfissional() {
 
       if (!res.ok) throw new Error('Erro ao salvar');
       addToast({ type: 'success', title: 'Perfil atualizado com sucesso!' });
-    } catch (e) {
+    } catch {
       addToast({ type: 'error', title: 'Falha ao atualizar o perfil' });
     } finally {
       setIsSaving(false);
@@ -94,7 +94,7 @@ export default function PerfilProfissional() {
 
       if (!res.ok) throw new Error('Erro ao salvar');
       addToast({ type: 'success', title: 'Contato atualizado com sucesso!' });
-    } catch (e) {
+    } catch {
       addToast({ type: 'error', title: 'Falha ao atualizar contato' });
     } finally {
       setIsSaving(false);
@@ -124,7 +124,7 @@ export default function PerfilProfissional() {
       
       // Update local state to reflect change
       setProfileData({ ...profileData, requireDeposit: (form.elements.namedItem('requireDeposit') as HTMLInputElement).checked });
-    } catch (e) {
+    } catch {
       addToast({ type: 'error', title: 'Falha ao atualizar preferências' });
     } finally {
       setIsSaving(false);

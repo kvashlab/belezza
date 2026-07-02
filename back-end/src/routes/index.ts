@@ -4,6 +4,7 @@ import userRoutes from './user.routes';
 import professionalRoutes from './professional.routes';
 import appointmentRoutes from './appointment.routes';
 import clientRoutes from './client.routes';
+import teamRoutes from './team.routes';
 
 const router = Router();
 
@@ -12,5 +13,6 @@ router.use('/users', userRoutes);
 router.use('/clients', clientRoutes);
 router.use('/professionals', professionalRoutes);
 router.use('/appointments', appointmentRoutes);
+router.use('/team', teamRoutes);
 
 export default router;

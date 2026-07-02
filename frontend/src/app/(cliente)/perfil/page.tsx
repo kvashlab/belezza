@@ -23,7 +23,11 @@ export default function Perfil() {
     cpf: '',
     avatar: ''
   });
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [isSavingProfile, setIsSavingProfile] = useState(false);
+  const [showSmsModal, setShowSmsModal] = useState(false);
+  const [smsCode, setSmsCode] = useState('');
+  const [pendingProfileData, setPendingProfileData] = useState<any>(null);
 
   // States for Security
   const [passwordData, setPasswordData] = useState({
@@ -108,8 +112,13 @@ export default function Perfil() {
           const ctx = canvas.getContext('2d');
           ctx?.drawImage(img, 0, 0, width, height);
           
-          const compressedBase64 = canvas.toDataURL('image/jpeg', 0.8);
-          setFormData({ ...formData, avatar: compressedBase64 });
+          canvas.toBlob((blob) => {
+            if (blob) {
+              const newFile = new File([blob], 'avatar.jpg', { type: 'image/jpeg' });
+              setAvatarFile(newFile);
+              setFormData({ ...formData, avatar: URL.createObjectURL(blob) });
+            }
+          }, 'image/jpeg', 0.8);
         };
         img.src = event.target?.result as string;
       };
@@ -117,8 +126,6 @@ export default function Perfil() {
     }
   };
 
-  const [showSmsModal, setShowSmsModal] = useState(false);
-  const [smsCode, setSmsCode] = useState('');
 
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -127,21 +134,30 @@ export default function Perfil() {
       addToast({ type: 'info', title: 'SMS Enviado', message: 'Código de teste: 1234' });
       return;
     }
-    await executeSaveProfile();
+
+    // Phone didn't change, save directly
+    executeSaveProfile(formData);
   };
 
-  const executeSaveProfile = async () => {
+  const executeSaveProfile = async (dataToSave: any) => {
     setIsSavingProfile(true);
     try {
-      await updateProfile({
-        name: formData.name,
-        phone: formData.phone,
-        cpf: formData.cpf,
-        avatar: formData.avatar
-      });
+      const data = new FormData();
+      data.append('name', dataToSave.name);
+      data.append('phone', dataToSave.phone);
+      data.append('cpf', dataToSave.cpf);
+      if (avatarFile) {
+        data.append('avatar', avatarFile);
+      } else if (dataToSave.avatar) {
+        data.append('avatar', dataToSave.avatar);
+      }
+
+      await updateProfile(data);
       await fetchMe();
       addToast({ type: 'success', title: 'Sucesso', message: 'Perfil atualizado com sucesso!' });
       setShowSmsModal(false);
+      setSmsCode('');
+      setPendingProfileData(null);
     } catch (err: any) {
       addToast({ type: 'error', title: 'Erro', message: err.message });
     } finally {
@@ -154,7 +170,7 @@ export default function Perfil() {
       addToast({ type: 'error', title: 'Código Inválido', message: 'Tente usar 1234 para testes.' });
       return;
     }
-    executeSaveProfile();
+    executeSaveProfile(pendingProfileData);
   };
 
   // --- SEGURANÇA ---
@@ -256,7 +272,7 @@ export default function Perfil() {
               <div className={styles.avatarSection}>
                 <div className={styles.avatar}>
                   {formData.avatar ? (
-                    <img src={formData.avatar} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    <img src={formData.avatar} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
                   ) : (
                     <User size={40} />
                   )}
@@ -290,6 +306,18 @@ export default function Perfil() {
                   <input type="text" name="cpf" value={formData.cpf} onChange={handleProfileChange} placeholder="000.000.000-00" className={styles.input} />
                 </div>
               </div>
+
+              {showSmsModal && (
+                <div style={{ marginTop: 'var(--spacing-6)', padding: 'var(--spacing-4)', border: '1px solid var(--color-primary-200)', borderRadius: 'var(--radius-md)', backgroundColor: 'var(--color-primary-50)' }}>
+                  <h3 style={{ fontSize: '16px', fontWeight: 600, marginBottom: 'var(--spacing-2)' }}>Verificação de Telefone</h3>
+                  <p style={{ fontSize: '14px', marginBottom: 'var(--spacing-4)', color: 'var(--color-neutral-600)' }}>Um SMS foi enviado para {pendingProfileData?.phone}. Insira o código 1234 abaixo:</p>
+                  <div style={{ display: 'flex', gap: 'var(--spacing-2)' }}>
+                    <input type="text" className={styles.input} style={{ flex: 1 }} placeholder="1234" value={smsCode} onChange={(e) => setSmsCode(e.target.value)} maxLength={4} />
+                    <Button variant="primary" type="button" onClick={handleVerifySms}>Verificar e Salvar</Button>
+                    <Button variant="secondary" type="button" onClick={() => setShowSmsModal(false)}>Cancelar</Button>
+                  </div>
+                </div>
+              )}
 
               <div className={styles.formActions}>
                 <Button variant="primary" type="submit" isLoading={isSavingProfile}>Salvar Alterações</Button>

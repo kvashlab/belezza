@@ -5,11 +5,12 @@ import { authMiddleware } from '../middlewares/auth.middleware';
 const router = Router();
 const userController = new UserController();
 
-// Apply auth middleware to all user routes
+import { upload } from '../middlewares/upload.middleware';
+
 router.use(authMiddleware);
 
 router.get('/me', (req, res) => userController.getMe(req, res));
-router.put('/me', (req, res) => userController.updateMe(req, res));
+router.put('/me', upload.single('avatar'), (req, res) => userController.updateMe(req, res));
 router.put('/me/password', (req, res) => userController.changePassword(req, res));
 
 router.post('/me/addresses', (req, res) => userController.addAddress(req, res));

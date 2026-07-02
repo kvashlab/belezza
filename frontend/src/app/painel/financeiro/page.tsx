@@ -1,6 +1,6 @@
 'use client';
 import React, { useEffect, useState } from 'react';
-import { TrendingUp, ArrowDownRight, ArrowUpRight, Calendar as CalendarIcon, Filter, Download } from 'lucide-react';
+import { TrendingUp, ArrowDownRight, ArrowUpRight, Calendar as CalendarIcon, Filter, Download, AlertCircle, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 
 export default function FinanceiroPage() {

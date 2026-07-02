@@ -24,6 +24,7 @@ export default function AgendarFlow() {
     setProfessional, 
     step, setStep,
     selectedServices, addService, removeService,
+    selectedTeamMember, setTeamMember,
     selectedDate, selectedTime, setDateTime,
     reset 
   } = useBookingStore();
@@ -70,7 +71,8 @@ export default function AgendarFlow() {
       try {
         // We fetch slots based on the first selected service duration
         const serviceId = selectedServices[0].id;
-        const res = await fetch(`http://localhost:3333/api/appointments/slots?professionalId=${profData.id}&serviceId=${serviceId}&date=${selectedDate}`);
+        const teamMemberParam = selectedTeamMember ? `&teamMemberId=${selectedTeamMember.id}` : '';
+        const res = await fetch(`http://localhost:3333/api/appointments/slots?professionalId=${profData.id}&serviceId=${serviceId}&date=${selectedDate}${teamMemberParam}`);
         if (res.ok) {
           const data = await res.json();
           setAvailableSlots(data);
@@ -90,8 +92,11 @@ export default function AgendarFlow() {
   const totalDuration = selectedServices.reduce((acc, curr) => acc + curr.duration, 0);
   const totalPrice = selectedServices.reduce((acc, curr) => acc + curr.price, 0);
 
+    const hasTeam = profData.teamMembers && profData.teamMembers.length > 0;
+    
     const steps = [
       { id: 'servicos', label: 'Serviços' },
+      ...(hasTeam ? [{ id: 'equipe', label: 'Equipe' }] : []),
       { id: 'data-hora', label: 'Data/Hora' },
       { id: 'dados', label: 'Seus Dados' },
       ...(profData.requireDeposit ? [{ id: 'pagamento', label: 'Sinal' }] : []),
@@ -115,6 +120,10 @@ export default function AgendarFlow() {
     const handleNext = async () => {
       if (step === 'servicos' && selectedServices.length === 0) {
         addToast({ type: 'error', title: 'Atenção', message: 'Selecione pelo menos um serviço.' });
+        return;
+      }
+      if (step === 'equipe' && !selectedTeamMember) {
+        addToast({ type: 'error', title: 'Atenção', message: 'Selecione um profissional para o atendimento.' });
         return;
       }
       if (step === 'data-hora' && (!selectedDate || !selectedTime)) {
@@ -173,6 +182,7 @@ export default function AgendarFlow() {
             body: JSON.stringify({
               professionalId: profData.id,
               serviceId: service.id,
+              teamMemberId: selectedTeamMember?.id,
               dateTime: `${selectedDate}T${selectedTime}:00.000Z`,
               notes
             })
@@ -222,6 +232,53 @@ export default function AgendarFlow() {
         </div>
       </div>
     );
+
+  const renderEquipe = () => (
+    <div className={styles.stepContent}>
+      <h2 className={styles.stepTitle}>Com quem deseja agendar?</h2>
+      <div className="grid grid-cols-1 gap-4 mt-6">
+        <div 
+          className={`${styles.serviceCard} ${!selectedTeamMember ? styles.selected : ''}`}
+          onClick={() => setTeamMember(null)}
+        >
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-full bg-indigo-100 flex items-center justify-center font-bold text-indigo-700">Q</div>
+            <div>
+              <h4 className="font-semibold text-gray-900">Qualquer profissional</h4>
+              <p className="text-sm text-gray-500">O primeiro disponível</p>
+            </div>
+          </div>
+          <div className={styles.checkbox}>
+            {!selectedTeamMember && '✓'}
+          </div>
+        </div>
+
+        {profData.teamMembers.map((member: any) => {
+          const isSelected = selectedTeamMember?.id === member.id;
+          return (
+            <div 
+              key={member.id} 
+              className={`${styles.serviceCard} ${isSelected ? styles.selected : ''}`}
+              onClick={() => setTeamMember(member)}
+            >
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-full bg-indigo-100 flex items-center justify-center font-bold text-indigo-700 overflow-hidden relative">
+                  {member.avatar ? <img src={member.avatar} alt={member.name} className="w-full h-full object-cover" /> : member.name.charAt(0)}
+                </div>
+                <div>
+                  <h4 className="font-semibold text-gray-900">{member.name}</h4>
+                  <p className="text-sm text-gray-500">{member.role}</p>
+                </div>
+              </div>
+              <div className={styles.checkbox}>
+                {isSelected && '✓'}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
   
     const renderDataHora = () => {
       const today = new Date().toISOString().split('T')[0];
@@ -370,6 +427,7 @@ export default function AgendarFlow() {
           
           <div className={styles.card}>
             {step === 'servicos' && renderServicos()}
+            {step === 'equipe' && renderEquipe()}
             {step === 'data-hora' && renderDataHora()}
             {step === 'dados' && renderDados()}
             {step === 'pagamento' && renderPagamento()}
@@ -390,6 +448,12 @@ export default function AgendarFlow() {
                 <p>@{profData.username}</p>
               </div>
             </div>
+
+            {selectedTeamMember && (
+              <div style={{ marginTop: 12, padding: 12, backgroundColor: '#f9fafb', borderRadius: 8, fontSize: 14 }}>
+                <span className="text-gray-500">Profissional:</span> <strong className="text-gray-900">{selectedTeamMember.name}</strong>
+              </div>
+            )}
             
             <div className={styles.miniSummaryDetails}>
               {selectedServices.length > 0 ? (
