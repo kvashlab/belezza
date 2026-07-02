@@ -1,0 +1,137 @@
+.profileContainer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-6);
+}
+
+.title {
+  color: var(--color-neutral-900);
+}
+
+.content {
+  display: flex;
+  gap: var(--spacing-8);
+  align-items: flex-start;
+}
+
+@media (max-width: 768px) {
+  .content {
+    flex-direction: column;
+  }
+}
+
+.sidebar {
+  width: 250px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+  flex-shrink: 0;
+}
+
+.tab {
+  text-align: left;
+  padding: var(--spacing-3) var(--spacing-4);
+  border-radius: var(--radius-md);
+  color: var(--color-neutral-700);
+  font-weight: 500;
+  transition: all var(--transition-fast);
+}
+
+.tab:hover {
+  background-color: var(--color-primary-50);
+  color: var(--color-primary-700);
+}
+
+.tab.active {
+  background-color: var(--color-primary-100);
+  color: var(--color-primary-700);
+}
+
+.formSection {
+  flex: 1;
+  background-color: var(--surface-card);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-8);
+  width: 100%;
+}
+
+.sectionTitle {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--color-neutral-900);
+  margin-bottom: var(--spacing-6);
+}
+
+.avatarSection {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-6);
+  margin-bottom: var(--spacing-8);
+}
+
+.avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background-color: var(--color-primary-100);
+  color: var(--color-primary-700);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.avatarActions {
+  display: flex;
+  gap: var(--spacing-3);
+}
+
+.formGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-4);
+  margin-bottom: var(--spacing-6);
+}
+
+@media (max-width: 600px) {
+  .formGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.inputGroup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+}
+
+.label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-neutral-700);
+}
+
+.input {
+  padding: var(--spacing-3) var(--spacing-4);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-md);
+  font-family: inherit;
+  font-size: 14px;
+  transition: all var(--transition-fast);
+  background-color: var(--surface-main);
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--color-primary-500);
+  box-shadow: var(--shadow-focus);
+}
+
+.formActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--spacing-3);
+  margin-top: var(--spacing-8);
+  padding-top: var(--spacing-6);
+  border-top: 1px solid var(--surface-border);
+}

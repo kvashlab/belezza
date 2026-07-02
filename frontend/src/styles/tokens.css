@@ -1,0 +1,110 @@
+:root {
+  /* Primária — Rosé sofisticado */
+  --color-primary-50:  #FDF2F4;
+  --color-primary-100: #FBE4E8;
+  --color-primary-300: #F0A8B8;
+  --color-primary-500: #D4487A;
+  --color-primary-600: #B8356A;
+  --color-primary-700: #922A55;
+
+  /* Secundária — Dourado */
+  --color-gold-300: #E8D5A8;
+  --color-gold-500: #C9A15C;
+  --color-gold-600: #A8813C; /* Acessibilidade: maior contraste para textos */
+  --color-gold-700: #9C7A3E;
+
+  /* Neutros */
+  --color-cream-50:  #FFFDF9;
+  --color-neutral-100: #F7F3EF;
+  --color-neutral-200: #EDE6DE;
+  --color-neutral-300: #D9CFC4;
+  --color-neutral-500: #8A7E71;
+  --color-neutral-700: #4A423A;
+  --color-neutral-900: #221D18;
+
+  /* Semânticas */
+  --color-success: #3FA66B;
+  --color-warning: #E0A02E;
+  --color-danger:  #D64545;
+  --color-info:    #4A8FD4;
+
+  /* Categorias de serviço */
+  --color-cabelo:       #B8356A;
+  --color-unhas:        #E1306C;
+  --color-sobrancelhas: #9C7A3E;
+  --color-cilios:       #6B4E9C;
+  --color-estetica:     #3FA66B;
+  --color-maquiagem:    #D4487A;
+  --color-massoterapia: #4A8FD4;
+
+  /* Superfícies */
+  --surface-header:       #FFFDF9;
+  --surface-main:         #FBF8F4;
+  --surface-card:         #FFFFFF;
+  --surface-border:       #EDE6DE;
+  --surface-dark:         #221D18;
+
+  /* Tipografia */
+  --font-family-display: var(--font-jakarta);
+  --font-family-base: var(--font-jakarta);
+
+  /* Sombras */
+  --shadow-sm: 0 1px 3px rgba(34,29,24,0.06);
+  --shadow-md: 0 6px 16px rgba(34,29,24,0.08);
+  --shadow-lg: 0 12px 40px rgba(34,29,24,0.14);
+  --shadow-focus: 0 0 0 3px rgba(212,72,122,0.25);
+
+  /* Border Radius */
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 24px;
+  --radius-full: 9999px;
+
+  /* Espaçamento Base 4px */
+  --spacing-1: 4px;
+  --spacing-2: 8px;
+  --spacing-3: 12px;
+  --spacing-4: 16px;
+  --spacing-5: 20px;
+  --spacing-6: 24px;
+  --spacing-8: 32px;
+  --spacing-10: 40px;
+  --spacing-12: 48px;
+  --spacing-16: 64px;
+
+  /* Transições Globais */
+  --transition-normal: 300ms ease-in-out;
+  --transition-fast: 150ms ease-in-out;
+}
+
+[data-theme="dark"] {
+  --color-primary-50:  #2B1B20;
+  --color-primary-100: #421F2A;
+  --color-primary-300: #8E2B4A;
+  --color-primary-500: #DE5386;
+  --color-primary-600: #EB79A5;
+  --color-primary-700: #F3A8C5;
+
+  --color-gold-300: #574B29;
+  --color-gold-500: #CBA25D;
+  --color-gold-700: #E6C88D;
+
+  --color-cream-50:  #1A1613;
+  --color-neutral-100: #221D18;
+  --color-neutral-200: #2E2822;
+  --color-neutral-300: #3C352E;
+  --color-neutral-500: #8A7E71;
+  --color-neutral-700: #D9CFC4;
+  --color-neutral-900: #F7F3EF;
+
+  --surface-header:       #1A1613;
+  --surface-main:         #151210;
+  --surface-card:         #221D18;
+  --surface-border:       #2E2822;
+  --surface-dark:         #0F0D0B;
+
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.4);
+  --shadow-md: 0 6px 16px rgba(0,0,0,0.5);
+  --shadow-lg: 0 12px 40px rgba(0,0,0,0.6);
+  --shadow-focus: 0 0 0 3px rgba(222,83,134,0.35);
+}

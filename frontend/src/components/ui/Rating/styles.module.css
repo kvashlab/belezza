@@ -1,0 +1,23 @@
+.rating {
+  display: inline-flex;
+  gap: 2px;
+}
+
+.star {
+  color: var(--color-neutral-300);
+  transition: all var(--transition-fast);
+  padding: 2px;
+  display: flex;
+}
+
+.star:not(:disabled):hover {
+  transform: scale(1.1);
+}
+
+.filled {
+  color: var(--color-gold-500);
+}
+
+.readOnly .star {
+  cursor: default;
+}

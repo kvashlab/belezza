@@ -1,0 +1,127 @@
+.dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-8);
+}
+
+.welcomeSection {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+}
+
+.title {
+  color: var(--color-neutral-900);
+}
+
+.subtitle {
+  color: var(--color-neutral-500);
+  font-size: 16px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-6);
+}
+
+@media (max-width: 768px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4);
+}
+
+.sectionTitle {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--color-neutral-900);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.viewAll {
+  font-size: 14px;
+  color: var(--color-primary-600);
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.viewAll:hover {
+  text-decoration: underline;
+}
+
+.emptyState {
+  background-color: var(--surface-card);
+  border: 1px dashed var(--surface-border);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-8);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: var(--spacing-4);
+  color: var(--color-neutral-500);
+}
+
+.emptyStateIcon {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background-color: var(--color-primary-50);
+  color: var(--color-primary-600);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.quickActions {
+  display: flex;
+  gap: var(--spacing-4);
+  overflow-x: auto;
+  padding-bottom: var(--spacing-2);
+  scrollbar-width: none;
+}
+
+.quickActions::-webkit-scrollbar {
+  display: none;
+}
+
+.actionCard {
+  min-width: 140px;
+  background-color: var(--surface-card);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-4);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-3);
+  text-align: center;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.actionCard:hover {
+  border-color: var(--color-primary-300);
+  background-color: var(--color-primary-50);
+  transform: translateY(-2px);
+}
+
+.actionIcon {
+  color: var(--color-primary-600);
+}
+
+.actionText {
+  font-weight: 500;
+  font-size: 14px;
+  color: var(--color-neutral-800);
+}

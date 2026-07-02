@@ -1,0 +1,92 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  animation: fadeIn 0.3s ease;
+}
+
+.title {
+  font-family: var(--font-family-display);
+  font-size: 28px;
+  color: var(--color-neutral-900);
+  margin: 0 0 var(--spacing-2) 0;
+}
+
+.subtitle {
+  color: var(--color-neutral-500);
+  margin: 0 0 var(--spacing-8) 0;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4);
+}
+
+.forgotPassword {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.forgotPassword button {
+  font-size: 13px;
+  color: var(--color-primary-600);
+  font-weight: 500;
+}
+
+.forgotPassword button:hover {
+  text-decoration: underline;
+}
+
+.submitBtn {
+  margin-top: var(--spacing-2);
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  margin: var(--spacing-6) 0;
+  color: var(--color-neutral-500);
+  font-size: 13px;
+}
+
+.divider::before, .divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background-color: var(--surface-border);
+}
+
+.divider span {
+  padding: 0 var(--spacing-4);
+}
+
+.googleBtn {
+  background-color: var(--surface-card);
+  border: 1px solid var(--surface-border);
+  color: var(--color-neutral-700);
+}
+
+.googleBtn:hover {
+  background-color: var(--surface-main);
+}
+
+.registerLink {
+  margin-top: var(--spacing-8);
+  text-align: center;
+  font-size: 15px;
+  color: var(--color-neutral-500);
+}
+
+.registerLink a {
+  color: var(--color-primary-600);
+  font-weight: 600;
+}
+
+.registerLink a:hover {
+  text-decoration: underline;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}

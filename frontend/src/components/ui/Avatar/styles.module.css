@@ -1,0 +1,50 @@
+.avatar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-full);
+  background-color: var(--color-primary-100);
+  color: var(--color-primary-700);
+  overflow: hidden;
+  flex-shrink: 0;
+  font-family: var(--font-family-display);
+}
+
+.goldBorder {
+  border: 3px solid var(--color-gold-500);
+}
+
+.image {
+  object-fit: cover;
+}
+
+.initials {
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+
+/* Tamanhos */
+.sm {
+  width: 32px;
+  height: 32px;
+}
+.sm .initials { font-size: 12px; }
+
+.md {
+  width: 48px;
+  height: 48px;
+}
+.md .initials { font-size: 16px; }
+
+.lg {
+  width: 64px;
+  height: 64px;
+}
+.lg .initials { font-size: 24px; }
+
+.xl {
+  width: 120px;
+  height: 120px;
+}
+.xl .initials { font-size: 40px; }

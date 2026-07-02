@@ -1,0 +1,101 @@
+.header {
+  background-color: var(--surface-main);
+  border-bottom: 1px solid transparent;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  transition: all 0.3s ease;
+}
+
+.scrolled {
+  background-color: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--surface-border);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 var(--spacing-4);
+  height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-6);
+}
+
+.logo {
+  font-family: var(--font-family-display);
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--color-primary-600);
+  letter-spacing: -0.02em;
+}
+
+.searchBar {
+  flex: 1;
+  max-width: 400px;
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.searchIcon {
+  position: absolute;
+  left: var(--spacing-3);
+  color: var(--color-neutral-500);
+}
+
+.searchInput {
+  width: 100%;
+  height: 40px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--surface-border);
+  background-color: var(--surface-main);
+  padding: 0 var(--spacing-4) 0 40px;
+  font-size: 14px;
+  transition: all var(--transition-fast);
+}
+
+.searchInput:focus {
+  outline: none;
+  border-color: var(--color-primary-300);
+  box-shadow: 0 0 0 3px rgba(212, 72, 122, 0.1);
+  background-color: var(--surface-card);
+}
+
+.nav {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-4);
+}
+
+.navLink {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-neutral-700);
+  transition: color var(--transition-fast);
+}
+
+.navLink:hover {
+  color: var(--color-primary-600);
+}
+
+.mobileMenuBtn {
+  display: none;
+  color: var(--color-neutral-900);
+}
+
+@media (max-width: 768px) {
+  .searchBar {
+    display: none;
+  }
+  .nav {
+    display: none;
+  }
+  .mobileMenuBtn {
+    display: flex;
+  }
+}

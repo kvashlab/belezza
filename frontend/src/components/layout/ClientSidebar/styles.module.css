@@ -1,0 +1,111 @@
+.sidebar {
+  width: 280px;
+  background-color: var(--surface-card);
+  border-right: 1px solid var(--surface-border);
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  position: sticky;
+  top: 0;
+  padding: var(--spacing-6) 0;
+}
+
+.profileSection {
+  padding: 0 var(--spacing-6) var(--spacing-6);
+  border-bottom: 1px solid var(--surface-border);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-4);
+}
+
+.avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-full);
+  background-color: var(--color-primary-100);
+  color: var(--color-primary-700);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.userInfo {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.userName {
+  font-weight: 600;
+  color: var(--color-neutral-900);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.userEmail {
+  font-size: var(--small-text);
+  color: var(--color-neutral-500);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.nav {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+  padding: var(--spacing-6);
+  flex: 1;
+}
+
+.navItem {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3);
+  padding: var(--spacing-3) var(--spacing-4);
+  border-radius: var(--radius-md);
+  color: var(--color-neutral-700);
+  font-weight: 500;
+  transition: all var(--transition-fast);
+}
+
+.navItem:hover {
+  background-color: var(--color-primary-50);
+  color: var(--color-primary-700);
+}
+
+.navItem.active {
+  background-color: var(--color-primary-100);
+  color: var(--color-primary-700);
+}
+
+.icon {
+  flex-shrink: 0;
+}
+
+.logoutBtn {
+  margin: auto var(--spacing-6) 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-2);
+  padding: var(--spacing-3);
+  border-radius: var(--radius-md);
+  color: var(--color-danger);
+  font-weight: 500;
+  transition: all var(--transition-fast);
+  background-color: transparent;
+  border: 1px solid transparent;
+}
+
+.logoutBtn:hover {
+  background-color: #FEF2F2; /* Soft red bg */
+}
+
+@media (max-width: 1024px) {
+  .sidebar {
+    display: none; /* Hide on mobile/tablet, rely on bottom nav */
+  }
+}
