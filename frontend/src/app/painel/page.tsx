@@ -1,15 +1,48 @@
 'use client';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Calendar, DollarSign, Star, Users, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { SimpleBarChart } from '@/components/ui/SimpleBarChart';
 import { useAuthStore } from '@/stores/auth.store';
+import { format, isSameDay } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 import styles from './styles.module.css';
 
 export default function PainelDashboard() {
   const { user } = useAuthStore();
+  const [appointments, setAppointments] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   
+  useEffect(() => {
+    async function fetchDashboardData() {
+      try {
+        const token = localStorage.getItem('@belezza:token');
+        const res = await fetch('http://localhost:3333/api/appointments/me', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setAppointments(data);
+        }
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    fetchDashboardData();
+  }, []);
+
+  const today = new Date();
+  const todaysAppointments = appointments.filter(a => isSameDay(new Date(a.date), today) && a.status !== 'CANCELLED');
+  const upcomingAppointments = appointments
+    .filter(a => new Date(a.date) >= today && a.status !== 'CANCELLED')
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+    .slice(0, 4);
+
+  const revenueToday = todaysAppointments.filter(a => a.status === 'COMPLETED' || a.status === 'CONFIRMED').reduce((acc, curr) => acc + curr.price, 0);
+
   const chartData = [
     { label: 'Seg', value: 150 },
     { label: 'Ter', value: 300 },
@@ -21,17 +54,10 @@ export default function PainelDashboard() {
   ];
 
   const metrics = [
-    { title: 'Agendamentos Hoje', value: '8', icon: Calendar, color: 'var(--color-info)' },
-    { title: 'Faturamento Mês', value: 'R$ 4.250', icon: DollarSign, color: 'var(--color-success)' },
+    { title: 'Agendamentos Hoje', value: isLoading ? '-' : todaysAppointments.length.toString(), icon: Calendar, color: 'var(--color-info)' },
+    { title: 'Faturamento (Hoje)', value: isLoading ? '-' : `R$ ${revenueToday.toFixed(2)}`, icon: DollarSign, color: 'var(--color-success)' },
     { title: 'Nota Média', value: '4.8', icon: Star, color: 'var(--color-gold-500)' },
     { title: 'Novos Clientes', value: '12', icon: Users, color: 'var(--color-primary-500)' },
-  ];
-
-  const upcomingClients = [
-    { time: '14:00', name: 'Ana Clara', service: 'Corte e Escova', status: 'confirmed' },
-    { time: '15:30', name: 'Juliana Silva', service: 'Coloração', status: 'confirmed' },
-    { time: '17:00', name: 'Marcos Paulo', service: 'Corte Masculino', status: 'pending' },
-    { time: '18:30', name: 'Beatriz Souza', service: 'Hidratação', status: 'confirmed' },
   ];
 
   return (
@@ -75,19 +101,28 @@ export default function PainelDashboard() {
           </div>
           
           <div className={styles.agendaList}>
-            {upcomingClients.map((client, i) => (
-              <div key={i} className={styles.agendaItem}>
-                <span className={styles.agendaTime}>{client.time}</span>
-                <div className={styles.agendaInfo}>
-                  <span className={styles.clientName}>{client.name}</span>
-                  <span className={styles.serviceName}>{client.service}</span>
+            {isLoading ? (
+              <p style={{ padding: '24px', textAlign: 'center', color: 'var(--color-neutral-500)' }}>Carregando...</p>
+            ) : upcomingAppointments.length === 0 ? (
+              <p style={{ padding: '24px', textAlign: 'center', color: 'var(--color-neutral-500)' }}>Sem agendamentos futuros.</p>
+            ) : (
+              upcomingAppointments.map((appt, i) => (
+                <div key={i} className={styles.agendaItem}>
+                  <span className={styles.agendaTime}>{format(new Date(appt.date), 'dd/MM HH:mm')}</span>
+                  <div className={styles.agendaInfo}>
+                    <span className={styles.clientName}>{appt.client?.user?.name || 'Cliente'}</span>
+                    <span className={styles.serviceName}>{appt.service?.name}</span>
+                  </div>
+                  <div 
+                    className={`${styles.statusIndicator} ${styles[appt.status.toLowerCase()]}`} 
+                    title={appt.status}
+                    style={{
+                      backgroundColor: appt.status === 'CONFIRMED' ? 'var(--color-success-500)' : 'var(--color-warning)'
+                    }}
+                  />
                 </div>
-                <div 
-                  className={`${styles.statusIndicator} ${styles[client.status]}`} 
-                  title={client.status === 'confirmed' ? 'Confirmado' : 'Pendente'}
-                />
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </section>
       </div>

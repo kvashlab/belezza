@@ -1,75 +1,97 @@
 'use client';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Tabs } from '@/components/ui/Tabs';
 import { AppointmentCard } from '@/components/cliente/AppointmentCard';
-
-// Mock data
-const mockAppointments = {
-  upcoming: [
-    {
-      id: '1',
-      professionalName: 'Ana Clara',
-      serviceName: 'Corte e Escova',
-      date: '15 de Agosto',
-      time: '14:00',
-      price: 'R$ 120,00',
-      location: 'Studio Bela - Centro',
-      status: 'confirmed' as const
-    },
-    {
-      id: '2',
-      professionalName: 'Bruna Nails',
-      serviceName: 'Manicure e Pedicure',
-      date: '20 de Agosto',
-      time: '10:30',
-      price: 'R$ 60,00',
-      location: 'Shopping Cidade',
-      status: 'pending' as const
-    }
-  ],
-  history: [
-    {
-      id: '3',
-      professionalName: 'Carlos Barber',
-      serviceName: 'Corte Degradê',
-      date: '01 de Agosto',
-      time: '18:00',
-      price: 'R$ 45,00',
-      location: 'Barbearia Vintage',
-      status: 'completed' as const
-    },
-    {
-      id: '4',
-      professionalName: 'Ana Clara',
-      serviceName: 'Hidratação',
-      date: '10 de Julho',
-      time: '15:00',
-      price: 'R$ 90,00',
-      location: 'Studio Bela - Centro',
-      status: 'cancelled' as const
-    }
-  ]
-};
+import { format, isAfter, isBefore } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import { useUIStore } from '@/stores/ui.store';
 
 export default function MeusAgendamentosPage() {
   const router = useRouter();
+  const [appointments, setAppointments] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const { addToast } = useUIStore();
 
-  const handleCancel = (id: string) => alert(`Cancelar agendamento ${id}`);
+  useEffect(() => {
+    fetchAppointments();
+  }, []);
+
+  const fetchAppointments = async () => {
+    setIsLoading(true);
+    try {
+      const token = localStorage.getItem('@belezza:token');
+      const res = await fetch('http://localhost:3333/api/appointments/me', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setAppointments(data);
+      }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const updateStatus = async (id: string, status: string) => {
+    try {
+      const token = localStorage.getItem('@belezza:token');
+      const res = await fetch(`http://localhost:3333/api/appointments/${id}/status`, {
+        method: 'PUT',
+        headers: { 
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}` 
+        },
+        body: JSON.stringify({ status })
+      });
+      if (res.ok) {
+        addToast({ type: 'success', title: 'Sucesso', message: 'Status atualizado!' });
+        fetchAppointments();
+      }
+    } catch (e) {
+      addToast({ type: 'error', title: 'Erro', message: 'Falha ao atualizar status.' });
+    }
+  };
+
+  const handleCancel = (id: string) => updateStatus(id, 'CANCELLED');
   const handleReschedule = (id: string) => alert(`Reagendar agendamento ${id}`);
   const handleReview = (id: string) => alert(`Avaliar agendamento ${id}`);
-  const handleRebook = (id: string) => alert(`Agendar novamente ${id}`);
+  const handleRebook = (username: string) => router.push(`/@${username}/agendar`);
 
-  const renderGrid = (items: typeof mockAppointments.upcoming) => (
+  const now = new Date();
+  
+  // Format appointments for the cards
+  const formattedAppointments = appointments.map(a => {
+    const d = new Date(a.date);
+    return {
+      id: a.id,
+      professionalName: a.professional?.businessName || a.professional?.user?.name || 'Profissional',
+      username: a.professional?.username,
+      serviceName: a.service?.name || 'Serviço',
+      date: format(d, "dd 'de' MMMM", { locale: ptBR }),
+      time: format(d, 'HH:mm'),
+      price: `R$ ${a.price.toFixed(2)}`,
+      location: a.professional?.city ? `${a.professional.city}` : 'Local',
+      status: a.status.toLowerCase(), // PENDING -> pending
+      rawDate: d
+    };
+  });
+
+  const upcoming = formattedAppointments.filter(a => isAfter(a.rawDate, now) && a.status !== 'cancelled');
+  const history = formattedAppointments.filter(a => isBefore(a.rawDate, now) || a.status === 'cancelled' || a.status === 'completed');
+
+  const renderGrid = (items: any[]) => (
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 'var(--spacing-6)' }}>
       {items.map(item => (
         <AppointmentCard 
           key={item.id} 
           {...item} 
-          onCancel={handleCancel}
-          onReschedule={handleReschedule}
-          onReview={handleReview}
-          onRebook={handleRebook}
+          onCancel={() => handleCancel(item.id)}
+          onReschedule={() => handleReschedule(item.id)}
+          onReview={() => handleReview(item.id)}
+          onRebook={() => handleRebook(item.username)}
         />
       ))}
     </div>
@@ -82,32 +104,36 @@ export default function MeusAgendamentosPage() {
         <p className="body-text" style={{ color: 'var(--color-neutral-500)' }}>Gerencie e acompanhe todos os seus serviços.</p>
       </div>
       
-      <Tabs 
-        items={[
-          {
-            id: 'upcoming',
-            label: 'Próximos',
-            content: mockAppointments.upcoming.length > 0 ? (
-              renderGrid(mockAppointments.upcoming)
-            ) : (
-              <div style={{ padding: 'var(--spacing-8)', textAlign: 'center', backgroundColor: 'var(--surface-card)', borderRadius: 'var(--radius-lg)' }}>
-                Nenhum agendamento futuro.
-              </div>
-            )
-          },
-          {
-            id: 'history',
-            label: 'Histórico',
-            content: mockAppointments.history.length > 0 ? (
-              renderGrid(mockAppointments.history)
-            ) : (
-              <div style={{ padding: 'var(--spacing-8)', textAlign: 'center', backgroundColor: 'var(--surface-card)', borderRadius: 'var(--radius-lg)' }}>
-                Nenhum histórico de agendamento.
-              </div>
-            )
-          }
-        ]}
-      />
+      {isLoading ? (
+        <div style={{ padding: 'var(--spacing-8)', textAlign: 'center' }}>Carregando agendamentos...</div>
+      ) : (
+        <Tabs 
+          items={[
+            {
+              id: 'upcoming',
+              label: 'Próximos',
+              content: upcoming.length > 0 ? (
+                renderGrid(upcoming)
+              ) : (
+                <div style={{ padding: 'var(--spacing-8)', textAlign: 'center', backgroundColor: 'var(--surface-card)', borderRadius: 'var(--radius-lg)' }}>
+                  Nenhum agendamento futuro.
+                </div>
+              )
+            },
+            {
+              id: 'history',
+              label: 'Histórico',
+              content: history.length > 0 ? (
+                renderGrid(history)
+              ) : (
+                <div style={{ padding: 'var(--spacing-8)', textAlign: 'center', backgroundColor: 'var(--surface-card)', borderRadius: 'var(--radius-lg)' }}>
+                  Nenhum histórico de agendamento.
+                </div>
+              )
+            }
+          ]}
+        />
+      )}
     </div>
   );
 }

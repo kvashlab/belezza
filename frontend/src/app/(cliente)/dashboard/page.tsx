@@ -1,30 +1,93 @@
 'use client';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/stores/auth.store';
 import { Calendar, Search, Star, Sparkles } from 'lucide-react';
 import { AppointmentCard } from '@/components/cliente/AppointmentCard';
 import { Button } from '@/components/ui/Button';
+import { format, isAfter } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import { useUIStore } from '@/stores/ui.store';
 import styles from './styles.module.css';
 
 export default function ClientDashboard() {
   const { user } = useAuthStore();
   const router = useRouter();
+  const { addToast } = useUIStore();
+  
+  const [appointments, setAppointments] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   const firstName = user?.name?.split(' ')[0] || 'Cliente';
 
-  // Mock data for next appointment
-  const nextAppointment = {
-    id: '1',
-    professionalName: 'Ana Clara',
-    serviceName: 'Corte e Escova',
-    date: 'Amanhã, 14:00',
-    time: '14:00',
-    price: 'R$ 120,00',
-    location: 'Studio Bela - Centro',
-    status: 'confirmed' as const
+  useEffect(() => {
+    fetchAppointments();
+  }, []);
+
+  const fetchAppointments = async () => {
+    try {
+      const token = localStorage.getItem('@belezza:token');
+      const res = await fetch('http://localhost:3333/api/appointments/me', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setAppointments(data);
+      }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsLoading(false);
+    }
   };
+
+  const updateStatus = async (id: string, status: string) => {
+    try {
+      const token = localStorage.getItem('@belezza:token');
+      const res = await fetch(`http://localhost:3333/api/appointments/${id}/status`, {
+        method: 'PUT',
+        headers: { 
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}` 
+        },
+        body: JSON.stringify({ status })
+      });
+      if (res.ok) {
+        addToast({ type: 'success', title: 'Sucesso', message: 'Status atualizado!' });
+        fetchAppointments();
+      }
+    } catch (e) {
+      addToast({ type: 'error', title: 'Erro', message: 'Falha ao atualizar status.' });
+    }
+  };
+
+  const handleCancel = (id: string) => updateStatus(id, 'CANCELLED');
+  const handleRebook = (username: string) => router.push(`/@${username}/agendar`);
+
+  const now = new Date();
+  
+  const upcomingAppointments = appointments
+    .filter(a => isAfter(new Date(a.date), now) && a.status !== 'CANCELLED')
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+  const nextApptData = upcomingAppointments[0];
+  
+  let nextAppointment = null;
+  if (nextApptData) {
+    const d = new Date(nextApptData.date);
+    nextAppointment = {
+      id: nextApptData.id,
+      professionalName: nextApptData.professional?.businessName || nextApptData.professional?.user?.name || 'Profissional',
+      username: nextApptData.professional?.username,
+      serviceName: nextApptData.service?.name || 'Serviço',
+      date: format(d, "dd 'de' MMMM", { locale: ptBR }),
+      time: format(d, 'HH:mm'),
+      price: `R$ ${nextApptData.price.toFixed(2)}`,
+      location: nextApptData.professional?.city ? `${nextApptData.professional.city}` : 'Local',
+      status: nextApptData.status.toLowerCase()
+    };
+  }
 
   return (
     <div className={styles.dashboard}>
@@ -36,7 +99,7 @@ export default function ClientDashboard() {
       <section className={styles.section}>
         <h2 className={styles.sectionTitle}>Acesso Rápido</h2>
         <div className={styles.quickActions}>
-          <div className={styles.actionCard} onClick={() => router.push('/')}>
+          <div className={styles.actionCard} onClick={() => router.push('/explorar')}>
             <Search size={24} className={styles.actionIcon} />
             <span className={styles.actionText}>Buscar Profissionais</span>
           </div>
@@ -58,8 +121,14 @@ export default function ClientDashboard() {
             <Link href="/meus-agendamentos" className={styles.viewAll}>Ver todos</Link>
           </div>
           
-          {nextAppointment ? (
-            <AppointmentCard {...nextAppointment} />
+          {isLoading ? (
+            <div style={{ padding: '24px', textAlign: 'center', color: 'var(--color-neutral-500)' }}>Carregando...</div>
+          ) : nextAppointment ? (
+            <AppointmentCard 
+              {...nextAppointment} 
+              onCancel={() => handleCancel(nextAppointment.id)}
+              onRebook={() => handleRebook(nextAppointment.username)}
+            />
           ) : (
             <div className={styles.emptyState}>
               <div className={styles.emptyStateIcon}>
@@ -69,7 +138,7 @@ export default function ClientDashboard() {
                 <h3 style={{ fontSize: '18px', fontWeight: 600, color: 'var(--color-neutral-900)' }}>Nenhum agendamento</h3>
                 <p>Você não tem horários marcados no momento.</p>
               </div>
-              <Button onClick={() => router.push('/')}>Encontrar Profissional</Button>
+              <Button onClick={() => router.push('/explorar')}>Encontrar Profissional</Button>
             </div>
           )}
         </section>
@@ -87,7 +156,7 @@ export default function ClientDashboard() {
               <h3 style={{ fontSize: '18px', fontWeight: 600, color: 'var(--color-neutral-900)' }}>Explorar Novidades</h3>
               <p>Descubra os melhores profissionais da sua região.</p>
             </div>
-            <Button variant="secondary" onClick={() => router.push('/')}>Explorar</Button>
+            <Button variant="secondary" onClick={() => router.push('/explorar')}>Explorar</Button>
           </div>
         </section>
       </div>
