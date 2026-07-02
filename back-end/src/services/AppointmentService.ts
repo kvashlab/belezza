@@ -69,6 +69,25 @@ export class AppointmentService {
     const service = await prisma.service.findUnique({ where: { id: serviceId } });
     if (!service) throw new Error('Serviço não encontrado');
 
+    // Premium Check: FREE plans can only have 50 appointments per month
+    const professional = await prisma.professionalProfile.findUnique({ where: { id: professionalId } });
+    if (professional?.plan === 'FREE') {
+      const startOfMonth = new Date();
+      startOfMonth.setDate(1);
+      startOfMonth.setHours(0, 0, 0, 0);
+
+      const appointmentsThisMonth = await prisma.appointment.count({
+        where: {
+          professionalId,
+          createdAt: { gte: startOfMonth }
+        }
+      });
+
+      if (appointmentsThisMonth >= 50) {
+        throw new Error('Este profissional atingiu o limite de agendamentos mensais do plano gratuito.');
+      }
+    }
+
     // In a real app, we should verify again if the slot is still available right before saving
     // For simplicity, we just create it here.
     return prisma.appointment.create({

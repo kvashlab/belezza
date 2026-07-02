@@ -10,17 +10,19 @@ datasource db {
 
 
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
+  id        String    @id @default(uuid())
+  email     String    @unique
   password  String
   name      String
-  role      String   @default("CLIENT")
+  role      String    @default("CLIENT")
   phone     String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  cpf       String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 
   clientProfile       ClientProfile?
   professionalProfile ProfessionalProfile?
+  addresses           Address[]
 }
 
 model ClientProfile {
@@ -33,6 +35,8 @@ model ClientProfile {
   tags          String?  // JSON string
   notes         String?
   appointments  Appointment[]
+  favorites     Favorite[]
+  reviews       Review[]
 }
 
 model ProfessionalProfile {
@@ -58,11 +62,14 @@ model ProfessionalProfile {
   serviceLocation String @default("ambos") // "no_local", "domicilio", "ambos"
   verified        Boolean @default(false)
   socialLinks     String? // JSON string
+  plan            String  @default("FREE") // "FREE" or "PREMIUM"
   
   services     Service[]
   workingHours WorkingHour[]
   portfolio    PortfolioPhoto[]
   appointments Appointment[]
+  favorites    Favorite[]
+  reviews      Review[]
 }
 
 model Service {
@@ -110,6 +117,50 @@ model Appointment {
   price          Float
   duration       Int
   notes          String?
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+  review         Review?
+}
+
+model Address {
+  id           String   @id @default(uuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title        String   // "Casa", "Trabalho", etc.
+  street       String
+  number       String
+  complement   String?
+  neighborhood String
+  city         String
+  state        String
+  zipCode      String
+  lat          Float?
+  lng          Float?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Favorite {
+  id             String              @id @default(uuid())
+  clientId       String
+  client         ClientProfile       @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  professionalId String
+  professional   ProfessionalProfile @relation(fields: [professionalId], references: [id], onDelete: Cascade)
+  createdAt      DateTime            @default(now())
+
+  @@unique([clientId, professionalId])
+}
+
+model Review {
+  id             String              @id @default(uuid())
+  clientId       String
+  client         ClientProfile       @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  professionalId String
+  professional   ProfessionalProfile @relation(fields: [professionalId], references: [id], onDelete: Cascade)
+  appointmentId  String?             @unique
+  appointment    Appointment?        @relation(fields: [appointmentId], references: [id], onDelete: SetNull)
+  rating         Int                 // 1 to 5
+  comment        String?
   createdAt      DateTime            @default(now())
   updatedAt      DateTime            @updatedAt
 }

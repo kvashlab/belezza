@@ -120,9 +120,9 @@ export default function PublicProfile() {
       {profReviews.map((review: any) => (
         <div key={review.id} className={styles.reviewCard}>
           <div className={styles.reviewHeader}>
-            <Avatar name={review.clientName} src={review.clientAvatar} size="sm" />
+            <Avatar name={review.client?.user?.name || review.clientName} src={review.client?.avatar || review.clientAvatar} size="sm" />
             <div>
-              <span className={styles.reviewerName}>{review.clientName}</span>
+              <span className={styles.reviewerName}>{review.client?.user?.name || review.clientName}</span>
               <span className={styles.reviewDate}>{new Date(review.createdAt).toLocaleDateString()}</span>
             </div>
             <div className={styles.reviewStars}>

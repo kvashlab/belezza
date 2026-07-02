@@ -2,7 +2,7 @@
 import React, { useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { LayoutDashboard, Calendar, Scissors, Users, DollarSign, User, LogOut, X } from 'lucide-react';
+import { LayoutDashboard, Calendar, Scissors, Users, DollarSign, User, LogOut, X, Image as ImageIcon } from 'lucide-react';
 import { useAuthStore } from '@/stores/auth.store';
 import styles from './styles.module.css';
 
@@ -15,6 +15,7 @@ const NAV_ITEMS = [
   { label: 'Dashboard', href: '/painel', icon: LayoutDashboard },
   { label: 'Agenda', href: '/painel/agenda', icon: Calendar },
   { label: 'Serviços', href: '/painel/servicos', icon: Scissors },
+  { label: 'Portfólio', href: '/painel/portfolio', icon: ImageIcon },
   { label: 'Clientes', href: '/painel/clientes', icon: Users },
   { label: 'Financeiro', href: '/painel/financeiro', icon: DollarSign },
   { label: 'Meu Perfil', href: '/painel/perfil', icon: User },

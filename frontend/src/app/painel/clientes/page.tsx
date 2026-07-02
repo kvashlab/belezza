@@ -6,13 +6,28 @@ import { Avatar } from '@/components/ui/Avatar';
 
 export default function ClientesPage() {
   const [searchTerm, setSearchTerm] = useState('');
+  const [clients, setClients] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const clients = [
-    { id: 1, name: 'Ana Beatriz Sousa', email: 'ana.beatriz@example.com', phone: '(11) 98765-4321', lastVisit: '2023-10-15', totalSpent: 450, avatar: '' },
-    { id: 2, name: 'Carla Dias', email: 'carla.dias@example.com', phone: '(11) 91234-5678', lastVisit: '2023-10-20', totalSpent: 120, avatar: 'https://i.pravatar.cc/150?u=carla' },
-    { id: 3, name: 'Juliana Paes', email: 'juju.paes@example.com', phone: '(11) 99999-8888', lastVisit: '2023-10-25', totalSpent: 890, avatar: 'https://i.pravatar.cc/150?u=juliana' },
-    { id: 4, name: 'Mariana Ximenes', email: 'mariana.x@example.com', phone: '(11) 97777-6666', lastVisit: '2023-09-30', totalSpent: 340, avatar: '' },
-  ];
+  useEffect(() => {
+    async function loadClients() {
+      try {
+        const token = localStorage.getItem('@belezza:token');
+        const res = await fetch('http://localhost:3333/api/professionals/clients', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setClients(data);
+        }
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    loadClients();
+  }, []);
 
   const filteredClients = clients.filter(c => c.name.toLowerCase().includes(searchTerm.toLowerCase()));
 
@@ -53,8 +68,15 @@ export default function ClientesPage() {
               </tr>
             </thead>
             <tbody>
-              {filteredClients.map(client => (
-                <tr key={client.id} style={{ borderBottom: '1px solid var(--surface-main)' }}>
+              {isLoading ? (
+                <tr>
+                  <td colSpan={5} style={{ padding: 'var(--spacing-8)', textAlign: 'center', color: 'var(--color-neutral-500)' }}>
+                    Carregando clientes...
+                  </td>
+                </tr>
+              ) : (
+                filteredClients.map(client => (
+                  <tr key={client.id} style={{ borderBottom: '1px solid var(--surface-main)' }}>
                   <td style={{ padding: 'var(--spacing-3)' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-3)' }}>
                       <Avatar name={client.name} src={client.avatar} size="sm" />
@@ -79,8 +101,8 @@ export default function ClientesPage() {
                     </button>
                   </td>
                 </tr>
-              ))}
-              {filteredClients.length === 0 && (
+              )}
+              {!isLoading && filteredClients.length === 0 && (
                 <tr>
                   <td colSpan={5} style={{ padding: 'var(--spacing-8)', textAlign: 'center', color: 'var(--color-neutral-500)' }}>
                     Nenhum cliente encontrado.

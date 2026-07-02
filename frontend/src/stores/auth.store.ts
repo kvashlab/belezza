@@ -9,10 +9,11 @@ interface AuthStore {
   login: (credentials: any) => Promise<void>;
   register: (data: any) => Promise<void>;
   googleLogin: (data: any) => Promise<void>;
+  fetchMe: () => Promise<void>;
   logout: () => void;
 }
 
-export const useAuthStore = create<AuthStore>((set) => ({
+export const useAuthStore = create<AuthStore>((set, get) => ({
   user: null,
   role: null,
   isAuthenticated: false,
@@ -74,6 +75,25 @@ export const useAuthStore = create<AuthStore>((set) => ({
       localStorage.setItem('@belezza:token', data.token);
     } catch (error) {
       throw error;
+    }
+  },
+  fetchMe: async () => {
+    try {
+      const token = localStorage.getItem('@belezza:token');
+      if (!token) return;
+
+      const response = await fetch('http://localhost:3333/api/users/me', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      const user = await response.json();
+      if (!response.ok) throw new Error(user.error || 'Erro ao carregar perfil');
+
+      set({ user, role: user.role.toLowerCase(), isAuthenticated: true });
+    } catch (error) {
+      console.error(error);
     }
   },
   logout: () => {

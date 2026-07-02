@@ -1,17 +1,38 @@
 'use client';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { useUIStore } from '@/stores/ui.store';
-import { professionalsMock } from '@/mocks/professionals.mock';
 import { ProfessionalCard } from '@/components/shared/ProfessionalCard';
 
 export default function FavoritosPage() {
   const router = useRouter();
-  const { favoriteIds } = useUIStore();
+  const [favorites, setFavorites] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const token = localStorage.getItem('@belezza:token');
+        const res = await fetch('http://localhost:3333/api/clients/favorites', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          // data is array of Favorite, with .professional
+          const professionals = data.map((fav: any) => fav.professional);
+          setFavorites(professionals);
+        }
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    load();
+  }, []);
   
-  const favorites = professionalsMock.filter(p => favoriteIds.includes(p.id));
-  
+  if (isLoading) return <div style={{ padding: '64px', textAlign: 'center' }}>Carregando favoritos...</div>;
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-6)' }}>
       <div>

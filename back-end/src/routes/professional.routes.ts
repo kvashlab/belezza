@@ -20,4 +20,13 @@ router.delete('/services/:id', (req, res) => controller.deleteService(req, res))
 
 router.put('/working-hours', (req, res) => controller.updateWorkingHours(req, res));
 
+router.get('/me/dashboard', (req, res) => controller.getDashboard(req, res));
+router.get('/clients', (req, res) => controller.getClients(req, res));
+
+router.get('/portfolio', (req, res) => controller.getPortfolio(req, res));
+router.post('/portfolio', (req, res) => controller.addPortfolioPhoto(req, res));
+router.delete('/portfolio/:id', (req, res) => controller.deletePortfolioPhoto(req, res));
+
+router.get('/reviews', (req, res) => controller.getReviews(req, res));
+
 export default router;

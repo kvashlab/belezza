@@ -6,7 +6,6 @@ import { ProfessionalCard } from '@/components/shared/ProfessionalCard';
 import { ServiceCategory } from '@/types/professional.types';
 import { Button } from '@/components/ui/Button';
 import { Select } from '@/components/ui/Select';
-import { professionalsMock } from '@/mocks/professionals.mock';
 import styles from './styles.module.css';
 
 function ExplorarContent() {

@@ -11,19 +11,19 @@ import styles from './styles.module.css';
 
 export default function PainelDashboard() {
   const { user } = useAuthStore();
-  const [appointments, setAppointments] = useState<any[]>([]);
+  const [metricsData, setMetricsData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   
   useEffect(() => {
     async function fetchDashboardData() {
       try {
         const token = localStorage.getItem('@belezza:token');
-        const res = await fetch('http://localhost:3333/api/appointments/me', {
+        const res = await fetch('http://localhost:3333/api/professionals/me/dashboard', {
           headers: { Authorization: `Bearer ${token}` }
         });
         if (res.ok) {
           const data = await res.json();
-          setAppointments(data);
+          setMetricsData(data);
         }
       } catch (error) {
         console.error(error);
@@ -34,28 +34,12 @@ export default function PainelDashboard() {
     fetchDashboardData();
   }, []);
 
-  const today = new Date();
-  const todaysAppointments = appointments.filter(a => isSameDay(new Date(a.date), today) && a.status !== 'CANCELLED');
-  const upcomingAppointments = appointments
-    .filter(a => new Date(a.date) >= today && a.status !== 'CANCELLED')
-    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-    .slice(0, 4);
-
-  const revenueToday = todaysAppointments.filter(a => a.status === 'COMPLETED' || a.status === 'CONFIRMED').reduce((acc, curr) => acc + curr.price, 0);
-
-  const chartData = [
-    { label: 'Seg', value: 150 },
-    { label: 'Ter', value: 300 },
-    { label: 'Qua', value: 450 },
-    { label: 'Qui', value: 200 },
-    { label: 'Sex', value: 800 },
-    { label: 'Sáb', value: 1200 },
-    { label: 'Dom', value: 0 },
-  ];
+  const upcomingAppointments = metricsData?.upcomingAppointments || [];
+  const chartData = metricsData?.chartData || [];
 
   const metrics = [
-    { title: 'Agendamentos Hoje', value: isLoading ? '-' : todaysAppointments.length.toString(), icon: Calendar, color: 'var(--color-info)' },
-    { title: 'Faturamento (Hoje)', value: isLoading ? '-' : `R$ ${revenueToday.toFixed(2)}`, icon: DollarSign, color: 'var(--color-success)' },
+    { title: 'Agendamentos Hoje', value: isLoading ? '-' : (metricsData?.todaysAppointmentsCount || '0'), icon: Calendar, color: 'var(--color-info)' },
+    { title: 'Faturamento (Hoje)', value: isLoading ? '-' : `R$ ${(metricsData?.revenueToday || 0).toFixed(2)}`, icon: DollarSign, color: 'var(--color-success)' },
     { title: 'Nota Média', value: '4.8', icon: Star, color: 'var(--color-gold-500)' },
     { title: 'Novos Clientes', value: '12', icon: Users, color: 'var(--color-primary-500)' },
   ];

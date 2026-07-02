@@ -14,7 +14,8 @@ interface UIStore {
   toasts: ToastMessage[];
   toggleTheme: () => void;
   setTheme: (theme: 'light' | 'dark') => void;
-  toggleFavorite: (professionalId: string) => void;
+  fetchFavorites: () => Promise<void>;
+  toggleFavorite: (professionalId: string) => Promise<void>;
   addToast: (toast: Omit<ToastMessage, 'id'>) => void;
   removeToast: (id: string) => void;
 }
@@ -47,14 +48,49 @@ export const useUIStore = create<UIStore>((set) => ({
     return { theme };
   }),
   
-  toggleFavorite: (professionalId) => set((state) => {
-    const isFavorite = state.favoriteIds.includes(professionalId);
-    return {
-      favoriteIds: isFavorite
-        ? state.favoriteIds.filter(id => id !== professionalId)
-        : [...state.favoriteIds, professionalId]
-    };
-  }),
+  fetchFavorites: async () => {
+    try {
+      const token = localStorage.getItem('@belezza:token');
+      if (!token) return;
+      const res = await fetch('http://localhost:3333/api/clients/favorites', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        set({ favoriteIds: data.map((f: any) => f.professionalId) });
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  },
+
+  toggleFavorite: async (professionalId) => {
+    const isFavorite = useUIStore.getState().favoriteIds.includes(professionalId);
+    try {
+      const token = localStorage.getItem('@belezza:token');
+      if (!token) return; // Must be logged in
+
+      if (isFavorite) {
+        await fetch(`http://localhost:3333/api/clients/favorites/${professionalId}`, {
+          method: 'DELETE',
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        set((state) => ({ favoriteIds: state.favoriteIds.filter(id => id !== professionalId) }));
+      } else {
+        await fetch(`http://localhost:3333/api/clients/favorites`, {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}` 
+          },
+          body: JSON.stringify({ professionalId })
+        });
+        set((state) => ({ favoriteIds: [...state.favoriteIds, professionalId] }));
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  },
 
   addToast: (toast) => set((state) => ({
     toasts: [...state.toasts, { ...toast, id: Math.random().toString(36).substring(7) }]

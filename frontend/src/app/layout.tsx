@@ -16,6 +16,8 @@ export const metadata: Metadata = {
 
 import { BottomNavigation } from "@/components/layout/BottomNavigation";
 
+import { AppInitializer } from "@/components/shared/AppInitializer";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -24,6 +26,7 @@ export default function RootLayout({
   return (
     <html lang="pt-BR" className={jakarta.variable}>
       <body>
+        <AppInitializer />
         {children}
         <BottomNavigation />
         <ToastContainer />
