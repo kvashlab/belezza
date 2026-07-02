@@ -2,12 +2,13 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Home, Calendar, Heart, User, LogOut } from 'lucide-react';
+import { Home, Calendar, Heart, User, LogOut, Search } from 'lucide-react';
 import { useAuthStore } from '@/stores/auth.store';
 import styles from './styles.module.css';
 
 const NAV_ITEMS = [
   { label: 'Visão Geral', href: '/dashboard', icon: Home },
+  { label: 'Buscar Profissionais', href: '/buscar', icon: Search },
   { label: 'Agendamentos', href: '/meus-agendamentos', icon: Calendar },
   { label: 'Favoritos', href: '/favoritos', icon: Heart },
   { label: 'Meu Perfil', href: '/perfil', icon: User },

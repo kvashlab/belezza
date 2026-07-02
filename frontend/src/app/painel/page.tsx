@@ -5,8 +5,7 @@ import { Calendar, DollarSign, Star, Users, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { SimpleBarChart } from '@/components/ui/SimpleBarChart';
 import { useAuthStore } from '@/stores/auth.store';
-import { format, isSameDay } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
+import { format } from 'date-fns';
 import styles from './styles.module.css';
 
 export default function PainelDashboard() {

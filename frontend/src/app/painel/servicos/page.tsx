@@ -76,7 +76,7 @@ export default function ServicosProfissional() {
       setIsModalOpen(false);
       setEditingService(null);
       fetchServices();
-    } catch (e) {
+    } catch {
       addToast({ type: 'error', title: 'Falha ao salvar serviço' });
     } finally {
       setIsSaving(false);
@@ -97,7 +97,7 @@ export default function ServicosProfissional() {
       
       addToast({ type: 'success', title: 'Serviço excluído!' });
       fetchServices();
-    } catch (e) {
+    } catch {
       addToast({ type: 'error', title: 'Falha ao excluir serviço' });
     }
   };

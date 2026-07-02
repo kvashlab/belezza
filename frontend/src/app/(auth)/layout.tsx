@@ -9,7 +9,7 @@ export default function AuthLayout({
   return (
     <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: 'var(--surface-main)' }}>
       {/* Lado Esquerdo - Formulário */}
-      <div style={{ flex: '1 1 50%', display: 'flex', flexDirection: 'column', padding: 'var(--spacing-8)' }}>
+      <div className="auth-left" style={{ flex: '1 1 50%', display: 'flex', flexDirection: 'column' }}>
         <div style={{ maxWidth: '440px', width: '100%', margin: 'auto' }}>
           <Link href="/" style={{ fontFamily: 'var(--font-family-display)', fontSize: '32px', color: 'var(--color-primary-600)', fontWeight: 800, display: 'inline-block', marginBottom: 'var(--spacing-12)' }}>
             Belezza
@@ -56,6 +56,10 @@ export default function AuthLayout({
       </div>
       
       <style dangerouslySetInnerHTML={{__html: `
+        .auth-left { padding: var(--spacing-8); }
+        @media (max-width: 480px) {
+          .auth-left { padding: var(--spacing-4); }
+        }
         @media (min-width: 1024px) {
           .auth-illustration { display: block !important; }
         }

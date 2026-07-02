@@ -19,10 +19,10 @@ export default function AgendarFlow() {
   const router = useRouter();
   const username = (params.username as string).replace('%40', '').replace('@', '');
   
-  const { user } = useAuthStore();
+  const { user, role } = useAuthStore();
   const { 
-    professional, setProfessional, 
-    step, nextStep, previousStep, setStep,
+    setProfessional, 
+    step, setStep,
     selectedServices, addService, removeService,
     selectedDate, selectedTime, setDateTime,
     reset 
@@ -122,7 +122,7 @@ export default function AgendarFlow() {
         return;
       }
       if (step === 'dados') {
-        if (!user || (user as any).role !== 'client') {
+        if (!user || role !== 'client') {
            addToast({ type: 'error', title: 'Login necessário', message: 'Por favor, faça login como cliente para agendar.' });
            router.push('/login');
            return;
@@ -185,8 +185,8 @@ export default function AgendarFlow() {
         if (!allOk) throw new Error('Erro ao confirmar agendamento');
   
         addToast({ type: 'success', title: 'Sucesso!', message: 'Seu agendamento foi confirmado.' });
-        router.push('/painel'); 
-      } catch (e) {
+        router.push('/dashboard'); 
+      } catch {
         addToast({ type: 'error', title: 'Erro', message: 'Falha ao realizar agendamento. Tente novamente.' });
       } finally {
         setIsSubmitting(false);

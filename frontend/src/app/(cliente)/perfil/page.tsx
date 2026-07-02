@@ -73,16 +73,64 @@ export default function Perfil() {
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      if (!file.type.startsWith('image/')) {
+        addToast({ type: 'error', title: 'Erro', message: 'Por favor, selecione uma imagem.' });
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        addToast({ type: 'error', title: 'Erro', message: 'A imagem deve ter no máximo 5MB.' });
+        return;
+      }
+
       const reader = new FileReader();
-      reader.onloadend = () => {
-        setFormData({ ...formData, avatar: reader.result as string });
+      reader.onloadend = (event) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const MAX_WIDTH = 400;
+          const MAX_HEIGHT = 400;
+          let width = img.width;
+          let height = img.height;
+
+          if (width > height) {
+            if (width > MAX_WIDTH) {
+              height *= MAX_WIDTH / width;
+              width = MAX_WIDTH;
+            }
+          } else {
+            if (height > MAX_HEIGHT) {
+              width *= MAX_HEIGHT / height;
+              height = MAX_HEIGHT;
+            }
+          }
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx?.drawImage(img, 0, 0, width, height);
+          
+          const compressedBase64 = canvas.toDataURL('image/jpeg', 0.8);
+          setFormData({ ...formData, avatar: compressedBase64 });
+        };
+        img.src = event.target?.result as string;
       };
       reader.readAsDataURL(file);
     }
   };
 
+  const [showSmsModal, setShowSmsModal] = useState(false);
+  const [smsCode, setSmsCode] = useState('');
+
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (formData.phone && formData.phone !== (user as any).phone) {
+      setShowSmsModal(true);
+      addToast({ type: 'info', title: 'SMS Enviado', message: 'Código de teste: 1234' });
+      return;
+    }
+    await executeSaveProfile();
+  };
+
+  const executeSaveProfile = async () => {
     setIsSavingProfile(true);
     try {
       await updateProfile({
@@ -93,11 +141,20 @@ export default function Perfil() {
       });
       await fetchMe();
       addToast({ type: 'success', title: 'Sucesso', message: 'Perfil atualizado com sucesso!' });
+      setShowSmsModal(false);
     } catch (err: any) {
       addToast({ type: 'error', title: 'Erro', message: err.message });
     } finally {
       setIsSavingProfile(false);
     }
+  };
+
+  const handleVerifySms = () => {
+    if (smsCode !== '1234') {
+      addToast({ type: 'error', title: 'Código Inválido', message: 'Tente usar 1234 para testes.' });
+      return;
+    }
+    executeSaveProfile();
   };
 
   // --- SEGURANÇA ---
@@ -238,6 +295,23 @@ export default function Perfil() {
                 <Button variant="primary" type="submit" isLoading={isSavingProfile}>Salvar Alterações</Button>
               </div>
             </form>
+          )}
+          
+          {activeTab === 'dados_pessoais' && showSmsModal && (
+            <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+              <div style={{ backgroundColor: 'var(--surface-main)', padding: 'var(--spacing-6)', borderRadius: 'var(--radius-lg)', width: '100%', maxWidth: '400px', display: 'flex', flexDirection: 'column', gap: 'var(--spacing-4)' }}>
+                <h3 style={{ fontSize: '18px', fontWeight: 600 }}>Verificação de Telefone</h3>
+                <p style={{ fontSize: '14px', color: 'var(--color-neutral-500)' }}>Um código de 4 dígitos foi enviado para o seu novo número: {formData.phone}</p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-2)' }}>
+                  <label className={styles.label}>Código SMS</label>
+                  <input type="text" className={styles.input} maxLength={4} value={smsCode} onChange={(e) => setSmsCode(e.target.value)} placeholder="1234" />
+                </div>
+                <div style={{ display: 'flex', gap: 'var(--spacing-3)', justifyContent: 'flex-end', marginTop: 'var(--spacing-4)' }}>
+                  <Button variant="secondary" onClick={() => setShowSmsModal(false)}>Cancelar</Button>
+                  <Button variant="primary" onClick={handleVerifySms}>Verificar e Salvar</Button>
+                </div>
+              </div>
+            </div>
           )}
 
           {/* ABA: ENDEREÇOS */}

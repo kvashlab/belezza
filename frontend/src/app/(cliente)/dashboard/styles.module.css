@@ -112,7 +112,7 @@
 
 .actionCard:hover {
   border-color: var(--color-primary-300);
-  background-color: var(--color-primary-50);
+  box-shadow: var(--shadow-sm);
   transform: translateY(-2px);
 }
 

@@ -16,6 +16,7 @@ import styles from '../login/styles.module.css';
 const registerSchema = z.object({
   name: z.string().min(3, 'O nome deve ter no mínimo 3 caracteres'),
   email: z.string().email('E-mail inválido'),
+  phone: z.string().min(10, 'Telefone é obrigatório e deve ter no mínimo 10 dígitos'),
   password: z.string().min(6, 'A senha deve ter no mínimo 6 caracteres'),
 });
 
@@ -27,14 +28,33 @@ export default function Cadastro() {
   const { addToast } = useUIStore();
   const [profileType, setProfileType] = useState<'CLIENT' | 'PROFESSIONAL' | null>(null);
   
+  // SMS Mock State
+  const [showSmsModal, setShowSmsModal] = useState(false);
+  const [smsCode, setSmsCode] = useState('');
+  const [pendingData, setPendingData] = useState<RegisterForm | null>(null);
+  
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<RegisterForm>({
     resolver: zodResolver(registerSchema)
   });
 
   const onSubmit = async (data: RegisterForm) => {
     if (!profileType) return;
+    setPendingData(data);
+    setShowSmsModal(true);
+    // Simulating SMS send
+    addToast({ type: 'info', title: 'SMS Enviado', message: 'Código de teste: 1234' });
+  };
+
+  const handleVerifySms = async () => {
+    if (smsCode !== '1234') {
+      addToast({ type: 'error', title: 'Código Inválido', message: 'Tente usar 1234 para testes.' });
+      return;
+    }
+    
+    if (!pendingData || !profileType) return;
+    
     try {
-      await registerUser({ ...data, role: profileType });
+      await registerUser({ ...pendingData, role: profileType });
       addToast({
         type: 'success',
         title: 'Cadastro Realizado',
@@ -109,6 +129,27 @@ export default function Cadastro() {
     );
   }
 
+  if (showSmsModal) {
+    return (
+      <div className={styles.container}>
+        <h1 className={styles.title}>Verificação de Telefone</h1>
+        <p className={styles.subtitle}>Insira o código de 4 dígitos enviado por SMS para o número {pendingData?.phone}</p>
+        
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-4)', marginTop: 'var(--spacing-4)' }}>
+          <Input 
+            label="Código SMS" 
+            placeholder="1234" 
+            value={smsCode}
+            onChange={(e) => setSmsCode(e.target.value)}
+            maxLength={4}
+          />
+          <Button variant="primary" onClick={handleVerifySms}>Verificar e Criar Conta</Button>
+          <Button variant="secondary" onClick={() => setShowSmsModal(false)}>Voltar</Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className={styles.container}>
       <button 
@@ -134,6 +175,12 @@ export default function Cadastro() {
           placeholder="seu@email.com" 
           error={errors.email?.message}
           {...register('email')} 
+        />
+        <Input 
+          label="Telefone / WhatsApp" 
+          placeholder="(00) 00000-0000" 
+          error={errors.phone?.message}
+          {...register('phone')} 
         />
         <Input 
           label="Senha" 

@@ -9,7 +9,7 @@ if (!JWT_SECRET) {
 
 export class AuthService {
   async register(data: any) {
-    const { email, password, name, role } = data;
+    const { email, password, name, phone, role } = data;
 
     const existingUser = await prisma.user.findUnique({ where: { email } });
     if (existingUser) {
@@ -23,6 +23,7 @@ export class AuthService {
         email,
         password: hashedPassword,
         name,
+        phone,
         role: role || 'CLIENT',
       },
     });

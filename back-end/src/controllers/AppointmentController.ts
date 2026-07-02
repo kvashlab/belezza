@@ -58,7 +58,9 @@ export class AppointmentController {
       
       res.status(201).json(appointment);
     } catch (error: any) {
-      if (error instanceof z.ZodError) return res.status(400).json({ error: (error as any).errors });
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: error.errors.map(e => e.message).join(', ') });
+      }
       res.status(400).json({ error: error.message });
     }
   }

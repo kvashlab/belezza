@@ -38,7 +38,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         images: [image],
       },
     };
-  } catch (error) {
+  } catch {
     return { title: 'Profissional não encontrado | Belezza' };
   }
 }

@@ -8,6 +8,7 @@ const registerSchema = z.object({
   email: z.string().email(),
   password: z.string().min(6),
   name: z.string().min(2),
+  phone: z.string().min(10),
   role: z.enum(['CLIENT', 'PROFESSIONAL']).optional(),
 });
 
@@ -24,7 +25,8 @@ export class AuthController {
       res.status(201).json(result);
     } catch (error: any) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ error: (error as any).errors });
+        const errorMessages = error.errors.map(e => e.message).join(', ');
+        return res.status(400).json({ error: errorMessages });
       }
       res.status(400).json({ error: error.message });
     }
@@ -37,7 +39,8 @@ export class AuthController {
       res.json(result);
     } catch (error: any) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ error: (error as any).errors });
+        const errorMessages = error.errors.map(e => e.message).join(', ');
+        return res.status(400).json({ error: errorMessages });
       }
       res.status(401).json({ error: error.message });
     }

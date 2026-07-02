@@ -36,41 +36,73 @@ export default function PortfolioPage() {
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      addToast({ type: 'error', title: 'Erro', message: 'Selecione uma imagem.' });
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      addToast({ type: 'error', title: 'Erro', message: 'A imagem deve ter no máximo 5MB.' });
+      return;
+    }
 
-    // Convert to base64 for simplicity
     const reader = new FileReader();
     reader.onload = async (event) => {
-      const base64 = event.target?.result;
-      if (!base64) return;
+      const img = new window.Image();
+      img.onload = async () => {
+        const canvas = document.createElement('canvas');
+        const MAX_WIDTH = 1080;
+        const MAX_HEIGHT = 1080;
+        let width = img.width;
+        let height = img.height;
 
-      setIsUploading(true);
-      try {
-        const token = localStorage.getItem('@belezza:token');
-        const res = await fetch('http://localhost:3333/api/professionals/portfolio', {
-          method: 'POST',
-          headers: { 
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}` 
-          },
-          body: JSON.stringify({ 
-            url: base64,
-            description: 'Nova foto do portfólio',
-            isBeforeAfter: false
-          })
-        });
-
-        if (res.ok) {
-          addToast({ type: 'success', title: 'Sucesso', message: 'Foto adicionada!' });
-          fetchPortfolio();
+        if (width > height) {
+          if (width > MAX_WIDTH) {
+            height *= MAX_WIDTH / width;
+            width = MAX_WIDTH;
+          }
         } else {
-          const err = await res.json();
-          addToast({ type: 'error', title: 'Erro', message: err.error || 'Falha ao adicionar foto.' });
+          if (height > MAX_HEIGHT) {
+            width *= MAX_HEIGHT / height;
+            height = MAX_HEIGHT;
+          }
         }
-      } catch (error) {
-        addToast({ type: 'error', title: 'Erro', message: 'Falha no upload.' });
-      } finally {
-        setIsUploading(false);
-      }
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx?.drawImage(img, 0, 0, width, height);
+        
+        const base64 = canvas.toDataURL('image/jpeg', 0.8);
+
+        setIsUploading(true);
+        try {
+          const token = localStorage.getItem('@belezza:token');
+          const res = await fetch('http://localhost:3333/api/professionals/portfolio', {
+            method: 'POST',
+            headers: { 
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}` 
+            },
+            body: JSON.stringify({ 
+              url: base64,
+              description: 'Nova foto do portfólio',
+              isBeforeAfter: false
+            })
+          });
+
+          if (res.ok) {
+            addToast({ type: 'success', title: 'Sucesso', message: 'Foto adicionada!' });
+            fetchPortfolio();
+          } else {
+            const err = await res.json();
+            addToast({ type: 'error', title: 'Erro', message: err.error || 'Falha ao adicionar foto.' });
+          }
+        } catch (error) {
+          addToast({ type: 'error', title: 'Erro', message: 'Falha no upload.' });
+        } finally {
+          setIsUploading(false);
+        }
+      };
+      img.src = event.target?.result as string;
     };
     reader.readAsDataURL(file);
   };
@@ -91,8 +123,8 @@ export default function PortfolioPage() {
       } else {
         addToast({ type: 'error', title: 'Erro', message: 'Falha ao excluir foto.' });
       }
-    } catch (error) {
-      console.error(error);
+    } catch {
+      addToast({ type: 'error', title: 'Erro', message: 'Falha ao excluir foto.' });
     }
   };
 

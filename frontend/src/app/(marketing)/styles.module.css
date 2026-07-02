@@ -694,3 +694,32 @@
     font-size: 32px;
   }
 }
+
+@media (max-width: 480px) {
+  .heroTitle {
+    font-size: 32px;
+  }
+  .heroSubtitle {
+    font-size: 16px;
+  }
+  .heroCtas {
+    flex-direction: column;
+    width: 100%;
+  }
+  .heroBtnPrimary, .heroBtnSecondary {
+    width: 100%;
+    justify-content: center;
+  }
+  .spItem h3 {
+    font-size: 28px;
+  }
+  .sectionHeaderCenter h2, .sfText h2, .bcContent h2 {
+    font-size: 28px;
+  }
+  .pricingCard {
+    padding: var(--spacing-6);
+  }
+  .price {
+    font-size: 36px;
+  }
+}

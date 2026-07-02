@@ -75,7 +75,9 @@ export class ProfessionalController {
       const updated = await professionalService.updateProfile(req.user.id, data);
       res.json(updated);
     } catch (error: any) {
-      if (error instanceof z.ZodError) return res.status(400).json({ error: (error as any).errors });
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: error.errors.map(e => e.message).join(', ') });
+      }
       res.status(400).json({ error: error.message });
     }
   }
@@ -87,7 +89,9 @@ export class ProfessionalController {
       const service = await professionalService.createService(req.user.id, data);
       res.status(201).json(service);
     } catch (error: any) {
-      if (error instanceof z.ZodError) return res.status(400).json({ error: (error as any).errors });
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: error.errors.map(e => e.message).join(', ') });
+      }
       res.status(400).json({ error: error.message });
     }
   }
@@ -110,7 +114,9 @@ export class ProfessionalController {
       const updated = await professionalService.updateService(req.user.id, serviceId, data);
       res.json(updated);
     } catch (error: any) {
-      if (error instanceof z.ZodError) return res.status(400).json({ error: (error as any).errors });
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: error.errors.map(e => e.message).join(', ') });
+      }
       res.status(400).json({ error: error.message });
     }
   }
@@ -133,7 +139,9 @@ export class ProfessionalController {
       const updated = await professionalService.updateWorkingHours(req.user.id, hours);
       res.json(updated);
     } catch (error: any) {
-      if (error instanceof z.ZodError) return res.status(400).json({ error: (error as any).errors });
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: error.errors.map(e => e.message).join(', ') });
+      }
       res.status(400).json({ error: error.message });
     }
   }

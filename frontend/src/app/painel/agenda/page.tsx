@@ -1,6 +1,6 @@
 'use client';
 import React, { useState, useEffect } from 'react';
-import { Calendar as CalendarIcon, Clock, User, ChevronLeft, ChevronRight, Plus, CheckCircle, XCircle } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, CheckCircle, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { format, addDays, subDays, isSameDay, startOfDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -51,7 +51,7 @@ export default function AgendaPage() {
         addToast({ type: 'success', title: 'Sucesso', message: 'Status atualizado!' });
         fetchAppointments();
       }
-    } catch (e) {
+    } catch {
       addToast({ type: 'error', title: 'Erro', message: 'Falha ao atualizar status.' });
     }
   };

@@ -99,7 +99,7 @@ export default function ClientDashboard() {
       <section className={styles.section}>
         <h2 className={styles.sectionTitle}>Acesso Rápido</h2>
         <div className={styles.quickActions}>
-          <div className={styles.actionCard} onClick={() => router.push('/explorar')}>
+          <div className={styles.actionCard} onClick={() => router.push('/buscar')}>
             <Search size={24} className={styles.actionIcon} />
             <span className={styles.actionText}>Buscar Profissionais</span>
           </div>
@@ -138,7 +138,7 @@ export default function ClientDashboard() {
                 <h3 style={{ fontSize: '18px', fontWeight: 600, color: 'var(--color-neutral-900)' }}>Nenhum agendamento</h3>
                 <p>Você não tem horários marcados no momento.</p>
               </div>
-              <Button onClick={() => router.push('/explorar')}>Encontrar Profissional</Button>
+              <Button onClick={() => router.push('/buscar')}>Encontrar Profissional</Button>
             </div>
           )}
         </section>
@@ -156,7 +156,7 @@ export default function ClientDashboard() {
               <h3 style={{ fontSize: '18px', fontWeight: 600, color: 'var(--color-neutral-900)' }}>Explorar Novidades</h3>
               <p>Descubra os melhores profissionais da sua região.</p>
             </div>
-            <Button variant="secondary" onClick={() => router.push('/explorar')}>Explorar</Button>
+            <Button variant="secondary" onClick={() => router.push('/buscar')}>Explorar</Button>
           </div>
         </section>
       </div>
