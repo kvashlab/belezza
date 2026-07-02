@@ -1,12 +1,11 @@
 'use client';
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { useParams, useRouter } from 'next/navigation';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useBookingStore } from '@/stores/booking.store';
-import { professionalsMock } from '@/mocks/professionals.mock';
-import { servicesMock } from '@/mocks/services.mock';
+import { useAuthStore } from '@/stores/auth.store';
 import { Stepper } from '@/components/ui/Stepper';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -20,25 +19,74 @@ export default function AgendarFlow() {
   const router = useRouter();
   const username = (params.username as string).replace('%40', '').replace('@', '');
   
+  const { user } = useAuthStore();
   const { 
     professional, setProfessional, 
-    step, nextStep, previousStep,
+    step, nextStep, previousStep, setStep,
     selectedServices, addService, removeService,
     selectedDate, selectedTime, setDateTime,
     reset 
   } = useBookingStore();
   
   const { addToast } = useUIStore();
+  
+  const [profData, setProfData] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [availableSlots, setAvailableSlots] = useState<string[]>([]);
+  const [isLoadingSlots, setIsLoadingSlots] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [notes, setNotes] = useState('');
 
   useEffect(() => {
-    const prof = professionalsMock.find(p => p.username === username);
-    if (prof) setProfessional(prof);
-    return () => reset(); // Cleanup on unmount
+    async function loadProf() {
+      try {
+        const res = await fetch(`http://localhost:3333/api/professionals/public/${username}`);
+        if (res.ok) {
+          const data = await res.json();
+          setProfData(data);
+          setProfessional({
+            id: data.id,
+            name: data.user?.name || data.businessName,
+            username: data.username,
+            avatar: data.avatar,
+            rating: data.rating
+          });
+        }
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    loadProf();
+    return () => reset();
   }, [username, setProfessional, reset]);
 
-  if (!professional) return <div className={styles.loading}>Carregando...</div>;
+  // Fetch slots whenever date or selected service changes
+  useEffect(() => {
+    async function fetchSlots() {
+      if (!selectedDate || selectedServices.length === 0 || !profData) return;
+      setIsLoadingSlots(true);
+      try {
+        // We fetch slots based on the first selected service duration
+        const serviceId = selectedServices[0].id;
+        const res = await fetch(`http://localhost:3333/api/appointments/slots?professionalId=${profData.id}&serviceId=${serviceId}&date=${selectedDate}`);
+        if (res.ok) {
+          const data = await res.json();
+          setAvailableSlots(data);
+        }
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setIsLoadingSlots(false);
+      }
+    }
+    fetchSlots();
+  }, [selectedDate, selectedServices, profData]);
 
-  const profServices = servicesMock.filter(s => s.professionalId === professional.id);
+  if (isLoading || !profData) return <div className={styles.loading}>Carregando...</div>;
+
+  const profServices = profData.services || [];
   const totalDuration = selectedServices.reduce((acc, curr) => acc + curr.duration, 0);
   const totalPrice = selectedServices.reduce((acc, curr) => acc + curr.price, 0);
 
@@ -49,7 +97,7 @@ export default function AgendarFlow() {
     { id: 'confirmacao', label: 'Confirmação' }
   ];
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (step === 'servicos' && selectedServices.length === 0) {
       addToast({ type: 'error', title: 'Atenção', message: 'Selecione pelo menos um serviço.' });
       return;
@@ -58,19 +106,60 @@ export default function AgendarFlow() {
       addToast({ type: 'error', title: 'Atenção', message: 'Selecione a data e o horário.' });
       return;
     }
+    if (step === 'dados') {
+      if (!user || user.role !== 'client') {
+         addToast({ type: 'error', title: 'Login necessário', message: 'Por favor, faça login como cliente para agendar.' });
+         router.push('/login');
+         return;
+      }
+    }
     if (step === 'confirmacao') {
-      addToast({ type: 'success', title: 'Sucesso!', message: 'Seu agendamento foi confirmado.' });
-      router.push('/meus-agendamentos');
+      await submitAppointment();
       return;
     }
     nextStep();
+  };
+
+  const submitAppointment = async () => {
+    setIsSubmitting(true);
+    try {
+      const token = localStorage.getItem('@belezza:token');
+      // Create an appointment for each selected service
+      const promises = selectedServices.map(service => {
+        return fetch('http://localhost:3333/api/appointments', {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}` 
+          },
+          body: JSON.stringify({
+            professionalId: profData.id,
+            serviceId: service.id,
+            dateTime: `${selectedDate}T${selectedTime}:00.000Z`,
+            notes
+          })
+        });
+      });
+
+      const responses = await Promise.all(promises);
+      const allOk = responses.every(r => r.ok);
+
+      if (!allOk) throw new Error('Erro ao confirmar agendamento');
+
+      addToast({ type: 'success', title: 'Sucesso!', message: 'Seu agendamento foi confirmado.' });
+      router.push('/painel'); // Or to client dashboard
+    } catch (e) {
+      addToast({ type: 'error', title: 'Erro', message: 'Falha ao realizar agendamento. Tente novamente.' });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const renderServicos = () => (
     <div className={styles.stepContent}>
       <h2 className={styles.stepTitle}>Selecione os serviços</h2>
       <div className={styles.servicesList}>
-        {profServices.map(service => {
+        {profServices.map((service: any) => {
           const isSelected = selectedServices.some(s => s.id === service.id);
           return (
             <div 
@@ -91,13 +180,12 @@ export default function AgendarFlow() {
             </div>
           );
         })}
+        {profServices.length === 0 && <p>Nenhum serviço disponível.</p>}
       </div>
     </div>
   );
 
   const renderDataHora = () => {
-    // Simulando horários disponíveis para o dia de hoje e amanhã
-    const times = ['09:00', '10:00', '11:00', '14:00', '15:00', '16:00', '17:00'];
     const today = new Date().toISOString().split('T')[0];
     
     return (
@@ -116,17 +204,20 @@ export default function AgendarFlow() {
         {selectedDate && (
           <div className={styles.timeSlots}>
             <h3 className={styles.timeTitle}>Horários disponíveis:</h3>
-            <div className={styles.timeGrid}>
-              {times.map(time => (
-                <button
-                  key={time}
-                  className={`${styles.timeSlot} ${selectedTime === time ? styles.timeSelected : ''}`}
-                  onClick={() => setDateTime(selectedDate, time)}
-                >
-                  {time}
-                </button>
-              ))}
-            </div>
+            {isLoadingSlots ? <p>Carregando horários...</p> : (
+              <div className={styles.timeGrid}>
+                {availableSlots.map(time => (
+                  <button
+                    key={time}
+                    className={`${styles.timeSlot} ${selectedTime === time ? styles.timeSelected : ''}`}
+                    onClick={() => setDateTime(selectedDate, time)}
+                  >
+                    {time}
+                  </button>
+                ))}
+                {availableSlots.length === 0 && <p style={{ gridColumn: '1 / -1', color: 'var(--gray-500)' }}>Nenhum horário disponível para esta data.</p>}
+              </div>
+            )}
             
             <div style={{ marginTop: 'var(--spacing-6)', padding: 'var(--spacing-4)', backgroundColor: 'var(--color-primary-50)', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-primary-100)' }}>
               <h4 style={{ color: 'var(--color-primary-700)', marginBottom: 'var(--spacing-2)', fontSize: '14px' }}>Não encontrou o horário ideal?</h4>
@@ -146,20 +237,31 @@ export default function AgendarFlow() {
   const renderDados = () => (
     <div className={styles.stepContent}>
       <h2 className={styles.stepTitle}>Seus Dados</h2>
-      <div className={styles.formGrid}>
-        <Input label="Nome completo" placeholder="Ex: Maria Silva" />
-        <Input label="Telefone / WhatsApp" placeholder="(11) 99999-9999" />
-        <Input label="E-mail" type="email" placeholder="maria@exemplo.com" />
-        <Select 
-          label="Forma de pagamento" 
-          options={[
-            { value: 'pix', label: 'Pix no local' },
-            { value: 'cartao', label: 'Cartão de Crédito/Débito' },
-            { value: 'dinheiro', label: 'Dinheiro' }
-          ]}
-        />
-        <Textarea label="Observações (opcional)" placeholder="Alguma observação para a profissional?" />
-      </div>
+      {!user || user.role !== 'client' ? (
+        <div style={{ padding: '24px', background: 'var(--color-danger-50)', color: 'var(--color-danger-700)', borderRadius: '8px' }}>
+          Você precisa estar logado como Cliente para agendar!
+          <Button style={{ marginTop: 16 }} onClick={() => router.push('/login')}>Ir para o Login</Button>
+        </div>
+      ) : (
+        <div className={styles.formGrid}>
+          <Input label="Nome completo" defaultValue={user?.name || ''} readOnly />
+          <Input label="E-mail" type="email" defaultValue={user?.email || ''} readOnly />
+          <Select 
+            label="Forma de pagamento" 
+            options={[
+              { value: 'pix', label: 'Pix no local' },
+              { value: 'cartao', label: 'Cartão de Crédito/Débito' },
+              { value: 'dinheiro', label: 'Dinheiro' }
+            ]}
+          />
+          <Textarea 
+            label="Observações (opcional)" 
+            placeholder="Alguma observação para a profissional?" 
+            value={notes}
+            onChange={e => setNotes(e.target.value)}
+          />
+        </div>
+      )}
     </div>
   );
 
@@ -169,7 +271,7 @@ export default function AgendarFlow() {
       <div className={styles.summaryCard}>
         <div className={styles.summaryItem}>
           <span>Profissional:</span>
-          <strong>{professional.name}</strong>
+          <strong>{profData.user?.name || profData.businessName}</strong>
         </div>
         <div className={styles.summaryItem}>
           <span>Data e Hora:</span>
@@ -218,11 +320,11 @@ export default function AgendarFlow() {
             <h3>Seu Agendamento</h3>
             <div className={styles.profSummary}>
               <div style={{ position: 'relative', width: '48px', height: '48px', borderRadius: '50%', overflow: 'hidden' }}>
-                <Image src={professional.avatar} alt={professional.name} fill style={{ objectFit: 'cover' }} unoptimized />
+                <Image src={profData.avatar || 'https://images.unsplash.com/photo-1522337660859-02fbefca4702?q=80&w=2069'} alt={profData.username} fill style={{ objectFit: 'cover' }} unoptimized />
               </div>
               <div>
-                <strong>{professional.name}</strong>
-                <p>@{professional.username}</p>
+                <strong>{profData.user?.name || profData.businessName}</strong>
+                <p>@{profData.username}</p>
               </div>
             </div>
             
@@ -253,7 +355,7 @@ export default function AgendarFlow() {
           
           <div className={styles.footerTotal}>
             <span>Total: <strong>R$ {totalPrice.toFixed(2)}</strong></span>
-            <Button variant="primary" onClick={handleNext}>
+            <Button variant="primary" onClick={handleNext} isLoading={isSubmitting}>
               {step === 'confirmacao' ? 'Confirmar Agendamento' : 'Avançar'}
             </Button>
           </div>

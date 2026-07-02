@@ -1,12 +1,8 @@
 'use client';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { useParams, useRouter } from 'next/navigation';
 import { MapPin, Star, Share2, Heart, Calendar } from 'lucide-react';
-import { professionalsMock } from '@/mocks/professionals.mock';
-import { servicesMock } from '@/mocks/services.mock';
-import { portfolioMock } from '@/mocks/portfolio.mock';
-import { reviewsMock } from '@/mocks/reviews.mock';
 import { Avatar } from '@/components/ui/Avatar';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
@@ -22,23 +18,46 @@ export default function PublicProfile() {
   
   const { favoriteIds, toggleFavorite, addToast } = useUIStore();
   
-  const professional = professionalsMock.find(p => p.username === username);
+  const [professional, setProfessional] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [activeStoryIndex, setActiveStoryIndex] = useState<number | null>(null);
+
+  useEffect(() => {
+    async function fetchProfessional() {
+      try {
+        const res = await fetch(`http://localhost:3333/api/professionals/public/${username}`);
+        if (res.ok) {
+          const data = await res.json();
+          setProfessional(data);
+        } else {
+          setProfessional(null);
+        }
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    fetchProfessional();
+  }, [username]);
   
-  const [activeStoryIndex, setActiveStoryIndex] = React.useState<number | null>(null);
-  
+  if (isLoading) {
+    return <div className={styles.page} style={{ display: 'flex', justifyContent: 'center', padding: '64px' }}>Carregando perfil...</div>;
+  }
+
   if (!professional) {
     return <div className={styles.notFound}>Profissional não encontrado(a).</div>;
   }
 
   const isFavorite = favoriteIds.includes(professional.id);
-  const profServices = servicesMock.filter(s => s.professionalId === professional.id);
-  const profPortfolio = portfolioMock.filter(p => p.professionalId === professional.id);
-  const profReviews = reviewsMock.filter(r => r.professionalId === professional.id);
+  const profServices = professional.services || [];
+  const profPortfolio = professional.portfolio || [];
+  const profReviews = professional.reviews || []; // Add reviews to backend later if needed
 
   const handleShare = () => {
     if (navigator.share) {
       navigator.share({
-        title: professional.businessName || professional.name,
+        title: professional.businessName || professional.user?.name,
         text: professional.bio,
         url: window.location.href,
       });
@@ -60,7 +79,7 @@ export default function PublicProfile() {
         </div>
       </div>
 
-      {profServices.map(service => (
+      {profServices.map((service: any) => (
         <div key={service.id} className={styles.serviceItem}>
           <div className={styles.serviceInfo}>
             <h4 className={styles.serviceName}>{service.name}</h4>
@@ -69,7 +88,7 @@ export default function PublicProfile() {
           </div>
           <div className={styles.serviceAction}>
             <div className={styles.servicePrice}>R$ {service.price.toFixed(2)}</div>
-            <Button size="sm" onClick={() => router.push(`/@${username}/agendar`)}>Adicionar</Button>
+            <Button size="sm" onClick={() => router.push(`/@${username}/agendar?serviceId=${service.id}`)}>Adicionar</Button>
           </div>
         </div>
       ))}
@@ -79,7 +98,7 @@ export default function PublicProfile() {
 
   const renderPortfolio = () => (
     <div className={styles.portfolioGrid}>
-      {profPortfolio.map((photo, index) => (
+      {profPortfolio.map((photo: any, index: number) => (
         <div key={photo.id} className={styles.portfolioItem} onClick={() => setActiveStoryIndex(index)}>
           <Image src={photo.url} alt={photo.description || 'Portfólio'} fill className={styles.portfolioImage} unoptimized />
           {photo.isBeforeAfter && <Badge size="sm" className={styles.beforeAfterBadge}>Antes/Depois</Badge>}
@@ -98,7 +117,7 @@ export default function PublicProfile() {
         </div>
         <p>{professional.reviewsCount} avaliações no total</p>
       </div>
-      {profReviews.map(review => (
+      {profReviews.map((review: any) => (
         <div key={review.id} className={styles.reviewCard}>
           <div className={styles.reviewHeader}>
             <Avatar name={review.clientName} src={review.clientAvatar} size="sm" />
@@ -127,17 +146,19 @@ export default function PublicProfile() {
     </div>
   );
 
+  const cats = typeof professional.categories === 'string' ? professional.categories.split(',') : (professional.categories || []);
+
   return (
     <div className={styles.page}>
       <div className={styles.coverSection}>
-        <Image src={professional.coverImage} alt="Capa" fill className={styles.coverImage} unoptimized />
+        <Image src={professional.coverImage || 'https://images.unsplash.com/photo-1522337660859-02fbefca4702?q=80&w=2069&auto=format&fit=crop'} alt="Capa" fill className={styles.coverImage} unoptimized />
         <div className={styles.coverOverlay}></div>
       </div>
       
       <div className={styles.profileContainer}>
         <div className={styles.headerInfo}>
           <div className={styles.avatarContainer}>
-            <Avatar name={professional.name} src={professional.avatar} size="xl" hasGoldBorder />
+            <Avatar name={professional.user?.name || professional.businessName} src={professional.avatar} size="xl" hasGoldBorder />
             {professional.verified && <div className={styles.verifiedBadge}>✓</div>}
           </div>
           
@@ -152,12 +173,12 @@ export default function PublicProfile() {
         </div>
         
         <div className={styles.details}>
-          <h1 className={styles.name}>{professional.businessName || professional.name}</h1>
+          <h1 className={styles.name}>{professional.businessName || professional.user?.name}</h1>
           <p className={styles.username}>@{professional.username}</p>
           
           <div className={styles.badges}>
-            {professional.categories.map((cat: string) => (
-              <Badge key={cat} variant={cat as 'cabelo' | 'unhas' | 'maquiagem' | 'estetica' | 'sobrancelhas' | 'cilios' | 'massoterapia' | 'default'}>{cat.replace('_', ' ')}</Badge>
+            {cats.map((cat: string) => (
+              <Badge key={cat} variant={'default'}>{cat.trim()}</Badge>
             ))}
           </div>
           
@@ -169,7 +190,7 @@ export default function PublicProfile() {
             </div>
             <div className={styles.statItem}>
               <MapPin size={16} />
-              <span>{professional.address.neighborhood}, {professional.address.city}</span>
+              <span>{professional.neighborhood || ''}{professional.city ? `, ${professional.city}` : ''}</span>
             </div>
           </div>
           
@@ -208,7 +229,7 @@ export default function PublicProfile() {
           <div className={styles.storiesContent}>
             {/* Progress Bars */}
             <div className={styles.storiesProgressContainer}>
-              {profPortfolio.map((_, idx) => (
+              {profPortfolio.map((_: any, idx: number) => (
                 <div key={idx} className={styles.storyProgressBar}>
                   <div 
                     className={styles.storyProgressFill} 
@@ -222,7 +243,7 @@ export default function PublicProfile() {
             </div>
             
             <div className={styles.storyHeader}>
-              <Avatar name={professional.name} src={professional.avatar} size="sm" />
+              <Avatar name={professional.user?.name} src={professional.avatar} size="sm" />
               <span className={styles.storyAuthor}>{professional.username}</span>
             </div>
             

@@ -16,6 +16,9 @@ function ExplorarContent() {
   const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
   const [isMobile, setIsMobile] = useState(false);
   const [categoryFilter, setCategoryFilter] = useState(initialCategory);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [professionals, setProfessionals] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 1024);
@@ -24,16 +27,31 @@ function ExplorarContent() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  useEffect(() => {
+    async function load() {
+      setIsLoading(true);
+      try {
+        const query = new URLSearchParams();
+        if (categoryFilter && categoryFilter !== 'todas') query.append('category', categoryFilter);
+        if (searchTerm) query.append('q', searchTerm);
+
+        const res = await fetch(`http://localhost:3333/api/professionals?${query.toString()}`);
+        if (res.ok) {
+          const data = await res.json();
+          setProfessionals(data);
+        }
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    load();
+  }, [categoryFilter, searchTerm]);
+
   const handleFilterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setCategoryFilter(e.target.value);
   };
-
-  const filteredProfessionals = professionalsMock.filter(p => {
-    if (categoryFilter && categoryFilter !== 'todas') {
-      return p.categories.includes(categoryFilter as unknown as ServiceCategory);
-    }
-    return true;
-  });
 
   return (
     <div className={styles.page}>
@@ -44,6 +62,8 @@ function ExplorarContent() {
             type="text" 
             placeholder="Buscar por nome, serviço ou bairro..." 
             className={styles.searchInput}
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
           />
           <div className={styles.filtersWrapper}>
             <Select 
@@ -75,15 +95,19 @@ function ExplorarContent() {
         {(viewMode === 'list' || !isMobile) && (
           <div className={styles.listContainer}>
             <div className={styles.resultsHeader}>
-              <h2>Profissionais encontradas</h2>
-              <span className={styles.resultsCount}>{filteredProfessionals.length} resultados</span>
+              <h2>Profissionais encontrados</h2>
+              <span className={styles.resultsCount}>{professionals.length} resultados</span>
             </div>
             
-            <div className={styles.grid}>
-              {filteredProfessionals.map(prof => (
-                <ProfessionalCard key={prof.id} professional={prof} />
-              ))}
-            </div>
+            {isLoading ? (
+              <div style={{ padding: '24px', textAlign: 'center' }}>Buscando profissionais...</div>
+            ) : (
+              <div className={styles.grid}>
+                {professionals.map(prof => (
+                  <ProfessionalCard key={prof.id} professional={prof} />
+                ))}
+              </div>
+            )}
           </div>
         )}
 
