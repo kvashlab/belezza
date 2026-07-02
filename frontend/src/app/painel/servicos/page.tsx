@@ -35,7 +35,7 @@ export default function ServicosProfissional() {
   };
 
   useEffect(() => {
-    if (user?.role === 'professional') {
+    if ((user as any)?.role === 'professional') {
       fetchServices();
     } else {
       setIsLoading(false);

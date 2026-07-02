@@ -116,7 +116,7 @@ export default function PortfolioPage() {
             disabled={isUploading}
           />
           <label htmlFor="photo-upload">
-            <Button as="span" variant="primary" leftIcon={isUploading ? <AlertCircle size={18} /> : <Plus size={18} />}>
+            <Button variant="primary" leftIcon={isUploading ? <AlertCircle size={18} /> : <Plus size={18} />}>
               {isUploading ? 'Enviando...' : 'Adicionar Foto'}
             </Button>
           </label>

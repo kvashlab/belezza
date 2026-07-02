@@ -24,7 +24,7 @@ export class AuthController {
       res.status(201).json(result);
     } catch (error: any) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ error: error.errors });
+        return res.status(400).json({ error: (error as any).errors });
       }
       res.status(400).json({ error: error.message });
     }
@@ -37,7 +37,7 @@ export class AuthController {
       res.json(result);
     } catch (error: any) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ error: error.errors });
+        return res.status(400).json({ error: (error as any).errors });
       }
       res.status(401).json({ error: error.message });
     }

@@ -37,6 +37,7 @@ model ClientProfile {
   appointments  Appointment[]
   favorites     Favorite[]
   reviews       Review[]
+  waitlists     Waitlist[]
 }
 
 model ProfessionalProfile {
@@ -63,6 +64,7 @@ model ProfessionalProfile {
   verified        Boolean @default(false)
   socialLinks     String? // JSON string
   plan            String  @default("FREE") // "FREE" or "PREMIUM"
+  requireDeposit  Boolean @default(false) // Whether to require 30% PIX deposit
   
   services     Service[]
   workingHours WorkingHour[]
@@ -70,6 +72,7 @@ model ProfessionalProfile {
   appointments Appointment[]
   favorites    Favorite[]
   reviews      Review[]
+  waitlists    Waitlist[]
 }
 
 model Service {
@@ -163,4 +166,15 @@ model Review {
   comment        String?
   createdAt      DateTime            @default(now())
   updatedAt      DateTime            @updatedAt
+}
+
+model Waitlist {
+  id             String              @id @default(uuid())
+  clientId       String
+  client         ClientProfile       @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  professionalId String
+  professional   ProfessionalProfile @relation(fields: [professionalId], references: [id], onDelete: Cascade)
+  date           String              // YYYY-MM-DD
+  status         String              @default("WAITING") // WAITING, NOTIFIED
+  createdAt      DateTime            @default(now())
 }

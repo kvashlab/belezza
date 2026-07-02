@@ -131,4 +131,32 @@ export class AppointmentService {
       data: { status },
     });
   }
+
+  async joinWaitlist(clientId: string, professionalId: string, date: string) {
+    // Check if already in waitlist
+    const existing = await prisma.waitlist.findFirst({
+      where: { clientId, professionalId, date }
+    });
+    if (existing) throw new Error('Você já está na fila de espera para este dia.');
+
+    return prisma.waitlist.create({
+      data: {
+        clientId,
+        professionalId,
+        date
+      }
+    });
+  }
+
+  async getWaitlist(professionalId: string, date: string) {
+    return prisma.waitlist.findMany({
+      where: { professionalId, date, status: 'WAITING' },
+      include: {
+        client: {
+          include: { user: true }
+        }
+      },
+      orderBy: { createdAt: 'asc' }
+    });
+  }
 }

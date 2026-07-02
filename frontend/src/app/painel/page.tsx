@@ -90,7 +90,7 @@ export default function PainelDashboard() {
             ) : upcomingAppointments.length === 0 ? (
               <p style={{ padding: '24px', textAlign: 'center', color: 'var(--color-neutral-500)' }}>Sem agendamentos futuros.</p>
             ) : (
-              upcomingAppointments.map((appt, i) => (
+              upcomingAppointments.map((appt: any, i: number) => (
                 <div key={i} className={styles.agendaItem}>
                   <span className={styles.agendaTime}>{format(new Date(appt.date), 'dd/MM HH:mm')}</span>
                   <div className={styles.agendaInfo}>

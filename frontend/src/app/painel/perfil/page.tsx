@@ -33,7 +33,7 @@ export default function PerfilProfissional() {
         setIsLoading(false);
       }
     }
-    if (user?.role === 'professional') {
+    if ((user as any)?.role === 'professional') {
       loadProfile();
     } else {
       setIsLoading(false);
@@ -96,6 +96,36 @@ export default function PerfilProfissional() {
       addToast({ type: 'success', title: 'Contato atualizado com sucesso!' });
     } catch (e) {
       addToast({ type: 'error', title: 'Falha ao atualizar contato' });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleUpdatePreferencias = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSaving(true);
+    const form = e.target as HTMLFormElement;
+    
+    try {
+      const token = localStorage.getItem('@belezza:token');
+      const res = await fetch('http://localhost:3333/api/professionals/me', {
+        method: 'PUT',
+        headers: { 
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}` 
+        },
+        body: JSON.stringify({
+          requireDeposit: (form.elements.namedItem('requireDeposit') as HTMLInputElement).checked
+        })
+      });
+
+      if (!res.ok) throw new Error('Erro ao salvar');
+      addToast({ type: 'success', title: 'Preferências atualizadas com sucesso!' });
+      
+      // Update local state to reflect change
+      setProfileData({ ...profileData, requireDeposit: (form.elements.namedItem('requireDeposit') as HTMLInputElement).checked });
+    } catch (e) {
+      addToast({ type: 'error', title: 'Falha ao atualizar preferências' });
     } finally {
       setIsSaving(false);
     }
@@ -233,27 +263,52 @@ export default function PerfilProfissional() {
           )}
 
           {activeTab === 'seguranca' && (
-            <form>
-              <h2 className={styles.sectionTitle}>Segurança da Conta</h2>
-              <div className={styles.formGrid}>
-                <div className={styles.inputGroup}>
-                  <label className={styles.label}>Senha Atual</label>
-                  <input type="password" placeholder="••••••••" className={styles.input} />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
+              <form onSubmit={handleUpdatePreferencias}>
+                <h2 className={styles.sectionTitle}>Preferências de Agendamento</h2>
+                <div style={{ backgroundColor: 'var(--surface-card)', padding: 'var(--spacing-4)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--surface-border)' }}>
+                  <label style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', cursor: 'pointer' }}>
+                    <input 
+                      type="checkbox" 
+                      name="requireDeposit" 
+                      defaultChecked={profileData?.requireDeposit} 
+                      style={{ marginTop: '4px', width: '18px', height: '18px', accentColor: 'var(--color-primary-600)' }} 
+                    />
+                    <div>
+                      <strong style={{ display: 'block', color: 'var(--color-neutral-900)', marginBottom: '4px' }}>Exigir Sinal (Pix) no Agendamento</strong>
+                      <span style={{ fontSize: '13px', color: 'var(--color-neutral-500)', lineHeight: '1.4' }}>
+                        Ao ativar esta opção, o cliente será obrigado a passar por uma etapa de pagamento simulado via Pix (30% do valor do serviço) para confirmar o horário, ajudando a evitar faltas (no-shows).
+                      </span>
+                    </div>
+                  </label>
                 </div>
-                <div className={styles.inputGroup}></div>
-                <div className={styles.inputGroup}>
-                  <label className={styles.label}>Nova Senha</label>
-                  <input type="password" placeholder="••••••••" className={styles.input} />
+                <div className={styles.formActions} style={{ marginTop: '16px' }}>
+                  <Button variant="primary" type="submit" isLoading={isSaving}>Salvar Preferências</Button>
                 </div>
-                <div className={styles.inputGroup}>
-                  <label className={styles.label}>Confirmar Nova Senha</label>
-                  <input type="password" placeholder="••••••••" className={styles.input} />
+              </form>
+
+              <form>
+                <h2 className={styles.sectionTitle}>Segurança da Conta</h2>
+                <div className={styles.formGrid}>
+                  <div className={styles.inputGroup}>
+                    <label className={styles.label}>Senha Atual</label>
+                    <input type="password" placeholder="••••••••" className={styles.input} />
+                  </div>
+                  <div className={styles.inputGroup}></div>
+                  <div className={styles.inputGroup}>
+                    <label className={styles.label}>Nova Senha</label>
+                    <input type="password" placeholder="••••••••" className={styles.input} />
+                  </div>
+                  <div className={styles.inputGroup}>
+                    <label className={styles.label}>Confirmar Nova Senha</label>
+                    <input type="password" placeholder="••••••••" className={styles.input} />
+                  </div>
                 </div>
-              </div>
-              <div className={styles.formActions}>
-                <Button variant="primary" type="button">Atualizar Senha</Button>
-              </div>
-            </form>
+                <div className={styles.formActions}>
+                  <Button variant="primary" type="button">Atualizar Senha</Button>
+                </div>
+              </form>
+            </div>
           )}
         </section>
       </div>

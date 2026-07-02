@@ -58,7 +58,7 @@ export class AppointmentController {
       
       res.status(201).json(appointment);
     } catch (error: any) {
-      if (error instanceof z.ZodError) return res.status(400).json({ error: error.errors });
+      if (error instanceof z.ZodError) return res.status(400).json({ error: (error as any).errors });
       res.status(400).json({ error: error.message });
     }
   }
@@ -90,10 +90,52 @@ export class AppointmentController {
   async updateStatus(req: AuthRequest, res: Response) {
     try {
       const { id } = req.params;
-      const { status } = req.body;
+      const status = req.body.status as string;
       // Should verify ownership, but simplified for now
-      const appt = await appointmentService.updateAppointmentStatus(id, status);
+      const appt = await appointmentService.updateAppointmentStatus(id as string, status);
       res.json(appt);
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  }
+
+  async joinWaitlist(req: AuthRequest, res: Response) {
+    try {
+      if (req.user?.role !== 'CLIENT') {
+        return res.status(403).json({ error: 'Apenas clientes podem entrar na fila.' });
+      }
+      const { prisma } = require('../config/prisma');
+      const clientProfile = await prisma.clientProfile.findUnique({
+        where: { userId: req.user.id }
+      });
+      if (!clientProfile) return res.status(400).json({ error: 'Perfil de cliente não encontrado.' });
+
+      const { professionalId, date } = req.body;
+      if (!professionalId || !date) return res.status(400).json({ error: 'Parâmetros ausentes' });
+
+      const waitlist = await appointmentService.joinWaitlist(clientProfile.id, professionalId, date);
+      res.json(waitlist);
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  }
+
+  async getWaitlist(req: AuthRequest, res: Response) {
+    try {
+      if (req.user?.role !== 'PROFESSIONAL') {
+        return res.status(403).json({ error: 'Apenas profissionais podem ver a fila.' });
+      }
+      const { prisma } = require('../config/prisma');
+      const professionalProfile = await prisma.professionalProfile.findUnique({
+        where: { userId: req.user.id }
+      });
+      if (!professionalProfile) return res.status(400).json({ error: 'Perfil não encontrado.' });
+
+      const { date } = req.query;
+      if (!date) return res.status(400).json({ error: 'Parâmetro date ausente' });
+
+      const waitlist = await appointmentService.getWaitlist(professionalProfile.id, date as string);
+      res.json(waitlist);
     } catch (error: any) {
       res.status(400).json({ error: error.message });
     }

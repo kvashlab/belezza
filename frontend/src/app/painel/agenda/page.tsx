@@ -87,8 +87,31 @@ export default function AgendaPage() {
 
   const schedule = generateSchedule();
 
+  const [waitlist, setWaitlist] = useState<any[]>([]);
+
+  useEffect(() => {
+    fetchWaitlist();
+  }, [currentDate]);
+
+  const fetchWaitlist = async () => {
+    try {
+      const token = localStorage.getItem('@belezza:token');
+      const dateStr = format(currentDate, 'yyyy-MM-dd');
+      const res = await fetch(`http://localhost:3333/api/appointments/waitlist?date=${dateStr}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setWaitlist(data);
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-6)' }}>
+    <div style={{ display: 'flex', gap: 'var(--spacing-6)' }}>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 'var(--spacing-6)' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 'var(--spacing-4)' }}>
         <div>
           <h1 className="heading-2" style={{ color: 'var(--color-neutral-900)' }}>Minha Agenda</h1>
@@ -179,7 +202,7 @@ export default function AgendaPage() {
                         </div>
                       )}
                       {slot.type === 'confirmed' && (
-                        <Button size="sm" variant="outline" onClick={() => updateStatus(slot.id, 'COMPLETED')} leftIcon={<CheckCircle size={16} />}>Concluir</Button>
+                        <Button size="sm" variant="secondary" onClick={() => updateStatus(slot.id, 'COMPLETED')} leftIcon={<CheckCircle size={16} />}>Concluir</Button>
                       )}
                     </div>
                   )}
@@ -189,6 +212,36 @@ export default function AgendaPage() {
           </div>
         )}
       </div>
+      </div>
+
+      {/* Waitlist Panel */}
+      <div style={{ width: '300px', display: 'flex', flexDirection: 'column', gap: 'var(--spacing-4)' }}>
+        <div style={{ backgroundColor: 'var(--surface-card)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--surface-border)', padding: 'var(--spacing-4)' }}>
+          <h3 style={{ fontSize: '16px', fontWeight: 600, marginBottom: 'var(--spacing-4)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            Fila de Espera 
+            <span style={{ backgroundColor: 'var(--color-primary-100)', color: 'var(--color-primary-700)', padding: '2px 8px', borderRadius: '12px', fontSize: '12px' }}>
+              {waitlist.length}
+            </span>
+          </h3>
+          
+          {waitlist.length === 0 ? (
+            <p style={{ color: 'var(--color-neutral-500)', fontSize: '14px', textAlign: 'center', padding: 'var(--spacing-4) 0' }}>
+              Nenhum cliente na fila para este dia.
+            </p>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-3)' }}>
+              {waitlist.map(w => (
+                <div key={w.id} style={{ padding: 'var(--spacing-3)', border: '1px solid var(--surface-border)', borderRadius: 'var(--radius-md)', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  <strong style={{ fontSize: '14px', color: 'var(--color-neutral-900)' }}>{w.client.user.name}</strong>
+                  <span style={{ fontSize: '12px', color: 'var(--color-neutral-500)' }}>{w.client.user.phone || 'Sem telefone'}</span>
+                  <Button size="sm" variant="secondary" style={{ marginTop: '8px' }}>Avisar Vaga</Button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
     </div>
   );
 }

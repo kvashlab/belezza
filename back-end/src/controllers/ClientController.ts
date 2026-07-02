@@ -1,12 +1,13 @@
 import { Request, Response } from 'express';
+import { AuthRequest } from '../middlewares/auth.middleware';
 import { ClientService } from '../services/ClientService';
 
 const clientService = new ClientService();
 
 export class ClientController {
-  async getFavorites(req: Request, res: Response) {
+  async getFavorites(req: AuthRequest, res: Response) {
     try {
-      const clientId = req.user?.clientProfile?.id;
+      const clientId = req.user?.id;
       if (!clientId) return res.status(403).json({ error: 'Only clients can have favorites' });
 
       const favorites = await clientService.getFavorites(clientId);
@@ -16,9 +17,9 @@ export class ClientController {
     }
   }
 
-  async addFavorite(req: Request, res: Response) {
+  async addFavorite(req: AuthRequest, res: Response) {
     try {
-      const clientId = req.user?.clientProfile?.id;
+      const clientId = req.user?.id;
       if (!clientId) return res.status(403).json({ error: 'Only clients can have favorites' });
 
       const { professionalId } = req.body;
@@ -29,22 +30,22 @@ export class ClientController {
     }
   }
 
-  async removeFavorite(req: Request, res: Response) {
+  async removeFavorite(req: AuthRequest, res: Response) {
     try {
-      const clientId = req.user?.clientProfile?.id;
+      const clientId = req.user?.id;
       if (!clientId) return res.status(403).json({ error: 'Only clients can have favorites' });
 
       const { professionalId } = req.params;
-      const result = await clientService.removeFavorite(clientId, professionalId);
+      const result = await clientService.removeFavorite(clientId, professionalId as string);
       res.json(result);
     } catch (error: any) {
       res.status(400).json({ error: error.message });
     }
   }
 
-  async addReview(req: Request, res: Response) {
+  async addReview(req: AuthRequest, res: Response) {
     try {
-      const clientId = req.user?.clientProfile?.id;
+      const clientId = req.user?.id;
       if (!clientId) return res.status(403).json({ error: 'Only clients can leave reviews' });
 
       const review = await clientService.addReview(clientId, req.body);

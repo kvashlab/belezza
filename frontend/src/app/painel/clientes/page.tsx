@@ -1,5 +1,5 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, Mail, Phone, MoreVertical } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Avatar } from '@/components/ui/Avatar';
@@ -101,6 +101,7 @@ export default function ClientesPage() {
                     </button>
                   </td>
                 </tr>
+                ))
               )}
               {!isLoading && filteredClients.length === 0 && (
                 <tr>

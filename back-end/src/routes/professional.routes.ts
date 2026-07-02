@@ -22,6 +22,7 @@ router.put('/working-hours', (req, res) => controller.updateWorkingHours(req, re
 
 router.get('/me/dashboard', (req, res) => controller.getDashboard(req, res));
 router.get('/clients', (req, res) => controller.getClients(req, res));
+router.get('/finances', (req, res) => controller.getFinances(req, res));
 
 router.get('/portfolio', (req, res) => controller.getPortfolio(req, res));
 router.post('/portfolio', (req, res) => controller.addPortfolioPhoto(req, res));

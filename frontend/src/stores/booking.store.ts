@@ -7,7 +7,7 @@ interface BookingStore {
   selectedServices: Service[];
   selectedDate: string | null;
   selectedTime: string | null;
-  step: 'servicos' | 'data-hora' | 'dados' | 'confirmacao';
+  step: 'servicos' | 'data-hora' | 'dados' | 'pagamento' | 'confirmacao';
   
   setProfessional: (professional: Professional) => void;
   addService: (service: Service) => void;
@@ -15,7 +15,7 @@ interface BookingStore {
   setDateTime: (date: string, time: string) => void;
   nextStep: () => void;
   previousStep: () => void;
-  setStep: (step: 'servicos' | 'data-hora' | 'dados' | 'confirmacao') => void;
+  setStep: (step: 'servicos' | 'data-hora' | 'dados' | 'pagamento' | 'confirmacao') => void;
   reset: () => void;
 }
 
@@ -41,7 +41,7 @@ export const useBookingStore = create<BookingStore>((set) => ({
   setDateTime: (date, time) => set({ selectedDate: date, selectedTime: time }),
   
   nextStep: () => set((state) => {
-    const steps: BookingStore['step'][] = ['servicos', 'data-hora', 'dados', 'confirmacao'];
+    const steps: BookingStore['step'][] = ['servicos', 'data-hora', 'dados', 'pagamento', 'confirmacao'];
     const currentIndex = steps.indexOf(state.step);
     if (currentIndex < steps.length - 1) {
       return { step: steps[currentIndex + 1] };
@@ -50,7 +50,7 @@ export const useBookingStore = create<BookingStore>((set) => ({
   }),
   
   previousStep: () => set((state) => {
-    const steps: BookingStore['step'][] = ['servicos', 'data-hora', 'dados', 'confirmacao'];
+    const steps: BookingStore['step'][] = ['servicos', 'data-hora', 'dados', 'pagamento', 'confirmacao'];
     const currentIndex = steps.indexOf(state.step);
     if (currentIndex > 0) {
       return { step: steps[currentIndex - 1] };

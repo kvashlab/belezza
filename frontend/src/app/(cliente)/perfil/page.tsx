@@ -107,11 +107,11 @@ export default function Perfil() {
 
   const handleSavePassword = async () => {
     if (passwordData.newPassword !== passwordData.confirmPassword) {
-      addToast({ type: 'warning', title: 'Atenção', message: 'A nova senha e a confirmação não conferem.' });
+      addToast({ type: 'info', title: 'Atenção', message: 'A nova senha e a confirmação não conferem.' });
       return;
     }
     if (passwordData.newPassword.length < 6) {
-      addToast({ type: 'warning', title: 'Atenção', message: 'A nova senha deve ter no mínimo 6 caracteres.' });
+      addToast({ type: 'info', title: 'Atenção', message: 'A nova senha deve ter no mínimo 6 caracteres.' });
       return;
     }
 
@@ -209,7 +209,7 @@ export default function Perfil() {
                   <Button variant="secondary" type="button" onClick={() => fileInputRef.current?.click()} leftIcon={<Camera size={18} />}>
                     Alterar Foto
                   </Button>
-                  <Button variant="outline" type="button" onClick={() => setFormData({...formData, avatar: ''})} style={{ color: 'var(--color-danger)', borderColor: 'var(--color-danger)' }}>
+                  <Button variant="secondary" type="button" onClick={() => setFormData({...formData, avatar: ''})} style={{ color: 'var(--color-danger)', borderColor: 'var(--color-danger)' }}>
                     Remover
                   </Button>
                 </div>

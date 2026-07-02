@@ -91,12 +91,12 @@ export const AppointmentCard: React.FC<AppointmentCardProps> = ({
         {(status === 'confirmed' || status === 'pending') && (
           <>
             <div className={styles.actionBtn}>
-              <Button variant="secondary" fullWidth onClick={() => onCancel?.(id)}>
+              <Button variant="secondary" onClick={() => onCancel?.(id)}>
                 Cancelar
               </Button>
             </div>
             <div className={styles.actionBtn}>
-              <Button variant="primary" fullWidth onClick={() => onReschedule?.(id)}>
+              <Button variant="primary" onClick={() => onReschedule?.(id)}>
                 Reagendar
               </Button>
             </div>
@@ -105,12 +105,12 @@ export const AppointmentCard: React.FC<AppointmentCardProps> = ({
         {status === 'completed' && (
           <>
             <div className={styles.actionBtn}>
-              <Button variant="secondary" fullWidth onClick={() => onReview?.(id)}>
+              <Button variant="secondary" onClick={() => onReview?.(id)}>
                 Avaliar
               </Button>
             </div>
             <div className={styles.actionBtn}>
-              <Button variant="primary" fullWidth onClick={() => onRebook?.(id)}>
+              <Button variant="primary" onClick={() => onRebook?.(id)}>
                 Agendar Novamente
               </Button>
             </div>
@@ -118,7 +118,7 @@ export const AppointmentCard: React.FC<AppointmentCardProps> = ({
         )}
         {status === 'cancelled' && (
           <div className={styles.actionBtn}>
-            <Button variant="primary" fullWidth onClick={() => onRebook?.(id)}>
+            <Button variant="primary" onClick={() => onRebook?.(id)}>
               Agendar Novamente
             </Button>
           </div>

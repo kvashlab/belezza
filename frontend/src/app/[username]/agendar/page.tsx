@@ -50,7 +50,7 @@ export default function AgendarFlow() {
             username: data.username,
             avatar: data.avatar,
             rating: data.rating
-          });
+          } as any);
         }
       } catch (e) {
         console.error(e);
@@ -90,43 +90,55 @@ export default function AgendarFlow() {
   const totalDuration = selectedServices.reduce((acc, curr) => acc + curr.duration, 0);
   const totalPrice = selectedServices.reduce((acc, curr) => acc + curr.price, 0);
 
-  const steps = [
-    { id: 'servicos', label: 'Serviços' },
-    { id: 'data-hora', label: 'Data e Hora' },
-    { id: 'dados', label: 'Seus Dados' },
-    { id: 'confirmacao', label: 'Confirmação' }
-  ];
-
-  const handleNext = async () => {
-    if (step === 'servicos' && selectedServices.length === 0) {
-      addToast({ type: 'error', title: 'Atenção', message: 'Selecione pelo menos um serviço.' });
-      return;
-    }
-    if (step === 'data-hora' && (!selectedDate || !selectedTime)) {
-      addToast({ type: 'error', title: 'Atenção', message: 'Selecione a data e o horário.' });
-      return;
-    }
-    if (step === 'dados') {
-      if (!user || user.role !== 'client') {
-         addToast({ type: 'error', title: 'Login necessário', message: 'Por favor, faça login como cliente para agendar.' });
-         router.push('/login');
-         return;
+    const steps = [
+      { id: 'servicos', label: 'Serviços' },
+      { id: 'data-hora', label: 'Data/Hora' },
+      { id: 'dados', label: 'Seus Dados' },
+      ...(profData.requireDeposit ? [{ id: 'pagamento', label: 'Sinal' }] : []),
+      { id: 'confirmacao', label: 'Confirmação' }
+    ] as any;
+  
+    const handleNextStepLocal = () => {
+      const currentIndex = steps.findIndex((s: any) => s.id === step);
+      if (currentIndex < steps.length - 1) {
+        setStep(steps[currentIndex + 1].id);
       }
-    }
-    if (step === 'confirmacao') {
-      await submitAppointment();
-      return;
-    }
-    nextStep();
-  };
+    };
 
-  const submitAppointment = async () => {
-    setIsSubmitting(true);
-    try {
-      const token = localStorage.getItem('@belezza:token');
-      // Create an appointment for each selected service
-      const promises = selectedServices.map(service => {
-        return fetch('http://localhost:3333/api/appointments', {
+    const handlePrevStepLocal = () => {
+      const currentIndex = steps.findIndex((s: any) => s.id === step);
+      if (currentIndex > 0) {
+        setStep(steps[currentIndex - 1].id);
+      }
+    };
+
+    const handleNext = async () => {
+      if (step === 'servicos' && selectedServices.length === 0) {
+        addToast({ type: 'error', title: 'Atenção', message: 'Selecione pelo menos um serviço.' });
+        return;
+      }
+      if (step === 'data-hora' && (!selectedDate || !selectedTime)) {
+        addToast({ type: 'error', title: 'Atenção', message: 'Selecione a data e o horário.' });
+        return;
+      }
+      if (step === 'dados') {
+        if (!user || (user as any).role !== 'client') {
+           addToast({ type: 'error', title: 'Login necessário', message: 'Por favor, faça login como cliente para agendar.' });
+           router.push('/login');
+           return;
+        }
+      }
+      if (step === 'confirmacao') {
+        await submitAppointment();
+        return;
+      }
+      handleNextStepLocal();
+    };
+
+    const handleJoinWaitlist = async () => {
+      try {
+        const token = localStorage.getItem('@belezza:token');
+        const res = await fetch('http://localhost:3333/api/appointments/waitlist', {
           method: 'POST',
           headers: { 
             'Content-Type': 'application/json',
@@ -134,110 +146,134 @@ export default function AgendarFlow() {
           },
           body: JSON.stringify({
             professionalId: profData.id,
-            serviceId: service.id,
-            dateTime: `${selectedDate}T${selectedTime}:00.000Z`,
-            notes
+            date: selectedDate
           })
         });
-      });
-
-      const responses = await Promise.all(promises);
-      const allOk = responses.every(r => r.ok);
-
-      if (!allOk) throw new Error('Erro ao confirmar agendamento');
-
-      addToast({ type: 'success', title: 'Sucesso!', message: 'Seu agendamento foi confirmado.' });
-      router.push('/painel'); // Or to client dashboard
-    } catch (e) {
-      addToast({ type: 'error', title: 'Erro', message: 'Falha ao realizar agendamento. Tente novamente.' });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const renderServicos = () => (
-    <div className={styles.stepContent}>
-      <h2 className={styles.stepTitle}>Selecione os serviços</h2>
-      <div className={styles.servicesList}>
-        {profServices.map((service: any) => {
-          const isSelected = selectedServices.some(s => s.id === service.id);
-          return (
-            <div 
-              key={service.id} 
-              className={`${styles.serviceCard} ${isSelected ? styles.selected : ''}`}
-              onClick={() => isSelected ? removeService(service.id) : addService(service)}
-            >
-              <div className={styles.serviceInfo}>
-                <h4>{service.name}</h4>
-                <p>{service.duration} min</p>
-              </div>
-              <div className={styles.servicePrice}>
-                R$ {service.price.toFixed(2)}
-              </div>
-              <div className={styles.checkbox}>
-                {isSelected && '✓'}
-              </div>
-            </div>
-          );
-        })}
-        {profServices.length === 0 && <p>Nenhum serviço disponível.</p>}
-      </div>
-    </div>
-  );
-
-  const renderDataHora = () => {
-    const today = new Date().toISOString().split('T')[0];
-    
-    return (
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.error || 'Erro ao entrar na fila');
+        }
+        addToast({ type: 'success', title: 'Fila de Espera', message: 'Você entrou na fila de espera para este dia!' });
+      } catch (e: any) {
+        addToast({ type: 'error', title: 'Erro', message: e.message });
+      }
+    };
+  
+    const submitAppointment = async () => {
+      setIsSubmitting(true);
+      try {
+        const token = localStorage.getItem('@belezza:token');
+        const promises = selectedServices.map(service => {
+          return fetch('http://localhost:3333/api/appointments', {
+            method: 'POST',
+            headers: { 
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}` 
+            },
+            body: JSON.stringify({
+              professionalId: profData.id,
+              serviceId: service.id,
+              dateTime: `${selectedDate}T${selectedTime}:00.000Z`,
+              notes
+            })
+          });
+        });
+  
+        const responses = await Promise.all(promises);
+        const allOk = responses.every(r => r.ok);
+  
+        if (!allOk) throw new Error('Erro ao confirmar agendamento');
+  
+        addToast({ type: 'success', title: 'Sucesso!', message: 'Seu agendamento foi confirmado.' });
+        router.push('/painel'); 
+      } catch (e) {
+        addToast({ type: 'error', title: 'Erro', message: 'Falha ao realizar agendamento. Tente novamente.' });
+      } finally {
+        setIsSubmitting(false);
+      }
+    };
+  
+    const renderServicos = () => (
       <div className={styles.stepContent}>
-        <h2 className={styles.stepTitle}>Escolha a data e horário</h2>
-        <div className={styles.datePicker}>
-          <Input 
-            type="date" 
-            label="Data" 
-            value={selectedDate || ''}
-            onChange={(e) => setDateTime(e.target.value, '')}
-            min={today}
-          />
-        </div>
-        
-        {selectedDate && (
-          <div className={styles.timeSlots}>
-            <h3 className={styles.timeTitle}>Horários disponíveis:</h3>
-            {isLoadingSlots ? <p>Carregando horários...</p> : (
-              <div className={styles.timeGrid}>
-                {availableSlots.map(time => (
-                  <button
-                    key={time}
-                    className={`${styles.timeSlot} ${selectedTime === time ? styles.timeSelected : ''}`}
-                    onClick={() => setDateTime(selectedDate, time)}
-                  >
-                    {time}
-                  </button>
-                ))}
-                {availableSlots.length === 0 && <p style={{ gridColumn: '1 / -1', color: 'var(--gray-500)' }}>Nenhum horário disponível para esta data.</p>}
+        <h2 className={styles.stepTitle}>Selecione os serviços</h2>
+        <div className={styles.servicesList}>
+          {profServices.map((service: any) => {
+            const isSelected = selectedServices.some(s => s.id === service.id);
+            return (
+              <div 
+                key={service.id} 
+                className={`${styles.serviceCard} ${isSelected ? styles.selected : ''}`}
+                onClick={() => isSelected ? removeService(service.id) : addService(service)}
+              >
+                <div className={styles.serviceInfo}>
+                  <h4>{service.name}</h4>
+                  <p>{service.duration} min</p>
+                </div>
+                <div className={styles.servicePrice}>
+                  R$ {service.price.toFixed(2)}
+                </div>
+                <div className={styles.checkbox}>
+                  {isSelected && '✓'}
+                </div>
               </div>
-            )}
-            
-            <div style={{ marginTop: 'var(--spacing-6)', padding: 'var(--spacing-4)', backgroundColor: 'var(--color-primary-50)', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-primary-100)' }}>
-              <h4 style={{ color: 'var(--color-primary-700)', marginBottom: 'var(--spacing-2)', fontSize: '14px' }}>Não encontrou o horário ideal?</h4>
-              <p style={{ color: 'var(--color-neutral-700)', fontSize: '13px', marginBottom: 'var(--spacing-3)' }}>
-                Entre na fila de espera e seja avisado caso haja alguma desistência neste dia.
-              </p>
-              <Button size="sm" variant="secondary" onClick={() => {
-                addToast({ type: 'success', title: 'Fila de Espera', message: 'Você entrou na fila de espera para este dia!' });
-              }}>Entrar na fila de espera</Button>
-            </div>
-          </div>
-        )}
+            );
+          })}
+          {profServices.length === 0 && <p>Nenhum serviço disponível.</p>}
+        </div>
       </div>
     );
-  };
+  
+    const renderDataHora = () => {
+      const today = new Date().toISOString().split('T')[0];
+      
+      return (
+        <div className={styles.stepContent}>
+          <h2 className={styles.stepTitle}>Escolha a data e horário</h2>
+          <div className={styles.datePicker}>
+            <Input 
+              type="date" 
+              label="Data" 
+              value={selectedDate || ''}
+              onChange={(e) => setDateTime(e.target.value, '')}
+              min={today}
+            />
+          </div>
+          
+          {selectedDate && (
+            <div className={styles.timeSlots}>
+              <h3 className={styles.timeTitle}>Horários disponíveis:</h3>
+              {isLoadingSlots ? <p>Carregando horários...</p> : (
+                <div className={styles.timeGrid}>
+                  {availableSlots.map(time => (
+                    <button
+                      key={time}
+                      className={`${styles.timeSlot} ${selectedTime === time ? styles.timeSelected : ''}`}
+                      onClick={() => setDateTime(selectedDate, time)}
+                    >
+                      {time}
+                    </button>
+                  ))}
+                  {availableSlots.length === 0 && <p style={{ gridColumn: '1 / -1', color: 'var(--gray-500)' }}>Nenhum horário disponível para esta data.</p>}
+                </div>
+              )}
+              
+              <div style={{ marginTop: 'var(--spacing-6)', padding: 'var(--spacing-4)', backgroundColor: 'var(--color-primary-50)', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-primary-100)' }}>
+                <h4 style={{ color: 'var(--color-primary-700)', marginBottom: 'var(--spacing-2)', fontSize: '14px' }}>Não encontrou o horário ideal?</h4>
+                <p style={{ color: 'var(--color-neutral-700)', fontSize: '13px', marginBottom: 'var(--spacing-3)' }}>
+                  Entre na fila de espera e seja avisado caso haja alguma desistência neste dia.
+                </p>
+                <Button size="sm" variant="secondary" onClick={handleJoinWaitlist}>Entrar na fila de espera</Button>
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    };
 
   const renderDados = () => (
     <div className={styles.stepContent}>
       <h2 className={styles.stepTitle}>Seus Dados</h2>
-      {!user || user.role !== 'client' ? (
+      {!user || (user as any).role !== 'client' ? (
         <div style={{ padding: '24px', background: 'var(--color-danger-50)', color: 'var(--color-danger-700)', borderRadius: '8px' }}>
           Você precisa estar logado como Cliente para agendar!
           <Button style={{ marginTop: 16 }} onClick={() => router.push('/login')}>Ir para o Login</Button>
@@ -245,7 +281,7 @@ export default function AgendarFlow() {
       ) : (
         <div className={styles.formGrid}>
           <Input label="Nome completo" defaultValue={user?.name || ''} readOnly />
-          <Input label="E-mail" type="email" defaultValue={user?.email || ''} readOnly />
+          <Input label="E-mail" type="email" defaultValue={(user as any)?.email || ''} readOnly />
           <Select 
             label="Forma de pagamento" 
             options={[
@@ -264,6 +300,32 @@ export default function AgendarFlow() {
       )}
     </div>
   );
+
+  const renderPagamento = () => {
+    const downPayment = totalPrice * 0.3; // 30% sinal
+    return (
+      <div className={styles.stepContent}>
+        <h2 className={styles.stepTitle}>Garantia de Agendamento (Sinal)</h2>
+        <div style={{ backgroundColor: 'var(--color-primary-50)', padding: 'var(--spacing-4)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--color-primary-100)', marginBottom: 'var(--spacing-4)' }}>
+          <p style={{ color: 'var(--color-primary-700)', fontSize: '14px', marginBottom: '8px' }}>
+            Para confirmar seu horário, solicitamos um sinal de 30% do valor total. O restante será pago no local.
+          </p>
+          <strong style={{ fontSize: '24px', color: 'var(--color-neutral-900)' }}>R$ {downPayment.toFixed(2)}</strong>
+        </div>
+
+        <div style={{ padding: 'var(--spacing-6)', backgroundColor: 'var(--surface-card)', border: '1px solid var(--surface-border)', borderRadius: 'var(--radius-lg)', textAlign: 'center' }}>
+          <div style={{ width: '150px', height: '150px', backgroundColor: 'var(--color-neutral-100)', margin: '0 auto var(--spacing-4)', borderRadius: 'var(--radius-md)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <span style={{ color: 'var(--color-neutral-500)', fontSize: '12px' }}>QR Code Pix (Simulado)</span>
+          </div>
+          <p style={{ fontSize: '14px', color: 'var(--color-neutral-600)', marginBottom: '16px' }}>Escaneie o QR Code ou copie o código Pix abaixo:</p>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <Input readOnly value="00020126580014br.gov.bcb.pix..." style={{ flex: 1 }} />
+            <Button variant="secondary" onClick={() => addToast({ type: 'success', title: 'Copiado', message: 'Código Pix copiado!' })}>Copiar</Button>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   const renderConfirmacao = () => (
     <div className={styles.stepContent}>
@@ -310,6 +372,7 @@ export default function AgendarFlow() {
             {step === 'servicos' && renderServicos()}
             {step === 'data-hora' && renderDataHora()}
             {step === 'dados' && renderDados()}
+            {step === 'pagamento' && renderPagamento()}
             {step === 'confirmacao' && renderConfirmacao()}
           </div>
         </div>
@@ -349,7 +412,7 @@ export default function AgendarFlow() {
       {/* Footer Fixo */}
       <div className={styles.footer}>
         <div className={styles.footerContainer}>
-          <Button variant="ghost" onClick={step === 'servicos' ? () => router.back() : previousStep}>
+          <Button variant="ghost" onClick={step === 'servicos' ? () => router.back() : handlePrevStepLocal}>
             {step === 'servicos' ? 'Cancelar' : 'Voltar'}
           </Button>
           

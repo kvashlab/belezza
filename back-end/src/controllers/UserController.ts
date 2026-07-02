@@ -1,10 +1,11 @@
 import { Request, Response } from 'express';
+import { AuthRequest } from '../middlewares/auth.middleware';
 import { UserService } from '../services/UserService';
 
 const userService = new UserService();
 
 export class UserController {
-  async getMe(req: Request, res: Response) {
+  async getMe(req: AuthRequest, res: Response) {
     try {
       const userId = req.user?.id; // Assuming authMiddleware sets req.user
       if (!userId) return res.status(401).json({ error: 'Unauthorized' });
@@ -16,7 +17,7 @@ export class UserController {
     }
   }
 
-  async updateMe(req: Request, res: Response) {
+  async updateMe(req: AuthRequest, res: Response) {
     try {
       const userId = req.user?.id;
       if (!userId) return res.status(401).json({ error: 'Unauthorized' });
@@ -28,7 +29,7 @@ export class UserController {
     }
   }
 
-  async changePassword(req: Request, res: Response) {
+  async changePassword(req: AuthRequest, res: Response) {
     try {
       const userId = req.user?.id;
       if (!userId) return res.status(401).json({ error: 'Unauthorized' });
@@ -40,7 +41,7 @@ export class UserController {
     }
   }
 
-  async addAddress(req: Request, res: Response) {
+  async addAddress(req: AuthRequest, res: Response) {
     try {
       const userId = req.user?.id;
       if (!userId) return res.status(401).json({ error: 'Unauthorized' });
@@ -52,13 +53,13 @@ export class UserController {
     }
   }
 
-  async removeAddress(req: Request, res: Response) {
+  async removeAddress(req: AuthRequest, res: Response) {
     try {
       const userId = req.user?.id;
       if (!userId) return res.status(401).json({ error: 'Unauthorized' });
 
       const { id } = req.params;
-      const result = await userService.removeAddress(userId, id);
+      const result = await userService.removeAddress(userId, id as string);
       res.json(result);
     } catch (error: any) {
       res.status(400).json({ error: error.message });
