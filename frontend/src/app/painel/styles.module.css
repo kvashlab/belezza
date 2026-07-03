@@ -1,7 +1,7 @@
 .dashboard {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-8);
+  gap: var(--spacing-6); /* Reduced from 8 */
 }
 
 .header {
@@ -20,28 +20,29 @@
 
 .title {
   color: var(--color-neutral-900);
+  font-size: 28px; /* Ensure title is not oversized */
 }
 
 .subtitle {
   color: var(--color-neutral-500);
-  font-size: 16px;
-  margin-top: var(--spacing-2);
+  font-size: 14px; /* Reduced from 16px */
+  margin-top: var(--spacing-1); /* Reduced from 2 */
 }
 
 .metricsGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: var(--spacing-4);
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); /* Reduced from 240px */
+  gap: var(--spacing-3); /* Reduced from 4 */
 }
 
 .metricCard {
   background-color: var(--surface-card);
-  padding: var(--spacing-5);
+  padding: var(--spacing-4); /* Reduced from 5 */
   border-radius: var(--radius-lg);
   border: 1px solid var(--surface-border);
   display: flex;
   align-items: flex-start;
-  gap: var(--spacing-4);
+  gap: var(--spacing-3); /* Reduced from 4 */
   transition: all var(--transition-normal);
 }
 
@@ -52,8 +53,8 @@
 }
 
 .metricIcon {
-  width: 48px;
-  height: 48px;
+  width: 40px; /* Reduced from 48px */
+  height: 40px; /* Reduced from 48px */
   border-radius: var(--radius-md);
   display: flex;
   align-items: center;
@@ -64,18 +65,18 @@
 .metricContent {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-1);
+  gap: 2px; /* Tighter gap */
 }
 
 .metricLabel {
   color: var(--color-neutral-500);
-  font-size: 14px;
+  font-size: 13px; /* Reduced from 14px */
   font-weight: 500;
 }
 
 .metricValue {
   color: var(--color-neutral-900);
-  font-size: 24px;
+  font-size: 20px; /* Reduced from 24px */
   font-weight: 700;
   font-family: var(--font-family-display);
 }
@@ -83,7 +84,7 @@
 .gridContent {
   display: grid;
   grid-template-columns: 2fr 1fr;
-  gap: var(--spacing-6);
+  gap: var(--spacing-5); /* Reduced from 6 */
 }
 
 @media (max-width: 1024px) {
@@ -95,18 +96,18 @@
 .section {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-4);
+  gap: var(--spacing-3); /* Reduced from 4 */
 }
 
 .sectionTitle {
-  font-size: 18px;
+  font-size: 16px; /* Reduced from 18px */
   font-weight: 600;
   color: var(--color-neutral-900);
 }
 
 .chartCard {
   background-color: var(--surface-card);
-  padding: var(--spacing-6);
+  padding: var(--spacing-4); /* Reduced from 6 */
   border-radius: var(--radius-lg);
   border: 1px solid var(--surface-border);
   height: 100%;
@@ -115,7 +116,7 @@
 .agendaList {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-3);
+  gap: var(--spacing-2); /* Reduced from 3 */
 }
 
 .agendaItem {
@@ -123,7 +124,7 @@
   align-items: center;
   justify-content: space-between;
   background-color: var(--surface-card);
-  padding: var(--spacing-4);
+  padding: var(--spacing-3); /* Reduced from 4 */
   border-radius: var(--radius-md);
   border: 1px solid var(--surface-border);
   transition: all var(--transition-fast);
@@ -137,7 +138,8 @@
 .agendaTime {
   font-weight: 600;
   color: var(--color-primary-700);
-  width: 60px;
+  width: 50px; /* Tighter width */
+  font-size: 13px;
 }
 
 .agendaInfo {
@@ -148,11 +150,12 @@
 
 .clientName {
   font-weight: 600;
+  font-size: 14px;
   color: var(--color-neutral-900);
 }
 
 .serviceName {
-  font-size: 13px;
+  font-size: 12px; /* Reduced from 13px */
   color: var(--color-neutral-500);
 }
 

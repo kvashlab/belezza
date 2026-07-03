@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/Button';
 import { format, addDays, subDays, isSameDay, startOfDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useUIStore } from '@/stores/ui.store';
+import { api } from '@/lib/api';
 
 export default function AgendaPage() {
   const [currentDate, setCurrentDate] = useState(startOfDay(new Date()));
@@ -21,14 +22,8 @@ export default function AgendaPage() {
   const fetchAppointments = async () => {
     setIsLoading(true);
     try {
-      const token = localStorage.getItem('@belezza:token');
-      const res = await fetch('http://localhost:3333/api/appointments/me', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setAppointments(data);
-      }
+      const response = await api.get('/appointments/me');
+      setAppointments(response.data);
     } catch (error) {
       console.error(error);
     } finally {
@@ -38,19 +33,9 @@ export default function AgendaPage() {
 
   const updateStatus = async (id: string, status: string) => {
     try {
-      const token = localStorage.getItem('@belezza:token');
-      const res = await fetch(`http://localhost:3333/api/appointments/${id}/status`, {
-        method: 'PUT',
-        headers: { 
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}` 
-        },
-        body: JSON.stringify({ status })
-      });
-      if (res.ok) {
-        addToast({ type: 'success', title: 'Sucesso', message: 'Status atualizado!' });
-        fetchAppointments();
-      }
+      await api.put(`/appointments/${id}/status`, { status });
+      addToast({ type: 'success', title: 'Sucesso', message: 'Status atualizado!' });
+      fetchAppointments();
     } catch {
       addToast({ type: 'error', title: 'Erro', message: 'Falha ao atualizar status.' });
     }
@@ -95,15 +80,9 @@ export default function AgendaPage() {
 
   const fetchWaitlist = async () => {
     try {
-      const token = localStorage.getItem('@belezza:token');
       const dateStr = format(currentDate, 'yyyy-MM-dd');
-      const res = await fetch(`http://localhost:3333/api/appointments/waitlist?date=${dateStr}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setWaitlist(data);
-      }
+      const response = await api.get(`/appointments/waitlist?date=${dateStr}`);
+      setWaitlist(response.data);
     } catch (error) {
       console.error(error);
     }

@@ -6,6 +6,7 @@ import { ProfessionalCard } from '@/components/shared/ProfessionalCard';
 
 import { Button } from '@/components/ui/Button';
 import { Select } from '@/components/ui/Select';
+import { api } from '@/lib/api';
 import styles from './styles.module.css';
 
 function ExplorarContent() {
@@ -34,11 +35,8 @@ function ExplorarContent() {
         if (categoryFilter && categoryFilter !== 'todas') query.append('category', categoryFilter);
         if (searchTerm) query.append('q', searchTerm);
 
-        const res = await fetch(`http://localhost:3333/api/professionals?${query.toString()}`);
-        if (res.ok) {
-          const data = await res.json();
-          setProfessionals(data);
-        }
+        const response = await api.get(`/professionals?${query.toString()}`);
+        setProfessionals(response.data);
       } catch (e) {
         console.error(e);
       } finally {

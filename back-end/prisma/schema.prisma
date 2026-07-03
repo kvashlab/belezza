@@ -75,6 +75,9 @@ model ProfessionalProfile {
   favorites    Favorite[]
   reviews      Review[]
   waitlists    Waitlist[]
+
+  @@index([city])
+  @@index([rating])
 }
 
 model Service {
@@ -129,6 +132,10 @@ model Appointment {
   createdAt      DateTime            @default(now())
   updatedAt      DateTime            @updatedAt
   review         Review?
+
+  @@index([date])
+  @@index([status])
+  @@index([professionalId, date])
 }
 
 model Address {

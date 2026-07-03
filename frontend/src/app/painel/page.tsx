@@ -5,6 +5,7 @@ import { Calendar, DollarSign, Star, Users, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { SimpleBarChart } from '@/components/ui/SimpleBarChart';
 import { useAuthStore } from '@/stores/auth.store';
+import { api } from '@/lib/api';
 import { format } from 'date-fns';
 import styles from './styles.module.css';
 
@@ -16,14 +17,8 @@ export default function PainelDashboard() {
   useEffect(() => {
     async function fetchDashboardData() {
       try {
-        const token = localStorage.getItem('@belezza:token');
-        const res = await fetch('http://localhost:3333/api/professionals/me/dashboard', {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        if (res.ok) {
-          const data = await res.json();
-          setMetricsData(data);
-        }
+        const response = await api.get('/professionals/me/dashboard');
+        setMetricsData(response.data);
       } catch (error) {
         console.error(error);
       } finally {

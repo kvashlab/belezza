@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/Button';
 import { format, isAfter } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useUIStore } from '@/stores/ui.store';
+import { api } from '@/lib/api';
 import styles from './styles.module.css';
 
 export default function ClientDashboard() {
@@ -27,14 +28,8 @@ export default function ClientDashboard() {
 
   const fetchAppointments = async () => {
     try {
-      const token = localStorage.getItem('@belezza:token');
-      const res = await fetch('http://localhost:3333/api/appointments/me', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setAppointments(data);
-      }
+      const response = await api.get('/appointments/me');
+      setAppointments(response.data);
     } catch (error) {
       console.error(error);
     } finally {
@@ -44,19 +39,9 @@ export default function ClientDashboard() {
 
   const updateStatus = async (id: string, status: string) => {
     try {
-      const token = localStorage.getItem('@belezza:token');
-      const res = await fetch(`http://localhost:3333/api/appointments/${id}/status`, {
-        method: 'PUT',
-        headers: { 
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}` 
-        },
-        body: JSON.stringify({ status })
-      });
-      if (res.ok) {
-        addToast({ type: 'success', title: 'Sucesso', message: 'Status atualizado!' });
-        fetchAppointments();
-      }
+      await api.put(`/appointments/${id}/status`, { status });
+      addToast({ type: 'success', title: 'Sucesso', message: 'Status atualizado!' });
+      fetchAppointments();
     } catch {
       addToast({ type: 'error', title: 'Erro', message: 'Falha ao atualizar status.' });
     }

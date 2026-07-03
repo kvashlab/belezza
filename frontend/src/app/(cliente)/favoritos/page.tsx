@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { ProfessionalCard } from '@/components/shared/ProfessionalCard';
+import { api } from '@/lib/api';
 
 export default function FavoritosPage() {
   const router = useRouter();
@@ -12,16 +13,10 @@ export default function FavoritosPage() {
   useEffect(() => {
     async function load() {
       try {
-        const token = localStorage.getItem('@belezza:token');
-        const res = await fetch('http://localhost:3333/api/clients/favorites', {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        if (res.ok) {
-          const data = await res.json();
-          // data is array of Favorite, with .professional
-          const professionals = data.map((fav: any) => fav.professional);
-          setFavorites(professionals);
-        }
+        const response = await api.get('/clients/favorites');
+        // response.data is array of Favorite, with .professional
+        const professionals = response.data.map((fav: any) => fav.professional);
+        setFavorites(professionals);
       } catch (e) {
         console.error(e);
       } finally {

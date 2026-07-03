@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Search, Mail, Phone, MoreVertical } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Avatar } from '@/components/ui/Avatar';
+import { api } from '@/lib/api';
 
 export default function ClientesPage() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -12,14 +13,8 @@ export default function ClientesPage() {
   useEffect(() => {
     async function loadClients() {
       try {
-        const token = localStorage.getItem('@belezza:token');
-        const res = await fetch('http://localhost:3333/api/professionals/clients', {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        if (res.ok) {
-          const data = await res.json();
-          setClients(data);
-        }
+        const response = await api.get('/professionals/clients');
+        setClients(response.data);
       } catch (e) {
         console.error(e);
       } finally {

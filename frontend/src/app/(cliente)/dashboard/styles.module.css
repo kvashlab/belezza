@@ -1,13 +1,13 @@
 .dashboard {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-8);
+  gap: var(--spacing-6); /* Reduced from 8 */
 }
 
 .welcomeSection {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-2);
+  gap: var(--spacing-1); /* Reduced from 2 */
 }
 
 .title {
@@ -16,13 +16,13 @@
 
 .subtitle {
   color: var(--color-neutral-500);
-  font-size: 16px;
+  font-size: 14px; /* Reduced from 16px */
 }
 
 .grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: var(--spacing-6);
+  gap: var(--spacing-4); /* Reduced from 6 */
 }
 
 @media (max-width: 768px) {
@@ -34,11 +34,11 @@
 .section {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-4);
+  gap: var(--spacing-3); /* Reduced from 4 */
 }
 
 .sectionTitle {
-  font-size: 20px;
+  font-size: 18px; /* Reduced from 20px */
   font-weight: 600;
   color: var(--color-neutral-900);
   display: flex;
@@ -47,7 +47,7 @@
 }
 
 .viewAll {
-  font-size: 14px;
+  font-size: 13px; /* Reduced from 14px */
   color: var(--color-primary-600);
   font-weight: 500;
   text-decoration: none;
@@ -61,19 +61,19 @@
   background-color: var(--surface-card);
   border: 1px dashed var(--surface-border);
   border-radius: var(--radius-lg);
-  padding: var(--spacing-8);
+  padding: var(--spacing-6); /* Reduced from 8 */
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   text-align: center;
-  gap: var(--spacing-4);
+  gap: var(--spacing-3); /* Reduced from 4 */
   color: var(--color-neutral-500);
 }
 
 .emptyStateIcon {
-  width: 64px;
-  height: 64px;
+  width: 48px; /* Reduced from 64px */
+  height: 48px; /* Reduced from 64px */
   border-radius: 50%;
   background-color: var(--color-primary-50);
   color: var(--color-primary-600);
@@ -84,7 +84,7 @@
 
 .quickActions {
   display: flex;
-  gap: var(--spacing-4);
+  gap: var(--spacing-3); /* Reduced from 4 */
   overflow-x: auto;
   padding-bottom: var(--spacing-2);
   scrollbar-width: none;
@@ -95,16 +95,16 @@
 }
 
 .actionCard {
-  min-width: 140px;
+  min-width: 120px; /* Reduced from 140px */
   background-color: var(--surface-card);
   border: 1px solid var(--surface-border);
   border-radius: var(--radius-md);
-  padding: var(--spacing-4);
+  padding: var(--spacing-3); /* Reduced from 4 */
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: var(--spacing-3);
+  gap: var(--spacing-2); /* Reduced from 3 */
   text-align: center;
   cursor: pointer;
   transition: all var(--transition-fast);
@@ -125,6 +125,6 @@
 
 .actionText {
   font-weight: 500;
-  font-size: 14px;
+  font-size: 13px; /* Reduced from 14px */
   color: var(--color-neutral-800);
 }

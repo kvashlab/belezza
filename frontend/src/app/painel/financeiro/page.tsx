@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { TrendingUp, ArrowDownRight, ArrowUpRight, Calendar as CalendarIcon, Filter, Download, AlertCircle, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import { api } from '@/lib/api';
 
 export default function FinanceiroPage() {
   const [finances, setFinances] = useState<any>(null);
@@ -10,14 +11,8 @@ export default function FinanceiroPage() {
   useEffect(() => {
     async function loadFinances() {
       try {
-        const token = localStorage.getItem('@belezza:token');
-        const res = await fetch('http://localhost:3333/api/professionals/finances', {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        if (res.ok) {
-          const data = await res.json();
-          setFinances(data);
-        }
+        const response = await api.get('/professionals/finances');
+        setFinances(response.data);
       } catch (e) {
         console.error(e);
       } finally {

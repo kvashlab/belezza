@@ -5,6 +5,7 @@ import { Plus, Trash2, Camera, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { useUIStore } from '@/stores/ui.store';
 import { Badge } from '@/components/ui/Badge';
+import { api } from '@/lib/api';
 
 export default function PortfolioPage() {
   const [photos, setPhotos] = useState<any[]>([]);
@@ -14,14 +15,8 @@ export default function PortfolioPage() {
 
   const fetchPortfolio = async () => {
     try {
-      const token = localStorage.getItem('@belezza:token');
-      const res = await fetch('http://localhost:3333/api/professionals/portfolio', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setPhotos(data);
-      }
+      const response = await api.get('/professionals/portfolio');
+      setPhotos(response.data);
     } catch (e) {
       console.error(e);
     } finally {
@@ -81,24 +76,16 @@ export default function PortfolioPage() {
 
           setIsUploading(true);
           try {
-            const token = localStorage.getItem('@belezza:token');
-            const res = await fetch('http://localhost:3333/api/professionals/portfolio', {
-              method: 'POST',
-              headers: { 
-                Authorization: `Bearer ${token}` 
-              },
-              body: formData
+            await api.post('/professionals/portfolio', formData, {
+              headers: {
+                'Content-Type': 'multipart/form-data'
+              }
             });
 
-            if (res.ok) {
-              addToast({ type: 'success', title: 'Sucesso', message: 'Foto adicionada!' });
-              fetchPortfolio();
-            } else {
-              const err = await res.json();
-              addToast({ type: 'error', title: 'Erro', message: err.error || 'Falha ao adicionar foto.' });
-            }
-          } catch (error) {
-            addToast({ type: 'error', title: 'Erro', message: 'Falha no upload.' });
+            addToast({ type: 'success', title: 'Sucesso', message: 'Foto adicionada!' });
+            fetchPortfolio();
+          } catch (error: any) {
+            addToast({ type: 'error', title: 'Erro', message: error.response?.data?.error || 'Falha no upload.' });
           } finally {
             setIsUploading(false);
           }
@@ -113,18 +100,9 @@ export default function PortfolioPage() {
     if (!confirm('Deseja realmente excluir esta foto?')) return;
 
     try {
-      const token = localStorage.getItem('@belezza:token');
-      const res = await fetch(`http://localhost:3333/api/professionals/portfolio/${id}`, {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` }
-      });
-
-      if (res.ok) {
-        addToast({ type: 'success', title: 'Sucesso', message: 'Foto excluída.' });
-        fetchPortfolio();
-      } else {
-        addToast({ type: 'error', title: 'Erro', message: 'Falha ao excluir foto.' });
-      }
+      await api.delete(`/professionals/portfolio/${id}`);
+      addToast({ type: 'success', title: 'Sucesso', message: 'Foto excluída.' });
+      fetchPortfolio();
     } catch {
       addToast({ type: 'error', title: 'Erro', message: 'Falha ao excluir foto.' });
     }

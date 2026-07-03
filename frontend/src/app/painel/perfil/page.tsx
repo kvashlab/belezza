@@ -4,6 +4,7 @@ import { useAuthStore } from '@/stores/auth.store';
 import { useUIStore } from '@/stores/ui.store';
 import { Button } from '@/components/ui/Button';
 import { Image as ImageIcon, Camera } from 'lucide-react';
+import { api } from '@/lib/api';
 import styles from './styles.module.css';
 
 type Tab = 'aparencia' | 'contato' | 'horarios' | 'seguranca';
@@ -19,14 +20,8 @@ export default function PerfilProfissional() {
   useEffect(() => {
     async function loadProfile() {
       try {
-        const token = localStorage.getItem('@belezza:token');
-        const res = await fetch('http://localhost:3333/api/professionals/me', {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        if (res.ok) {
-          const data = await res.json();
-          setProfileData(data);
-        }
+        const response = await api.get('/professionals/me');
+        setProfileData(response.data);
       } catch (e) {
         console.error(e);
       } finally {
@@ -46,21 +41,12 @@ export default function PerfilProfissional() {
     const form = e.target as HTMLFormElement;
     
     try {
-      const token = localStorage.getItem('@belezza:token');
-      const res = await fetch('http://localhost:3333/api/professionals/me', {
-        method: 'PUT',
-        headers: { 
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}` 
-        },
-        body: JSON.stringify({
-          businessName: (form.elements.namedItem('businessName') as HTMLInputElement).value,
-          bio: (form.elements.namedItem('bio') as HTMLTextAreaElement).value,
-          categories: (form.elements.namedItem('categories') as HTMLInputElement).value,
-        })
+      await api.put('/professionals/me', {
+        businessName: (form.elements.namedItem('businessName') as HTMLInputElement).value,
+        bio: (form.elements.namedItem('bio') as HTMLTextAreaElement).value,
+        categories: (form.elements.namedItem('categories') as HTMLInputElement).value,
       });
 
-      if (!res.ok) throw new Error('Erro ao salvar');
       addToast({ type: 'success', title: 'Perfil atualizado com sucesso!' });
     } catch {
       addToast({ type: 'error', title: 'Falha ao atualizar o perfil' });
@@ -75,24 +61,15 @@ export default function PerfilProfissional() {
     const form = e.target as HTMLFormElement;
     
     try {
-      const token = localStorage.getItem('@belezza:token');
-      const res = await fetch('http://localhost:3333/api/professionals/me', {
-        method: 'PUT',
-        headers: { 
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}` 
-        },
-        body: JSON.stringify({
-          socialLinks: JSON.stringify({
-            whatsapp: (form.elements.namedItem('whatsapp') as HTMLInputElement).value,
-            instagram: (form.elements.namedItem('instagram') as HTMLInputElement).value,
-          }),
-          city: (form.elements.namedItem('city') as HTMLInputElement).value,
-          neighborhood: (form.elements.namedItem('neighborhood') as HTMLInputElement).value,
-        })
+      await api.put('/professionals/me', {
+        socialLinks: JSON.stringify({
+          whatsapp: (form.elements.namedItem('whatsapp') as HTMLInputElement).value,
+          instagram: (form.elements.namedItem('instagram') as HTMLInputElement).value,
+        }),
+        city: (form.elements.namedItem('city') as HTMLInputElement).value,
+        neighborhood: (form.elements.namedItem('neighborhood') as HTMLInputElement).value,
       });
 
-      if (!res.ok) throw new Error('Erro ao salvar');
       addToast({ type: 'success', title: 'Contato atualizado com sucesso!' });
     } catch {
       addToast({ type: 'error', title: 'Falha ao atualizar contato' });
@@ -107,23 +84,15 @@ export default function PerfilProfissional() {
     const form = e.target as HTMLFormElement;
     
     try {
-      const token = localStorage.getItem('@belezza:token');
-      const res = await fetch('http://localhost:3333/api/professionals/me', {
-        method: 'PUT',
-        headers: { 
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}` 
-        },
-        body: JSON.stringify({
-          requireDeposit: (form.elements.namedItem('requireDeposit') as HTMLInputElement).checked
-        })
+      const requireDeposit = (form.elements.namedItem('requireDeposit') as HTMLInputElement).checked;
+      await api.put('/professionals/me', {
+        requireDeposit
       });
 
-      if (!res.ok) throw new Error('Erro ao salvar');
       addToast({ type: 'success', title: 'Preferências atualizadas com sucesso!' });
       
       // Update local state to reflect change
-      setProfileData({ ...profileData, requireDeposit: (form.elements.namedItem('requireDeposit') as HTMLInputElement).checked });
+      setProfileData({ ...profileData, requireDeposit });
     } catch {
       addToast({ type: 'error', title: 'Falha ao atualizar preferências' });
     } finally {

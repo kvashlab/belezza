@@ -4,6 +4,7 @@ import { useAuthStore } from '@/stores/auth.store';
 import { useUIStore } from '@/stores/ui.store';
 import { Button } from '@/components/ui/Button';
 import { Plus, Edit2, Trash2 } from 'lucide-react';
+import { api } from '@/lib/api';
 import styles from '../perfil/styles.module.css';
 
 export default function ServicosProfissional() {
@@ -19,14 +20,8 @@ export default function ServicosProfissional() {
 
   const fetchServices = async () => {
     try {
-      const token = localStorage.getItem('@belezza:token');
-      const res = await fetch('http://localhost:3333/api/professionals/services', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setServices(data);
-      }
+      const response = await api.get('/professionals/services');
+      setServices(response.data);
     } catch (e) {
       console.error(e);
     } finally {
@@ -56,21 +51,11 @@ export default function ServicosProfissional() {
     };
 
     try {
-      const token = localStorage.getItem('@belezza:token');
-      const url = editingService 
-        ? `http://localhost:3333/api/professionals/services/${editingService.id}`
-        : 'http://localhost:3333/api/professionals/services';
-        
-      const res = await fetch(url, {
-        method: editingService ? 'PUT' : 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}` 
-        },
-        body: JSON.stringify(payload)
-      });
-
-      if (!res.ok) throw new Error('Erro ao salvar serviço');
+      if (editingService) {
+        await api.put(`/professionals/services/${editingService.id}`, payload);
+      } else {
+        await api.post('/professionals/services', payload);
+      }
       
       addToast({ type: 'success', title: editingService ? 'Serviço atualizado!' : 'Serviço criado!' });
       setIsModalOpen(false);
@@ -87,13 +72,7 @@ export default function ServicosProfissional() {
     if (!confirm('Deseja realmente excluir este serviço?')) return;
     
     try {
-      const token = localStorage.getItem('@belezza:token');
-      const res = await fetch(`http://localhost:3333/api/professionals/services/${id}`, {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` }
-      });
-
-      if (!res.ok) throw new Error('Erro ao deletar');
+      await api.delete(`/professionals/services/${id}`);
       
       addToast({ type: 'success', title: 'Serviço excluído!' });
       fetchServices();
