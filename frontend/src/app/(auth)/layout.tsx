@@ -7,61 +7,110 @@ export default function AuthLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: 'var(--surface-main)' }}>
-      {/* Lado Esquerdo - Formulário */}
-      <div className="auth-left" style={{ flex: '1 1 50%', display: 'flex', flexDirection: 'column' }}>
-        <div style={{ maxWidth: '440px', width: '100%', margin: 'auto' }}>
-          <Link href="/" style={{ fontFamily: 'var(--font-family-display)', fontSize: '32px', color: 'var(--color-primary-600)', fontWeight: 800, display: 'inline-block', marginBottom: 'var(--spacing-12)' }}>
-            Belezza
-          </Link>
+    <div className="auth-container" style={{ 
+      display: 'flex', 
+      height: '100vh', /* Strict height to prevent scrolling */
+      width: '100%',
+      backgroundColor: 'var(--surface-main, #ffffff)',
+      overflow: 'hidden' /* Hide any overflow */
+    }}>
+      
+      {/* Lado Esquerdo - Graphic/Vibe (Escondido no Mobile) */}
+      <div className="auth-illustration" style={{ 
+        flex: '1 1 50%', 
+        position: 'relative', 
+        display: 'none', 
+        background: 'linear-gradient(135deg, #4f46e5 0%, #a855f7 50%, #ec4899 100%)', // Vibrant gradient mesh
+        color: 'white',
+        overflow: 'hidden'
+      }}>
+        {/* Decorative abstract elements */}
+        <div style={{ position: 'absolute', top: '-10%', left: '-5%', width: '40vw', height: '40vw', background: 'radial-gradient(circle, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0) 70%)', borderRadius: '50%' }}></div>
+        <div style={{ position: 'absolute', bottom: '-15%', right: '-10%', width: '50vw', height: '50vw', background: 'radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%)', borderRadius: '50%' }}></div>
+        
+        {/* Professional Structure - Padding and Flex */}
+        <div style={{ 
+          position: 'relative', 
+          zIndex: 3, 
+          display: 'flex', 
+          flexDirection: 'column', 
+          justifyContent: 'space-between', 
+          height: '100%', 
+          width: '100%',
+          padding: '48px 64px'
+        }}>
+          
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+             {/* Minimalist Logo Mark */}
+             <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M20 0L22.5 15L35 5L26.5 17.5L40 20L26.5 22.5L35 35L22.5 25L20 40L17.5 25L5 35L13.5 22.5L0 20L13.5 17.5L5 5L17.5 15L20 0Z" fill="white" fillOpacity="0.9"/>
+             </svg>
+          </div>
+          
+          <div style={{ maxWidth: '480px' }}>
+            <p style={{ 
+              fontWeight: 600, 
+              fontSize: '13px', 
+              textTransform: 'uppercase',
+              letterSpacing: '1.5px',
+              marginBottom: '16px', 
+              opacity: 0.8 
+            }}>
+              Para Gestão Premium
+            </p>
+            <h2 style={{ 
+              fontFamily: 'var(--font-family-display)', 
+              fontSize: '40px', 
+              fontWeight: 700, 
+              lineHeight: 1.1, 
+              margin: '0 0 16px 0', 
+              letterSpacing: '-1px' 
+            }}>
+              Seu hub pessoal para clareza e produtividade
+            </h2>
+            <p style={{
+              fontSize: '16px',
+              lineHeight: 1.5,
+              opacity: 0.9,
+              margin: 0
+            }}>
+              Gerencie seus agendamentos e clientes de forma inteligente e integrada, sem perder o foco na beleza.
+            </p>
+          </div>
+        </div>
+      </div>
+      
+      {/* Lado Direito - Formulário */}
+      <div className="auth-right" style={{ 
+        flex: '1 1 50%', 
+        display: 'flex', 
+        flexDirection: 'column',
+        justifyContent: 'center',
+        position: 'relative',
+        height: '100%',
+        overflowY: 'auto' /* Permit scroll only if screen is extremely small */
+      }}>
+        <div style={{ maxWidth: '380px', width: '100%', margin: '0 auto', padding: '32px' }}>
+          <div style={{ marginBottom: '20px', display: 'flex', alignItems: 'center' }}>
+            <Link href="/" style={{ fontFamily: 'var(--font-family-display)', fontSize: '20px', color: 'var(--color-primary-600)', fontWeight: 800, textDecoration: 'none' }}>
+              Belezza
+            </Link>
+          </div>
           {children}
         </div>
       </div>
-      
-      {/* Lado Direito - Imagem e Branding (Escondido no Mobile) */}
-      <div className="auth-illustration" style={{ flex: '1 1 50%', position: 'relative', display: 'none', backgroundColor: 'var(--color-neutral-900)' }}>
-        <div style={{ 
-          position: 'absolute', inset: 0, 
-          backgroundImage: 'url("https://images.unsplash.com/photo-1560066984-138dadb4c035?q=80&w=1974&auto=format&fit=crop")',
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          zIndex: 1 
-        }} />
-        
-        {/* Overlay Escuro para Legibilidade */}
-        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.8) 100%)', zIndex: 2 }} />
-        
-        {/* Conteúdo Sobreposto (Depoimento) */}
-        <div style={{ position: 'relative', zIndex: 3, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', height: '100%', padding: 'var(--spacing-16)', color: 'white' }}>
-          <div style={{ display: 'flex', gap: 'var(--spacing-2)', marginBottom: 'var(--spacing-4)' }}>
-            {[1,2,3,4,5].map(i => (
-              <svg key={i} width="24" height="24" viewBox="0 0 24 24" fill="var(--color-gold-500)" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" />
-              </svg>
-            ))}
-          </div>
-          <p style={{ fontFamily: 'var(--font-family-display)', fontSize: '36px', fontWeight: 600, lineHeight: 1.2, marginBottom: 'var(--spacing-6)' }}>
-            &quot;A Belezza transformou meu negócio. Hoje tenho minha agenda sempre lotada e reduzi em 90% as faltas das clientes com os lembretes automáticos.&quot;
-          </p>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-4)' }}>
-            <div style={{ width: '48px', height: '48px', borderRadius: 'var(--radius-full)', background: 'var(--color-primary-500)', overflow: 'hidden' }}>
-              <img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=100&auto=format&fit=crop" alt="Juliana" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-            </div>
-            <div>
-              <p style={{ fontWeight: 600, fontSize: '18px', margin: 0 }}>Juliana Santos</p>
-              <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '14px', margin: 0 }}>Nail Designer & Proprietária</p>
-            </div>
-          </div>
-        </div>
-      </div>
-      
+
       <style dangerouslySetInnerHTML={{__html: `
-        .auth-left { padding: var(--spacing-8); }
-        @media (max-width: 480px) {
-          .auth-left { padding: var(--spacing-4); }
+        @media (max-width: 768px) {
+          .auth-right {
+            flex: 1 1 100% !important;
+          }
+          .auth-right > div {
+            padding: var(--spacing-6) !important;
+          }
         }
         @media (min-width: 1024px) {
-          .auth-illustration { display: block !important; }
+          .auth-illustration { display: flex !important; }
         }
       `}} />
     </div>

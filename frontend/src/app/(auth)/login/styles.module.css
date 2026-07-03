@@ -6,20 +6,24 @@
 
 .title {
   font-family: var(--font-family-display);
-  font-size: 28px;
+  font-size: 26px; /* Reduced from 32px */
+  font-weight: 700;
   color: var(--color-neutral-900);
-  margin: 0 0 var(--spacing-2) 0;
+  margin: 0 0 4px 0;
+  letter-spacing: -0.5px;
 }
 
 .subtitle {
   color: var(--color-neutral-500);
-  margin: 0 0 var(--spacing-8) 0;
+  font-size: 14px; /* Reduced from 15px */
+  line-height: 1.5;
+  margin: 0 0 24px 0; /* Reduced margin */
 }
 
 .form {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-4);
+  gap: 12px; /* Reduced from 16px */
 }
 
 .forgotPassword {
@@ -28,9 +32,10 @@
 }
 
 .forgotPassword button {
-  font-size: 13px;
+  font-size: 12px; /* Reduced from 13px */
   color: var(--color-primary-600);
   font-weight: 500;
+  margin-top: -2px; 
 }
 
 .forgotPassword button:hover {
@@ -38,15 +43,15 @@
 }
 
 .submitBtn {
-  margin-top: var(--spacing-2);
+  margin-top: 4px;
 }
 
 .divider {
   display: flex;
   align-items: center;
-  margin: var(--spacing-6) 0;
+  margin: 16px 0; /* Reduced from 20px */
   color: var(--color-neutral-500);
-  font-size: 13px;
+  font-size: 12px; /* Reduced from 13px */
 }
 
 .divider::before, .divider::after {
@@ -71,9 +76,9 @@
 }
 
 .registerLink {
-  margin-top: var(--spacing-8);
+  margin-top: 16px; /* Reduced from 24px */
   text-align: center;
-  font-size: 15px;
+  font-size: 13px; /* Reduced from 14px */
   color: var(--color-neutral-500);
 }
 
