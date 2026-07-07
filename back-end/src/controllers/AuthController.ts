@@ -10,6 +10,7 @@ const registerSchema = z.object({
   name: z.string().min(2),
   phone: z.string().min(10).optional(),
   role: z.enum(['CLIENT', 'PROFESSIONAL']).optional(),
+  username: z.string().regex(/^[a-zA-Z0-9_]+$/, 'O username deve conter apenas letras, números e underlines').min(3).max(30).optional(),
 });
 
 const syncUserSchema = z.object({
@@ -18,6 +19,7 @@ const syncUserSchema = z.object({
   name: z.string().min(2),
   phone: z.string().optional(),
   role: z.enum(['CLIENT', 'PROFESSIONAL']).optional(),
+  username: z.string().regex(/^[a-zA-Z0-9_]+$/).min(3).max(30).optional(),
 });
 
 const loginSchema = z.object({

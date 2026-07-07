@@ -58,6 +58,68 @@ export class ProfessionalService {
     });
   }
 
+  async checkUsernameAvailability(username: string) {
+    const regex = /^[a-zA-Z0-9_]+$/;
+    if (!regex.test(username) || username.length < 3 || username.length > 30) {
+      return false;
+    }
+    const existing = await prisma.professionalProfile.findUnique({ where: { username } });
+    return !existing;
+  }
+
+  async changeUsername(userId: string, newUsername: string) {
+    const regex = /^[a-zA-Z0-9_]+$/;
+    if (!regex.test(newUsername) || newUsername.length < 3 || newUsername.length > 30) {
+      throw new Error('O username deve ter entre 3 e 30 caracteres e conter apenas letras, números e underlines.');
+    }
+
+    const profileId = await this.getProfileIdByUserId(userId);
+    const profile = await prisma.professionalProfile.findUnique({ where: { id: profileId } });
+    if (!profile) throw new Error('Perfil não encontrado.');
+
+    if (profile.username === newUsername) {
+      throw new Error('Este já é o seu username atual.');
+    }
+
+    const isAvailable = await this.checkUsernameAvailability(newUsername);
+    if (!isAvailable) {
+      throw new Error('Este username não está disponível.');
+    }
+
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    const recentChanges = await prisma.usernameChangeLog.count({
+      where: {
+        professionalId: profileId,
+        changedAt: { gte: thirtyDaysAgo }
+      }
+    });
+
+    const maxChanges = profile.plan === 'PREMIUM' ? 3 : 1;
+
+    if (recentChanges >= maxChanges) {
+      throw new Error(`Limite atingido. O seu plano (${profile.plan}) permite alterar o username ${maxChanges} vez(es) a cada 30 dias.`);
+    }
+
+    // Process change
+    const updated = await prisma.$transaction([
+      prisma.professionalProfile.update({
+        where: { id: profileId },
+        data: { username: newUsername }
+      }),
+      prisma.usernameChangeLog.create({
+        data: {
+          professionalId: profileId,
+          oldUsername: profile.username,
+          newUsername: newUsername
+        }
+      })
+    ]);
+
+    return updated[0];
+  }
+
   async updateProfile(userId: string, data: any) {
     const profileId = await this.getProfileIdByUserId(userId);
     

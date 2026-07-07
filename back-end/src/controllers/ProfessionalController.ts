@@ -68,21 +68,61 @@ export class ProfessionalController {
     }
   }
 
+  async checkUsername(req: Request, res: Response) {
+    try {
+      const { username } = req.query;
+      if (!username || typeof username !== 'string') {
+        return res.status(400).json({ error: 'Username é obrigatório' });
+      }
+      const isAvailable = await professionalService.checkUsernameAvailability(username);
+      res.json({ available: isAvailable });
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  }
+
+  async changeUsername(req: AuthRequest, res: Response) {
+    try {
+      if (req.user?.role !== 'PROFESSIONAL') return res.status(403).json({ error: 'Acesso negado.' });
+      
+      const { newUsername } = req.body;
+      if (!newUsername || typeof newUsername !== 'string') {
+        return res.status(400).json({ error: 'Novo username é obrigatório' });
+      }
+      
+      const updatedProfile = await professionalService.changeUsername(req.user.id, newUsername);
+      res.json(updatedProfile);
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  }
+
   async updateProfile(req: AuthRequest, res: Response) {
     try {
       if (req.user?.role !== 'PROFESSIONAL') return res.status(403).json({ error: 'Acesso negado.' });
       
       let avatarUrl = req.body.avatar;
-      if (req.file) {
+      let coverUrl = req.body.coverImage;
+      const files = req.files as { [fieldname: string]: Express.Multer.File[] } | undefined;
+
+      if (files?.['avatar']?.[0]) {
         const { uploadFileToSupabase } = require('../config/supabase');
-        avatarUrl = await uploadFileToSupabase(req.file, `avatars/prof_${req.user.id}_${Date.now()}.jpg`);
+        avatarUrl = await uploadFileToSupabase(files['avatar'][0], `avatars/prof_${req.user.id}_${Date.now()}.jpg`);
+      }
+      if (files?.['coverImage']?.[0]) {
+        const { uploadFileToSupabase } = require('../config/supabase');
+        coverUrl = await uploadFileToSupabase(files['coverImage'][0], `covers/prof_${req.user.id}_${Date.now()}.jpg`);
       }
 
       const bodyData = { ...req.body };
       if (avatarUrl) bodyData.avatar = avatarUrl;
+      if (coverUrl) bodyData.coverImage = coverUrl;
       if (bodyData.lat) bodyData.lat = parseFloat(bodyData.lat);
       if (bodyData.lng) bodyData.lng = parseFloat(bodyData.lng);
-      if (bodyData.requireDeposit !== undefined) bodyData.requireDeposit = bodyData.requireDeposit === 'true';
+      
+      if (bodyData.requireDeposit !== undefined) {
+        bodyData.requireDeposit = String(bodyData.requireDeposit) === 'true';
+      }
 
       const data = updateProfileSchema.parse(bodyData);
       const updated = await professionalService.updateProfile(req.user.id, data);

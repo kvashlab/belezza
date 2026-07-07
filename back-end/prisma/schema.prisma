@@ -76,6 +76,7 @@ model ProfessionalProfile {
   reviews      Review[]
   waitlists    Waitlist[]
   customers    Customer[]
+  usernameChangeLogs UsernameChangeLog[]
 
   @@index([city])
   @@index([rating])
@@ -228,3 +229,13 @@ model TeamMember {
   appointments   Appointment[]
   workingHours   WorkingHour[]
 }
+
+model UsernameChangeLog {
+  id             String              @id @default(uuid())
+  professionalId String
+  professional   ProfessionalProfile @relation(fields: [professionalId], references: [id], onDelete: Cascade)
+  oldUsername    String
+  newUsername    String
+  changedAt      DateTime            @default(now())
+}
+

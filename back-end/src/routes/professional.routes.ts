@@ -7,6 +7,7 @@ const controller = new ProfessionalController();
 
 router.get('/', (req, res) => controller.getProfessionals(req, res));
 router.get('/public/:username', (req, res) => controller.getByUsername(req, res));
+router.get('/check-username', (req, res) => controller.checkUsername(req, res));
 
 import { upload } from '../middlewares/upload.middleware';
 
@@ -14,6 +15,7 @@ router.use(authMiddleware);
 
 router.get('/me', (req, res) => controller.getProfile(req, res));
 router.put('/me', upload.fields([{ name: 'avatar', maxCount: 1 }, { name: 'coverImage', maxCount: 1 }]), (req, res) => controller.updateProfile(req, res));
+router.put('/me/username', (req, res) => controller.changeUsername(req, res));
 
 router.get('/services', (req, res) => controller.getServices(req, res));
 router.post('/services', (req, res) => controller.createService(req, res));

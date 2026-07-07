@@ -3,7 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { useAuthStore } from '@/stores/auth.store';
 import { useUIStore } from '@/stores/ui.store';
 import { Button } from '@/components/ui/Button';
-import { Image as ImageIcon, Camera } from 'lucide-react';
+import { Input } from '@/components/ui/Input';
+import { Image as ImageIcon, Camera, Check, X, Link as LinkIcon } from 'lucide-react';
 import { api } from '@/lib/api';
 import styles from './styles.module.css';
 
@@ -16,6 +17,12 @@ export default function PerfilProfissional() {
   const [profileData, setProfileData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+
+  // Username states
+  const [isChangingUsername, setIsChangingUsername] = useState(false);
+  const [newUsername, setNewUsername] = useState('');
+  const [usernameStatus, setUsernameStatus] = useState<'idle' | 'checking' | 'available' | 'unavailable'>('idle');
+  const [isSavingUsername, setIsSavingUsername] = useState(false);
 
   const loadProfile = async () => {
     try {
@@ -35,6 +42,45 @@ export default function PerfilProfissional() {
       setIsLoading(false);
     }
   }, [user]);
+
+  useEffect(() => {
+    if (!newUsername || newUsername.length < 3) {
+      setUsernameStatus('idle');
+      return;
+    }
+    const delayDebounceFn = setTimeout(async () => {
+      setUsernameStatus('checking');
+      try {
+        const res = await api.get(`/professionals/check-username?username=${newUsername}`);
+        if (res.data.available) {
+          setUsernameStatus('available');
+        } else {
+          setUsernameStatus('unavailable');
+        }
+      } catch (e) {
+        setUsernameStatus('idle');
+      }
+    }, 500);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [newUsername]);
+
+  const handleChangeUsername = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (usernameStatus !== 'available') return;
+    setIsSavingUsername(true);
+    try {
+      await api.put('/professionals/me/username', { newUsername });
+      addToast({ type: 'success', title: 'Username atualizado com sucesso!' });
+      setNewUsername('');
+      setIsChangingUsername(false);
+      await loadProfile();
+    } catch (error: any) {
+      addToast({ type: 'error', title: 'Erro', message: error.response?.data?.error || 'Falha ao atualizar username' });
+    } finally {
+      setIsSavingUsername(false);
+    }
+  };
 
   const handleUpdateAparencia = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,9 +103,7 @@ export default function PerfilProfissional() {
         formData.append('coverImage', coverInput.files[0]);
       }
 
-      await api.put('/professionals/me', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
+      await api.put('/professionals/me', formData);
 
       addToast({ type: 'success', title: 'Perfil atualizado com sucesso!' });
       await loadProfile();
@@ -118,6 +162,55 @@ export default function PerfilProfissional() {
     }
   };
 
+  const handleUpdateHorarios = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSaving(true);
+    const form = e.target as HTMLFormElement;
+    
+    try {
+      const hours = [];
+      for (let i = 0; i < 7; i++) {
+        const isOpen = (form.elements.namedItem(`day_${i}_isOpen`) as HTMLInputElement).checked;
+        const startTime = (form.elements.namedItem(`day_${i}_startTime`) as HTMLInputElement).value;
+        const endTime = (form.elements.namedItem(`day_${i}_endTime`) as HTMLInputElement).value;
+        hours.push({ dayOfWeek: i, isOpen, startTime, endTime });
+      }
+      await api.put('/professionals/working-hours', hours);
+      addToast({ type: 'success', title: 'Horários atualizados com sucesso!' });
+      await loadProfile();
+    } catch {
+      addToast({ type: 'error', title: 'Falha ao atualizar horários' });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleUpdateSenha = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSaving(true);
+    const form = e.target as HTMLFormElement;
+    
+    const currentPassword = (form.elements.namedItem('currentPassword') as HTMLInputElement).value;
+    const newPassword = (form.elements.namedItem('newPassword') as HTMLInputElement).value;
+    const confirmPassword = (form.elements.namedItem('confirmPassword') as HTMLInputElement).value;
+
+    if (newPassword !== confirmPassword) {
+      addToast({ type: 'error', title: 'As senhas não coincidem' });
+      setIsSaving(false);
+      return;
+    }
+
+    try {
+      await api.put('/users/me/password', { currentPassword, newPassword });
+      addToast({ type: 'success', title: 'Senha atualizada com sucesso!' });
+      form.reset();
+    } catch {
+      addToast({ type: 'error', title: 'Falha ao atualizar senha' });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   if (isLoading) return <div className={styles.container}>Carregando perfil...</div>;
 
   const socialLinks = profileData?.socialLinks ? JSON.parse(profileData.socialLinks) : {};
@@ -156,6 +249,44 @@ export default function PerfilProfissional() {
 
         <section className={styles.formSection}>
           {activeTab === 'aparencia' && (
+            <div>
+              <div style={{ backgroundColor: 'var(--surface-card)', padding: 'var(--spacing-6)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--surface-border)', marginBottom: 'var(--spacing-6)' }}>
+                <h3 style={{ fontSize: '18px', fontWeight: 600, marginBottom: 'var(--spacing-2)', color: 'var(--color-neutral-900)' }}>Link do Perfil</h3>
+                <p style={{ color: 'var(--color-neutral-500)', fontSize: '14px', marginBottom: 'var(--spacing-4)' }}>Este é o link público do seu portfólio. Você pode compartilhá-lo com clientes.</p>
+                
+                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-4)' }}>
+                  <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 16px', backgroundColor: 'var(--surface-main)', borderRadius: 'var(--radius-md)', border: '1px solid var(--surface-border)', color: 'var(--color-neutral-700)', fontWeight: 500 }}>
+                    <LinkIcon size={18} color="var(--color-neutral-400)" />
+                    {typeof window !== 'undefined' ? window.location.origin : 'belezza.com'}/@{profileData?.username}
+                  </div>
+                  <Button variant="secondary" onClick={() => setIsChangingUsername(!isChangingUsername)}>
+                    {isChangingUsername ? 'Cancelar' : 'Alterar Username'}
+                  </Button>
+                </div>
+
+                {isChangingUsername && (
+                  <form onSubmit={handleChangeUsername} style={{ marginTop: 'var(--spacing-4)', paddingTop: 'var(--spacing-4)', borderTop: '1px solid var(--surface-border)' }}>
+                    <p style={{ fontSize: '13px', color: 'var(--color-neutral-500)', marginBottom: 'var(--spacing-4)' }}>
+                      <strong>Atenção:</strong> Seu plano ({profileData?.plan}) permite {profileData?.plan === 'PREMIUM' ? '3 alterações' : '1 alteração'} a cada 30 dias.
+                    </p>
+                    <div style={{ display: 'flex', gap: 'var(--spacing-4)', alignItems: 'flex-start' }}>
+                      <div style={{ flex: 1, position: 'relative' }}>
+                        <Input 
+                          placeholder="novo_username" 
+                          value={newUsername}
+                          onChange={(e) => setNewUsername(e.target.value.replace(/[^a-zA-Z0-9_]/g, '').toLowerCase())}
+                          required
+                        />
+                        {usernameStatus === 'checking' && <span style={{ position: 'absolute', right: '12px', top: '12px', fontSize: '12px', color: 'var(--color-neutral-500)' }}>...</span>}
+                        {usernameStatus === 'available' && <Check size={18} style={{ position: 'absolute', right: '12px', top: '12px', color: 'var(--color-success-500)' }} />}
+                        {usernameStatus === 'unavailable' && <X size={18} style={{ position: 'absolute', right: '12px', top: '12px', color: 'var(--color-danger-500)' }} />}
+                      </div>
+                      <Button variant="primary" type="submit" isLoading={isSavingUsername} disabled={usernameStatus !== 'available'}>Confirmar</Button>
+                    </div>
+                  </form>
+                )}
+              </div>
+
             <form onSubmit={handleUpdateAparencia}>
               <h2 className={styles.sectionTitle}>Aparência da Página</h2>
               
@@ -190,6 +321,7 @@ export default function PerfilProfissional() {
                 <Button variant="primary" type="submit" isLoading={isSaving}>Salvar Aparência</Button>
               </div>
             </form>
+            </div>
           )}
 
           {activeTab === 'contato' && (
@@ -226,7 +358,7 @@ export default function PerfilProfissional() {
           )}
 
           {activeTab === 'horarios' && (
-            <form>
+            <form onSubmit={handleUpdateHorarios}>
               <h2 className={styles.sectionTitle}>Horários de Atendimento</h2>
               <div style={{ display: 'grid', gap: '16px' }}>
                 {['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'].map((day, i) => {
@@ -235,18 +367,18 @@ export default function PerfilProfissional() {
                     <div key={i} style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
                       <div style={{ width: '100px', fontWeight: 500 }}>{day}</div>
                       <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <input type="checkbox" defaultChecked={hour.isOpen} />
+                        <input type="checkbox" name={`day_${i}_isOpen`} defaultChecked={hour.isOpen} />
                         Aberto
                       </label>
-                      <input type="time" defaultValue={hour.startTime} className={styles.input} style={{ width: '120px' }} />
+                      <input type="time" name={`day_${i}_startTime`} defaultValue={hour.startTime} className={styles.input} style={{ width: '120px' }} />
                       <span>até</span>
-                      <input type="time" defaultValue={hour.endTime} className={styles.input} style={{ width: '120px' }} />
+                      <input type="time" name={`day_${i}_endTime`} defaultValue={hour.endTime} className={styles.input} style={{ width: '120px' }} />
                     </div>
                   );
                 })}
               </div>
               <div className={styles.formActions} style={{ marginTop: '24px' }}>
-                <Button variant="primary" type="button" onClick={() => addToast({ type: 'success', title: 'Horários atualizados!' })}>Salvar Horários</Button>
+                <Button variant="primary" type="submit" isLoading={isSaving}>Salvar Horários</Button>
               </div>
             </form>
           )}
@@ -276,25 +408,25 @@ export default function PerfilProfissional() {
                 </div>
               </form>
 
-              <form>
+              <form onSubmit={handleUpdateSenha}>
                 <h2 className={styles.sectionTitle}>Segurança da Conta</h2>
                 <div className={styles.formGrid}>
                   <div className={styles.inputGroup}>
                     <label className={styles.label}>Senha Atual</label>
-                    <input type="password" placeholder="••••••••" className={styles.input} />
+                    <input type="password" name="currentPassword" placeholder="••••••••" className={styles.input} required />
                   </div>
                   <div className={styles.inputGroup}></div>
                   <div className={styles.inputGroup}>
                     <label className={styles.label}>Nova Senha</label>
-                    <input type="password" placeholder="••••••••" className={styles.input} />
+                    <input type="password" name="newPassword" placeholder="••••••••" className={styles.input} required minLength={6} />
                   </div>
                   <div className={styles.inputGroup}>
                     <label className={styles.label}>Confirmar Nova Senha</label>
-                    <input type="password" placeholder="••••••••" className={styles.input} />
+                    <input type="password" name="confirmPassword" placeholder="••••••••" className={styles.input} required minLength={6} />
                   </div>
                 </div>
                 <div className={styles.formActions}>
-                  <Button variant="primary" type="button">Atualizar Senha</Button>
+                  <Button variant="primary" type="submit" isLoading={isSaving}>Atualizar Senha</Button>
                 </div>
               </form>
             </div>

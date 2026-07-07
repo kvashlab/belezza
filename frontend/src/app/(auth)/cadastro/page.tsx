@@ -5,12 +5,13 @@ import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { User, Scissors } from 'lucide-react';
+import { User, Scissors, Check, X } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { useAuthStore } from '@/stores/auth.store';
 import { useUIStore } from '@/stores/ui.store';
 import { supabase } from '@/lib/supabase';
+import { api } from '@/lib/api';
 import styles from '../login/styles.module.css';
 
 const registerSchema = z.object({
@@ -18,6 +19,7 @@ const registerSchema = z.object({
   email: z.string().email('E-mail inválido'),
   phone: z.string().min(10, 'Telefone é obrigatório e deve ter no mínimo 10 dígitos'),
   password: z.string().min(6, 'A senha deve ter no mínimo 6 caracteres'),
+  username: z.string().optional(),
 });
 
 type RegisterForm = z.infer<typeof registerSchema>;
@@ -28,12 +30,64 @@ export default function Cadastro() {
   const { addToast } = useUIStore();
   const [profileType, setProfileType] = useState<'CLIENT' | 'PROFESSIONAL' | null>(null);
   
-  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<RegisterForm>({
+  const { register, handleSubmit, watch, setError, clearErrors, formState: { errors, isSubmitting } } = useForm<RegisterForm>({
     resolver: zodResolver(registerSchema)
   });
 
+  const watchUsername = watch('username');
+  const [usernameStatus, setUsernameStatus] = useState<'idle' | 'checking' | 'available' | 'unavailable'>('idle');
+
+  React.useEffect(() => {
+    if (profileType !== 'PROFESSIONAL' || !watchUsername) {
+      setUsernameStatus('idle');
+      return;
+    }
+    
+    if (watchUsername.length < 3) {
+      setUsernameStatus('idle');
+      return;
+    }
+
+    const regex = /^[a-zA-Z0-9_]+$/;
+    if (!regex.test(watchUsername)) {
+      setError('username', { type: 'manual', message: 'Apenas letras, números e underlines.' });
+      setUsernameStatus('unavailable');
+      return;
+    } else {
+      clearErrors('username');
+    }
+
+    const delayDebounceFn = setTimeout(async () => {
+      setUsernameStatus('checking');
+      try {
+        const res = await api.get(`/professionals/check-username?username=${watchUsername}`);
+        if (res.data.available) {
+          setUsernameStatus('available');
+          clearErrors('username');
+        } else {
+          setUsernameStatus('unavailable');
+          setError('username', { type: 'manual', message: 'Este username já está em uso.' });
+        }
+      } catch (e) {
+        setUsernameStatus('idle');
+      }
+    }, 500);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [watchUsername, profileType, setError, clearErrors]);
+
   const onSubmit = async (data: RegisterForm) => {
     if (!profileType) return;
+    
+    if (profileType === 'PROFESSIONAL') {
+      if (!data.username || data.username.length < 3) {
+        setError('username', { type: 'manual', message: 'Username é obrigatório para profissionais (min 3 chars).' });
+        return;
+      }
+      if (usernameStatus === 'unavailable') {
+        return;
+      }
+    }
     
     try {
       await registerUser({ ...data, role: profileType });
@@ -141,6 +195,21 @@ export default function Cadastro() {
           error={errors.email?.message}
           {...register('email')} 
         />
+        
+        {profileType === 'PROFESSIONAL' && (
+          <div style={{ position: 'relative' }}>
+            <Input 
+              label="Username (@)" 
+              placeholder="ex: maria_nails" 
+              error={errors.username?.message}
+              {...register('username')} 
+            />
+            {usernameStatus === 'checking' && <span style={{ position: 'absolute', right: '12px', top: '38px', fontSize: '12px', color: 'var(--color-neutral-500)' }}>Verificando...</span>}
+            {usernameStatus === 'available' && <Check size={18} style={{ position: 'absolute', right: '12px', top: '36px', color: 'var(--color-success-500)' }} />}
+            {usernameStatus === 'unavailable' && <X size={18} style={{ position: 'absolute', right: '12px', top: '36px', color: 'var(--color-danger-500)' }} />}
+          </div>
+        )}
+
         <Input 
           label="Telefone / WhatsApp" 
           placeholder="(00) 00000-0000" 

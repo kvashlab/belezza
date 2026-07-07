@@ -9,7 +9,7 @@ if (!JWT_SECRET) {
 
 export class AuthService {
   async register(data: any) {
-    const { email, password, name, phone, role } = data;
+    const { email, password, name, phone, role, username } = data;
 
     const existingUser = await prisma.user.findUnique({ where: { email } });
     if (existingUser) {
@@ -31,10 +31,20 @@ export class AuthService {
     if (user.role === 'CLIENT') {
       await prisma.clientProfile.create({ data: { userId: user.id } });
     } else if (user.role === 'PROFESSIONAL') {
+      let finalUsername = username;
+      if (!finalUsername) {
+        finalUsername = `pro_${user.id.substring(0, 6)}`;
+      } else {
+        const existingProf = await prisma.professionalProfile.findUnique({ where: { username: finalUsername } });
+        if (existingProf) {
+          throw new Error('Username já está em uso.');
+        }
+      }
+      
       await prisma.professionalProfile.create({
         data: {
           userId: user.id,
-          username: `pro_${user.id.substring(0, 6)}`, // generate default username
+          username: finalUsername,
         },
       });
     }
@@ -63,7 +73,7 @@ export class AuthService {
   }
 
   async googleLogin(data: any) {
-    const { email, name, role } = data;
+    const { email, name, role, username } = data;
 
     let user = await prisma.user.findUnique({ where: { email } });
 
@@ -82,10 +92,19 @@ export class AuthService {
       if (user.role === 'CLIENT') {
         await prisma.clientProfile.create({ data: { userId: user.id } });
       } else if (user.role === 'PROFESSIONAL') {
+        let finalUsername = username;
+        if (!finalUsername) {
+          finalUsername = `pro_${user.id.substring(0, 6)}`;
+        } else {
+          const existingProf = await prisma.professionalProfile.findUnique({ where: { username: finalUsername } });
+          if (existingProf) {
+            finalUsername = `pro_${user.id.substring(0, 6)}`; // Fallback if Google username matches
+          }
+        }
         await prisma.professionalProfile.create({
           data: {
             userId: user.id,
-            username: `pro_${user.id.substring(0, 6)}`,
+            username: finalUsername,
           },
         });
       }
@@ -97,7 +116,7 @@ export class AuthService {
   }
 
   async syncUser(data: any) {
-    const { id, email, name, phone, role } = data;
+    const { id, email, name, phone, role, username } = data;
 
     let user = await prisma.user.findUnique({ where: { email } });
 
@@ -116,10 +135,19 @@ export class AuthService {
       if (user.role === 'CLIENT') {
         await prisma.clientProfile.create({ data: { userId: user.id } });
       } else if (user.role === 'PROFESSIONAL') {
+        let finalUsername = username;
+        if (!finalUsername) {
+          finalUsername = `pro_${user.id.substring(0, 6)}`;
+        } else {
+          const existingProf = await prisma.professionalProfile.findUnique({ where: { username: finalUsername } });
+          if (existingProf) {
+            throw new Error('Username já está em uso.');
+          }
+        }
         await prisma.professionalProfile.create({
           data: {
             userId: user.id,
-            username: `pro_${user.id.substring(0, 6)}`,
+            username: finalUsername,
           },
         });
       }
