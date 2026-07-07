@@ -14,6 +14,11 @@
   cursor: not-allowed;
 }
 
+.button:focus-visible {
+  outline: none;
+  box-shadow: var(--shadow-focus);
+}
+
 /* Tamanhos */
 .sm {
   height: 32px;

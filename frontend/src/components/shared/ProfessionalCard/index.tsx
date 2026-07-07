@@ -12,16 +12,28 @@ interface ProfessionalCardProps {
 }
 
 export const ProfessionalCard: React.FC<ProfessionalCardProps> = ({ professional }) => {
+  let categories: string[] = [];
+  try {
+    categories = Array.isArray(professional.categories)
+      ? professional.categories
+      : (typeof professional.categories === 'string' ? JSON.parse(professional.categories) : []);
+  } catch (e) {
+    categories = [];
+  }
   return (
     <Link href={`/@${professional.username}`} className={styles.card}>
       <div className={styles.coverWrapper}>
-        <Image 
-          src={professional.coverImage} 
-          alt={`Capa de ${professional.name}`} 
-          fill
-          className={styles.coverImage}
-          unoptimized
-        />
+        {professional.coverImage ? (
+          <Image 
+            src={professional.coverImage} 
+            alt={`Capa de ${professional.name}`} 
+            fill
+            className={styles.coverImage}
+            unoptimized
+          />
+        ) : (
+          <div className={styles.coverImage} style={{ backgroundColor: 'var(--color-neutral-200)', width: '100%', height: '100%', position: 'absolute' }} />
+        )}
         <div className={styles.avatarWrapper}>
           <Avatar 
             src={professional.avatar} 
@@ -50,20 +62,20 @@ export const ProfessionalCard: React.FC<ProfessionalCardProps> = ({ professional
         <p className={styles.bio}>{professional.bio}</p>
         
         <div className={styles.categories}>
-          {professional.categories.slice(0, 3).map((cat, i) => (
+          {categories.slice(0, 3).map((cat, i) => (
             <Badge key={i} size="sm" variant={cat as 'cabelo' | 'unhas' | 'maquiagem' | 'estetica' | 'sobrancelhas' | 'cilios' | 'massoterapia' | 'default'}>
               {cat.replace('_', ' ')}
             </Badge>
           ))}
-          {professional.categories.length > 3 && (
-            <Badge size="sm">+{professional.categories.length - 3}</Badge>
+          {categories.length > 3 && (
+            <Badge size="sm">+{categories.length - 3}</Badge>
           )}
         </div>
         
         <div className={styles.footer}>
           <div className={styles.location}>
             <MapPin size={14} className={styles.locationIcon} />
-            <span>{professional.address.neighborhood}, {professional.address.city}</span>
+            <span>{professional.address ? `${professional.address.neighborhood}, ${professional.address.city}` : 'Endereço não informado'}</span>
           </div>
         </div>
       </div>

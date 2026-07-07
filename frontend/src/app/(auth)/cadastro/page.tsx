@@ -28,45 +28,29 @@ export default function Cadastro() {
   const { addToast } = useUIStore();
   const [profileType, setProfileType] = useState<'CLIENT' | 'PROFESSIONAL' | null>(null);
   
-  // SMS Mock State
-  const [showSmsModal, setShowSmsModal] = useState(false);
-  const [smsCode, setSmsCode] = useState('');
-  const [pendingData, setPendingData] = useState<RegisterForm | null>(null);
-  
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<RegisterForm>({
     resolver: zodResolver(registerSchema)
   });
 
   const onSubmit = async (data: RegisterForm) => {
     if (!profileType) return;
-    setPendingData(data);
-    setShowSmsModal(true);
-    // Simulating SMS send
-    addToast({ type: 'info', title: 'SMS Enviado', message: 'Código de teste: 1234' });
-  };
-
-  const handleVerifySms = async () => {
-    if (smsCode !== '1234') {
-      addToast({ type: 'error', title: 'Código Inválido', message: 'Tente usar 1234 para testes.' });
-      return;
-    }
-    
-    if (!pendingData || !profileType) return;
     
     try {
-      await registerUser({ ...pendingData, role: profileType });
+      await registerUser({ ...data, role: profileType });
       addToast({
         type: 'success',
         title: 'Cadastro Realizado',
-        message: 'Sua conta foi criada com sucesso!'
+        message: 'Verifique seu e-mail para confirmar a conta!'
       });
+      // They won't be redirected immediately if email confirmation is required by Supabase
+      // The store handles the error if session is null
       if (profileType === 'PROFESSIONAL') {
         router.push('/painel');
       } else {
         router.push('/dashboard');
       }
     } catch (err: any) {
-      addToast({ type: 'error', title: 'Erro', message: err.message || 'Falha ao criar conta.' });
+      addToast({ type: 'error', title: 'Aviso', message: err.message || 'Verifique seu e-mail.' });
     }
   };
 
@@ -129,26 +113,7 @@ export default function Cadastro() {
     );
   }
 
-  if (showSmsModal) {
-    return (
-      <div className={styles.container}>
-        <h1 className={styles.title}>Verificação de Telefone</h1>
-        <p className={styles.subtitle}>Insira o código de 4 dígitos enviado por SMS para o número {pendingData?.phone}</p>
-        
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-4)', marginTop: 'var(--spacing-4)' }}>
-          <Input 
-            label="Código SMS" 
-            placeholder="1234" 
-            value={smsCode}
-            onChange={(e) => setSmsCode(e.target.value)}
-            maxLength={4}
-          />
-          <Button variant="primary" onClick={handleVerifySms}>Verificar e Criar Conta</Button>
-          <Button variant="secondary" onClick={() => setShowSmsModal(false)}>Voltar</Button>
-        </div>
-      </div>
-    );
-  }
+
 
   return (
     <div className={styles.container}>

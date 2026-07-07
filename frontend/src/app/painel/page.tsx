@@ -12,13 +12,19 @@ import styles from './styles.module.css';
 export default function PainelDashboard() {
   const { user } = useAuthStore();
   const [metricsData, setMetricsData] = useState<any>(null);
+  const [profileData, setProfileData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [showPremiumPopup, setShowPremiumPopup] = useState(true); // Control popup visibility
   
   useEffect(() => {
     async function fetchDashboardData() {
       try {
-        const response = await api.get('/professionals/me/dashboard');
-        setMetricsData(response.data);
+        const [metricsResponse, profileResponse] = await Promise.all([
+          api.get('/professionals/me/dashboard'),
+          api.get('/professionals/me')
+        ]);
+        setMetricsData(metricsResponse.data);
+        setProfileData(profileResponse.data);
       } catch (error) {
         console.error(error);
       } finally {
@@ -40,6 +46,68 @@ export default function PainelDashboard() {
 
   return (
     <div className={styles.dashboard}>
+      {/* POPUP PLANO PREMIUM */}
+      {!isLoading && profileData?.plan === 'FREE' && showPremiumPopup && (
+        <div style={{
+          position: 'fixed',
+          top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999,
+          backdropFilter: 'blur(4px)'
+        }}>
+          <div style={{
+            background: 'white',
+            borderRadius: '16px',
+            padding: '32px',
+            maxWidth: '500px',
+            width: '90%',
+            textAlign: 'center',
+            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+            position: 'relative'
+          }}>
+            <button 
+              onClick={() => setShowPremiumPopup(false)}
+              style={{
+                position: 'absolute', top: '16px', right: '16px',
+                background: 'none', border: 'none', cursor: 'pointer',
+                fontSize: '24px', color: 'var(--color-neutral-400)'
+              }}
+            >
+              &times;
+            </button>
+            <div style={{
+              background: 'linear-gradient(135deg, var(--color-gold-400) 0%, var(--color-gold-600) 100%)',
+              width: '64px', height: '64px', borderRadius: '50%',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              margin: '0 auto 24px', color: 'white'
+            }}>
+              <Star size={32} fill="currentColor" />
+            </div>
+            <h2 style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '16px', color: 'var(--color-neutral-900)' }}>
+              Eleve seu negócio com o Premium! 🚀
+            </h2>
+            <p style={{ fontSize: '16px', color: 'var(--color-neutral-600)', marginBottom: '24px', lineHeight: '1.5' }}>
+              Reduza faltas com lembretes automáticos pelo WhatsApp, receba pagamentos antecipados e desbloqueie agendamentos ilimitados.
+            </p>
+            <Button variant="primary" size="lg" style={{ width: '100%', background: 'var(--color-gold-500)', borderColor: 'var(--color-gold-500)', color: 'white' }}>
+              Ativar Plano Premium (14 dias grátis)
+            </Button>
+            <button 
+              onClick={() => setShowPremiumPopup(false)}
+              style={{
+                background: 'none', border: 'none', cursor: 'pointer',
+                marginTop: '16px', color: 'var(--color-neutral-500)', fontWeight: 500, fontSize: '14px'
+              }}
+            >
+              Talvez mais tarde
+            </button>
+          </div>
+        </div>
+      )}
+
       <header className={styles.header}>
         <div>
           <h1 className="heading-1 title">Olá, {user?.name?.split(' ')[0] || 'Profissional'} 👋</h1>

@@ -32,6 +32,10 @@
   color: var(--color-neutral-500);
 }
 
+.input:hover:not(:focus):not(:disabled) {
+  border-color: var(--color-neutral-300);
+}
+
 .input:focus {
   outline: none;
   border-color: var(--color-primary-500);

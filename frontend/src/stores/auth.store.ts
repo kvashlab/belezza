@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { Client } from '../types/client.types';
 import { Professional } from '../types/professional.types';
 import { api } from '../lib/api';
+import { supabase } from '../lib/supabase';
 
 interface AuthStore {
   user: (Client | Professional) | null;
@@ -19,41 +20,76 @@ export const useAuthStore = create<AuthStore>((set) => ({
   isAuthenticated: false,
   login: async (credentials: any) => {
     try {
-      const response = await api.post('/auth/login', credentials);
-      const data = response.data;
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: credentials.email,
+        password: credentials.password,
+      });
+
+      if (error) throw error;
       
-      set({ user: data.user, role: data.user.role.toLowerCase(), isAuthenticated: true });
-      localStorage.setItem('@belezza:token', data.token);
+      // Ensure session is set
+      localStorage.setItem('@belezza:token', data.session.access_token);
+      
+      // Fetch user profile from Prisma DB using the new token
+      await useAuthStore.getState().fetchMe();
     } catch (error: any) {
-      throw new Error(error.response?.data?.error || 'Erro ao realizar login');
+      throw new Error(error.message || 'Erro ao realizar login');
     }
   },
   register: async (credentials: any) => {
     try {
-      const response = await api.post('/auth/register', credentials);
-      const data = response.data;
+      const { data, error } = await supabase.auth.signUp({
+        email: credentials.email,
+        password: credentials.password,
+        options: {
+          data: {
+            name: credentials.name,
+            phone: credentials.phone,
+            role: credentials.role || 'CLIENT',
+          }
+        }
+      });
+
+      if (error) throw error;
       
-      set({ user: data.user, role: data.user.role.toLowerCase(), isAuthenticated: true });
-      localStorage.setItem('@belezza:token', data.token);
+      if (data.session) {
+        localStorage.setItem('@belezza:token', data.session.access_token);
+        // Sync with our Prisma backend
+        await api.post('/auth/sync-user', {
+          id: data.user?.id,
+          email: credentials.email,
+          name: credentials.name,
+          phone: credentials.phone,
+          role: credentials.role || 'CLIENT'
+        });
+        await useAuthStore.getState().fetchMe();
+      } else {
+        // Confirm email required
+        throw new Error('Verifique seu e-mail para confirmar o cadastro.');
+      }
     } catch (error: any) {
-      throw new Error(error.response?.data?.error || 'Erro ao realizar cadastro');
+      throw new Error(error.message || 'Erro ao realizar cadastro');
     }
   },
-  googleLogin: async (credentials: any) => {
+  googleLogin: async () => {
     try {
-      const response = await api.post('/auth/google', credentials);
-      const data = response.data;
-      
-      set({ user: data.user, role: data.user.role.toLowerCase(), isAuthenticated: true });
-      localStorage.setItem('@belezza:token', data.token);
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`
+        }
+      });
+      if (error) throw error;
     } catch (error: any) {
-      throw new Error(error.response?.data?.error || 'Erro ao realizar login com Google');
+      throw new Error(error.message || 'Erro ao realizar login com Google');
     }
   },
   fetchMe: async () => {
     try {
-      const token = localStorage.getItem('@belezza:token');
-      if (!token) return;
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      
+      localStorage.setItem('@belezza:token', session.access_token);
 
       const response = await api.get('/users/me');
       const user = response.data;
@@ -61,10 +97,10 @@ export const useAuthStore = create<AuthStore>((set) => ({
       set({ user, role: user.role.toLowerCase(), isAuthenticated: true });
     } catch (error) {
       console.error(error);
-      // Let the interceptor handle the 401 logout if token is invalid
     }
   },
-  logout: () => {
+  logout: async () => {
+    await supabase.auth.signOut();
     localStorage.removeItem('@belezza:token');
     localStorage.removeItem('@belezza:user');
     set({ user: null, role: null, isAuthenticated: false });

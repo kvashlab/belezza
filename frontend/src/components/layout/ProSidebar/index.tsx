@@ -52,7 +52,7 @@ export const ProSidebar: React.FC<ProSidebarProps> = ({ isOpen, onClose }) => {
       <aside className={`${styles.sidebar} ${isOpen ? styles.open : ''}`}>
         <div className={styles.brand}>
           <Link href="/painel" className={styles.logo}>
-            Belezza <span style={{ color: 'var(--color-neutral-900)' }}>Pro</span>
+            Belezza {(user as any)?.professionalProfile?.plan === 'PREMIUM' && <span style={{ color: 'var(--color-neutral-900)' }}>Pro</span>}
           </Link>
           <button className={styles.closeBtn} onClick={onClose} aria-label="Fechar menu">
             <X size={24} />
@@ -90,7 +90,28 @@ export const ProSidebar: React.FC<ProSidebarProps> = ({ isOpen, onClose }) => {
             </div>
             <div className={styles.userInfo}>
               <span className={styles.userName}>{user?.name || 'Profissional'}</span>
-              <span className={styles.userRole}>Plano Premium</span>
+              <span className={styles.userRole}>
+                {(user as any)?.professionalProfile?.plan === 'PREMIUM' ? 'Plano Premium' : 'Plano Básico'}
+              </span>
+              {(user as any)?.professionalProfile?.plan !== 'PREMIUM' && (
+                <button 
+                  style={{
+                    marginTop: '4px',
+                    padding: '4px 8px',
+                    fontSize: '11px',
+                    fontWeight: 600,
+                    backgroundColor: 'var(--color-gold-500)',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    width: 'fit-content'
+                  }}
+                  onClick={() => alert('Upgrade para o Premium em breve!')}
+                >
+                  Fazer Upgrade
+                </button>
+              )}
             </div>
           </div>
           <button onClick={handleLogout} className={styles.logoutBtn}>

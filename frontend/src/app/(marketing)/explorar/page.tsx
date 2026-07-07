@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Search, Map as MapIcon, List } from 'lucide-react';
 import { ProfessionalCard } from '@/components/shared/ProfessionalCard';
+import { InteractiveMap } from '@/components/shared/InteractiveMap';
 
 import { Button } from '@/components/ui/Button';
 import { Select } from '@/components/ui/Select';
@@ -36,7 +37,22 @@ function ExplorarContent() {
         if (searchTerm) query.append('q', searchTerm);
 
         const response = await api.get(`/professionals?${query.toString()}`);
-        setProfessionals(response.data);
+        
+        // Map the flat DB structure to the expected Professional type, and filter out those without a location
+        const mappedProfessionals = response.data
+          .map((p: any) => ({
+            ...p,
+            address: {
+              city: p.city,
+              state: p.state,
+              neighborhood: p.neighborhood,
+              lat: p.lat,
+              lng: p.lng
+            }
+          }))
+          .filter((p: any) => p.address.lat && p.address.lng);
+          
+        setProfessionals(mappedProfessionals);
       } catch (e) {
         console.error(e);
       } finally {
@@ -110,12 +126,7 @@ function ExplorarContent() {
 
         {(viewMode === 'map' || !isMobile) && (
           <div className={styles.mapContainer}>
-            {/* Placeholder para mapa */}
-            <div className={styles.mapPlaceholder}>
-              <MapIcon size={48} className={styles.mapIcon} />
-              <p>Mapa Interativo</p>
-              <span>Navegue para ver profissionais na sua região</span>
-            </div>
+            <InteractiveMap professionals={professionals} />
           </div>
         )}
       </div>

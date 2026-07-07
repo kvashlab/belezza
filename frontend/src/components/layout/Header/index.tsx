@@ -1,12 +1,24 @@
 'use client';
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Search, Menu } from 'lucide-react';
 import { AuthNavigation } from './AuthNavigation';
 import styles from './styles.module.css';
 
 export const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const router = useRouter();
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchTerm.trim()) {
+      router.push(`/explorar?q=${encodeURIComponent(searchTerm.trim())}`);
+    } else {
+      router.push('/explorar');
+    }
+  };
 
   useEffect(() => {
     const handleScroll = () => {
@@ -23,14 +35,16 @@ export const Header = () => {
           Belezza
         </Link>
 
-        <div className={styles.searchBar}>
+        <form className={styles.searchBar} onSubmit={handleSearch}>
           <Search size={18} className={styles.searchIcon} />
           <input 
             type="text" 
             placeholder="Buscar por profissional, categoria..."
             className={styles.searchInput}
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
           />
-        </div>
+        </form>
 
         <AuthNavigation />
 

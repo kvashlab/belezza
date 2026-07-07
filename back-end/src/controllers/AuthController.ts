@@ -6,9 +6,17 @@ const authService = new AuthService();
 
 const registerSchema = z.object({
   email: z.string().email(),
-  password: z.string().min(6),
+  password: z.string().min(6).optional(),
   name: z.string().min(2),
-  phone: z.string().min(10),
+  phone: z.string().min(10).optional(),
+  role: z.enum(['CLIENT', 'PROFESSIONAL']).optional(),
+});
+
+const syncUserSchema = z.object({
+  id: z.string(),
+  email: z.string().email(),
+  name: z.string().min(2),
+  phone: z.string().optional(),
   role: z.enum(['CLIENT', 'PROFESSIONAL']).optional(),
 });
 
@@ -51,6 +59,20 @@ export class AuthController {
       const result = await authService.googleLogin(req.body);
       res.json(result);
     } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  }
+
+  async syncUser(req: Request, res: Response) {
+    try {
+      const data = syncUserSchema.parse(req.body);
+      const result = await authService.syncUser(data);
+      res.status(201).json(result);
+    } catch (error: any) {
+      if (error instanceof z.ZodError) {
+        const errorMessages = (error as any).errors.map((e: any) => e.message).join(', ');
+        return res.status(400).json({ error: errorMessages });
+      }
       res.status(400).json({ error: error.message });
     }
   }

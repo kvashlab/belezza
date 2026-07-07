@@ -15,6 +15,7 @@ export default function EquipePage() {
   
   const { addToast } = useUIStore();
   const { user } = useAuthStore();
+  const isPremium = (user as any)?.professionalProfile?.plan === 'PREMIUM';
 
   const fetchTeam = async () => {
     try {
@@ -34,6 +35,10 @@ export default function EquipePage() {
 
   const handleAddMember = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isPremium) {
+      addToast({ type: 'error', title: 'Plano Premium', message: 'Faça o upgrade para adicionar membros.' });
+      return;
+    }
     try {
       await createTeamMember(newMember);
       addToast({ type: 'success', title: 'Sucesso', message: 'Membro adicionado!' });
@@ -69,7 +74,10 @@ export default function EquipePage() {
           <p className="text-gray-500">Gerencie os profissionais do seu salão.</p>
         </div>
         {!isAdding && (
-          <Button onClick={() => setIsAdding(true)}>
+          <Button onClick={() => {
+            if (isPremium) setIsAdding(true);
+            else addToast({ type: 'error', title: 'Acesso Negado', message: 'Exclusivo para assinantes Premium.' });
+          }}>
             <Plus className="w-4 h-4 mr-2" />
             Adicionar Membro
           </Button>

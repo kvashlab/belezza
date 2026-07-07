@@ -95,4 +95,36 @@ export class AuthService {
 
     return { user: { id: user.id, email: user.email, name: user.name, role: user.role }, token };
   }
+
+  async syncUser(data: any) {
+    const { id, email, name, phone, role } = data;
+
+    let user = await prisma.user.findUnique({ where: { email } });
+
+    if (!user) {
+      user = await prisma.user.create({
+        data: {
+          id, // use the same ID as Supabase auth.users
+          email,
+          password: 'supabase_auth', // Placeholder
+          name,
+          phone,
+          role: role || 'CLIENT',
+        },
+      });
+
+      if (user.role === 'CLIENT') {
+        await prisma.clientProfile.create({ data: { userId: user.id } });
+      } else if (user.role === 'PROFESSIONAL') {
+        await prisma.professionalProfile.create({
+          data: {
+            userId: user.id,
+            username: `pro_${user.id.substring(0, 6)}`,
+          },
+        });
+      }
+    }
+
+    return { user: { id: user.id, email: user.email, name: user.name, role: user.role } };
+  }
 }

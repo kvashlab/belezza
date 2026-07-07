@@ -20,14 +20,16 @@ export default function AuthLayout({
         flex: '1 1 50%', 
         position: 'relative', 
         display: 'none', 
-        background: 'linear-gradient(135deg, #4f46e5 0%, #a855f7 50%, #ec4899 100%)', // Vibrant gradient mesh
+        backgroundColor: 'var(--color-neutral-900)',
+        backgroundImage: 'url(https://images.unsplash.com/photo-1522337660859-02fbefca4702?q=80&w=1200&auto=format&fit=crop)',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
         color: 'white',
         overflow: 'hidden'
       }}>
-        {/* Decorative abstract elements */}
-        <div style={{ position: 'absolute', top: '-10%', left: '-5%', width: '40vw', height: '40vw', background: 'radial-gradient(circle, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0) 70%)', borderRadius: '50%' }}></div>
-        <div style={{ position: 'absolute', bottom: '-15%', right: '-10%', width: '50vw', height: '50vw', background: 'radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%)', borderRadius: '50%' }}></div>
-        
+        {/* Premium Dark Gradient Overlay */}
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.8) 100%)' }}></div>
+
         {/* Professional Structure - Padding and Flex */}
         <div style={{ 
           position: 'relative', 
@@ -47,34 +49,33 @@ export default function AuthLayout({
              </svg>
           </div>
           
-          <div style={{ maxWidth: '480px' }}>
+          <div style={{ maxWidth: '500px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
             <p style={{ 
               fontWeight: 600, 
-              fontSize: '13px', 
+              fontSize: '12px', 
               textTransform: 'uppercase',
               letterSpacing: '1.5px',
-              marginBottom: '16px', 
-              opacity: 0.8 
+              color: 'var(--color-primary-300)'
             }}>
-              Para Gestão Premium
+              Belezza Para Profissionais
             </p>
             <h2 style={{ 
               fontFamily: 'var(--font-family-display)', 
-              fontSize: '40px', 
+              fontSize: '36px', 
               fontWeight: 700, 
-              lineHeight: 1.1, 
-              margin: '0 0 16px 0', 
+              lineHeight: 1.2, 
+              margin: 0, 
               letterSpacing: '-1px' 
             }}>
-              Seu hub pessoal para clareza e produtividade
+              Sua agenda inteligente, integrada e desenhada para conversão.
             </h2>
             <p style={{
               fontSize: '16px',
-              lineHeight: 1.5,
-              opacity: 0.9,
+              lineHeight: 1.6,
+              opacity: 0.8,
               margin: 0
             }}>
-              Gerencie seus agendamentos e clientes de forma inteligente e integrada, sem perder o foco na beleza.
+              Junte-se aos profissionais que estão escalando seus negócios e oferecendo experiências premium para seus clientes.
             </p>
           </div>
         </div>

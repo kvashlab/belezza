@@ -48,11 +48,11 @@
   --font-family-display: var(--font-jakarta);
   --font-family-base: var(--font-jakarta);
 
-  /* Sombras */
-  --shadow-sm: 0 1px 3px rgba(34,29,24,0.06);
-  --shadow-md: 0 6px 16px rgba(34,29,24,0.08);
-  --shadow-lg: 0 12px 40px rgba(34,29,24,0.14);
-  --shadow-focus: 0 0 0 3px rgba(212,72,122,0.25);
+  /* Sombras (Estilo Premium/SaaS - ex: Stripe/Vercel) */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.02);
+  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.08), 0 2px 6px rgba(0, 0, 0, 0.03);
+  --shadow-focus: 0 0 0 3px rgba(212, 72, 122, 0.2);
 
   /* Border Radius */
   --radius-sm: 8px;
@@ -71,6 +71,9 @@
   --spacing-10: 40px;
   --spacing-12: 48px;
   --spacing-16: 64px;
+  --spacing-20: 80px;
+  --spacing-24: 96px;
+  --spacing-32: 128px;
 
   /* Transições Globais */
   --transition-normal: 300ms ease-in-out;
