@@ -88,10 +88,10 @@ export default function ServicosProfissional() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--spacing-6)' }}>
         <h1 className="heading-2 title" style={{ marginBottom: 0 }}>Meus Serviços</h1>
         <Button 
-          variant="primary" 
+          variant="primary"
+          leftIcon={<Plus size={18} />}
           onClick={() => { setEditingService(null); setIsModalOpen(true); }}
         >
-          <Plus size={18} style={{ marginRight: 8 }} />
           Novo Serviço
         </Button>
       </div>
@@ -136,39 +136,45 @@ export default function ServicosProfissional() {
       </div>
 
       {isModalOpen && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-          <div style={{ background: 'var(--bg-card)', padding: 'var(--spacing-6)', borderRadius: 'var(--radius-xl)', width: '100%', maxWidth: '500px' }}>
-            <h2 style={{ marginBottom: 'var(--spacing-4)' }}>{editingService ? 'Editar Serviço' : 'Novo Serviço'}</h2>
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 9999, display: 'flex',
+          alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)'
+        }}>
+          <div style={{
+            backgroundColor: 'var(--surface-card)', padding: '32px', borderRadius: '16px',
+            width: '90%', maxWidth: '500px', position: 'relative', boxShadow: '0 10px 25px rgba(0,0,0,0.1)'
+          }}>
+            <button onClick={() => setIsModalOpen(false)} style={{ position: 'absolute', top: '16px', right: '16px', background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer', color: 'var(--color-neutral-400)' }}>&times;</button>
+            <h2 style={{ fontSize: '20px', fontWeight: 600, marginBottom: '24px', color: 'var(--color-neutral-900)' }}>{editingService ? 'Editar Serviço' : 'Novo Serviço'}</h2>
             
-            <form onSubmit={handleSubmit}>
-              <div className={styles.formGridFull}>
-                <div className={styles.inputGroup}>
-                  <label className={styles.label}>Nome do Serviço</label>
-                  <input required name="name" type="text" className={styles.input} defaultValue={editingService?.name || ''} placeholder="Ex: Corte Degrade" />
+            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div>
+                <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 500, color: 'var(--color-neutral-700)' }}>Nome do Serviço</label>
+                <input required name="name" type="text" defaultValue={editingService?.name || ''} placeholder="Ex: Corte Degrade" style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--surface-border)', outline: 'none' }} />
+              </div>
+              <div>
+                <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 500, color: 'var(--color-neutral-700)' }}>Categoria</label>
+                <input required name="category" type="text" defaultValue={editingService?.category || ''} placeholder="Ex: Cabelo" style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--surface-border)', outline: 'none' }} />
+              </div>
+              <div>
+                <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 500, color: 'var(--color-neutral-700)' }}>Descrição (Opcional)</label>
+                <textarea name="description" defaultValue={editingService?.description || ''} placeholder="Detalhes do serviço..." style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--surface-border)', outline: 'none', minHeight: '80px', resize: 'vertical' }} />
+              </div>
+              <div style={{ display: 'flex', gap: '16px' }}>
+                <div style={{ flex: 1 }}>
+                  <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 500, color: 'var(--color-neutral-700)' }}>Preço (R$)</label>
+                  <input required name="price" type="number" step="0.01" defaultValue={editingService?.price || ''} placeholder="0.00" style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--surface-border)', outline: 'none' }} />
                 </div>
-                <div className={styles.inputGroup}>
-                  <label className={styles.label}>Categoria</label>
-                  <input required name="category" type="text" className={styles.input} defaultValue={editingService?.category || ''} placeholder="Ex: Cabelo" />
-                </div>
-                <div className={styles.inputGroup}>
-                  <label className={styles.label}>Descrição (Opcional)</label>
-                  <textarea name="description" className={styles.textarea} defaultValue={editingService?.description || ''} placeholder="Detalhes do serviço..." />
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                  <div className={styles.inputGroup}>
-                    <label className={styles.label}>Preço (R$)</label>
-                    <input required name="price" type="number" step="0.01" className={styles.input} defaultValue={editingService?.price || ''} placeholder="0.00" />
-                  </div>
-                  <div className={styles.inputGroup}>
-                    <label className={styles.label}>Duração (Minutos)</label>
-                    <input required name="duration" type="number" className={styles.input} defaultValue={editingService?.duration || ''} placeholder="60" />
-                  </div>
+                <div style={{ flex: 1 }}>
+                  <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 500, color: 'var(--color-neutral-700)' }}>Duração (Min)</label>
+                  <input required name="duration" type="number" defaultValue={editingService?.duration || ''} placeholder="60" style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--surface-border)', outline: 'none' }} />
                 </div>
               </div>
 
-              <div style={{ display: 'flex', gap: '12px', marginTop: 'var(--spacing-6)', justifyContent: 'flex-end' }}>
+              <div style={{ display: 'flex', gap: '12px', marginTop: '16px', justifyContent: 'flex-end' }}>
                 <Button variant="secondary" type="button" onClick={() => setIsModalOpen(false)}>Cancelar</Button>
-                <Button variant="primary" type="submit" isLoading={isSaving}>Salvar</Button>
+                <Button variant="primary" type="submit" isLoading={isSaving}>Salvar Serviço</Button>
               </div>
             </form>
           </div>

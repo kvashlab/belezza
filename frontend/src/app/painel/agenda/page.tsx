@@ -24,12 +24,24 @@ export default function AgendaPage() {
   const [modalClientName, setModalClientName] = useState('');
   const [modalServiceId, setModalServiceId] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const [saveAsClient, setSaveAsClient] = useState(false);
+  const [clientsList, setClientsList] = useState<any[]>([]);
 
   const formattedDate = format(currentDate, "EEEE, d 'de' MMMM", { locale: ptBR });
 
   useEffect(() => {
     fetchAppointments();
+    fetchClients();
   }, [currentDate]);
+
+  const fetchClients = async () => {
+    try {
+      const response = await api.get('/professionals/clients');
+      setClientsList(response.data);
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
   const fetchAppointments = async () => {
     setIsLoading(true);
@@ -78,10 +90,20 @@ export default function AgendaPage() {
         dateTime,
         clientName: modalClientName
       });
+
+      if (saveAsClient) {
+        try {
+          await api.post('/professionals/customers', { name: modalClientName });
+          fetchClients();
+        } catch (e) {
+          console.error("Falha ao salvar cliente", e);
+        }
+      }
       
       addToast({ type: 'success', title: 'Sucesso', message: 'Agendamento criado!' });
       setIsModalOpen(false);
       setModalClientName('');
+      setSaveAsClient(false);
       fetchAppointments();
     } catch (error: any) {
       addToast({ type: 'error', title: 'Erro', message: error.response?.data?.error || 'Falha ao criar agendamento' });
@@ -148,7 +170,8 @@ export default function AgendaPage() {
   };
 
   return (
-    <div style={{ display: 'flex', gap: 'var(--spacing-6)' }}>
+    <>
+      <div style={{ display: 'flex', gap: 'var(--spacing-6)' }}>
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 'var(--spacing-6)' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 'var(--spacing-4)' }}>
         <div>
@@ -303,12 +326,31 @@ export default function AgendaPage() {
                 <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 500, color: 'var(--color-neutral-700)' }}>Nome do Cliente</label>
                 <input 
                   type="text" 
+                  list="clients-list"
                   value={modalClientName}
                   onChange={e => setModalClientName(e.target.value)}
                   placeholder="Ex: Maria Silva"
                   required
                   style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--surface-border)', outline: 'none' }}
                 />
+                <datalist id="clients-list">
+                  {clientsList.map((c, i) => (
+                    <option key={c.id || i} value={c.name} />
+                  ))}
+                </datalist>
+
+                <div style={{ marginTop: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <input 
+                    type="checkbox" 
+                    id="saveAsClient"
+                    checked={saveAsClient}
+                    onChange={(e) => setSaveAsClient(e.target.checked)}
+                    style={{ width: '16px', height: '16px', cursor: 'pointer' }}
+                  />
+                  <label htmlFor="saveAsClient" style={{ fontSize: '13px', color: 'var(--color-neutral-600)', cursor: 'pointer' }}>
+                    Salvar na minha lista de clientes
+                  </label>
+                </div>
               </div>
               <div>
                 <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 500, color: 'var(--color-neutral-700)' }}>Serviço</label>
@@ -338,5 +380,6 @@ export default function AgendaPage() {
           </div>
         </div>
       )}
-    </div>
+    </>
+  );
 }

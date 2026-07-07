@@ -108,6 +108,8 @@ export default function PortfolioPage() {
     }
   };
 
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-6)' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 'var(--spacing-4)' }}>
@@ -121,17 +123,20 @@ export default function PortfolioPage() {
         <div>
           <input 
             type="file" 
-            id="photo-upload" 
+            ref={fileInputRef}
             accept="image/*" 
             style={{ display: 'none' }} 
             onChange={handleUpload}
             disabled={isUploading}
           />
-          <label htmlFor="photo-upload">
-            <Button variant="primary" leftIcon={isUploading ? <AlertCircle size={18} /> : <Plus size={18} />}>
-              {isUploading ? 'Enviando...' : 'Adicionar Foto'}
-            </Button>
-          </label>
+          <Button 
+            variant="primary" 
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isUploading}
+            leftIcon={isUploading ? <AlertCircle size={18} /> : <Plus size={18} />}
+          >
+            {isUploading ? 'Enviando...' : 'Adicionar Foto'}
+          </Button>
         </div>
       </div>
 

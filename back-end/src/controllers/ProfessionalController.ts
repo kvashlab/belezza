@@ -178,16 +178,21 @@ export class ProfessionalController {
     }
   }
 
+  async createCustomer(req: AuthRequest, res: Response) {
+    try {
+      if (req.user?.role !== 'PROFESSIONAL') return res.status(403).json({ error: 'Acesso negado.' });
+      const customer = await professionalService.createCustomer(req.user.id, req.body);
+      res.status(201).json(customer);
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  }
+
   async getFinances(req: AuthRequest, res: Response) {
     try {
       if (req.user?.role !== 'PROFESSIONAL') return res.status(403).json({ error: 'Acesso negado.' });
-      // In a real app we'd aggregate finance data. Let's return basic data or metrics for now.
-      const metrics = await professionalService.getDashboardMetrics(req.user.id);
-      res.json({
-        totalRevenue: metrics.revenueToday * 30, // Mock for now
-        monthlyRevenue: metrics.revenueToday * 30,
-        transactions: []
-      });
+      const finances = await professionalService.getFinances(req.user.id);
+      res.json(finances);
     } catch (error: any) {
       res.status(400).json({ error: error.message });
     }

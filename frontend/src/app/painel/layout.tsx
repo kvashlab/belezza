@@ -41,7 +41,7 @@ export default function PainelLayout({
                 <Menu size={24} color="var(--color-neutral-700)" />
               </button>
               <span style={{ fontWeight: 600, color: 'var(--color-neutral-900)' }} className="lg-hidden-text">
-                Olá, {user?.name?.split(' ')[0] || 'Profissional'}
+                Olá, {((user as any)?.professionalProfile?.businessName || user?.name)?.split(' ')[0] || 'Profissional'}
               </span>
             </div>
             <button aria-label="Notificações">

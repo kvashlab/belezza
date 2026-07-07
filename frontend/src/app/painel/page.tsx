@@ -14,9 +14,14 @@ export default function PainelDashboard() {
   const [metricsData, setMetricsData] = useState<any>(null);
   const [profileData, setProfileData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [showPremiumPopup, setShowPremiumPopup] = useState(true); // Control popup visibility
+  const [showPremiumPopup, setShowPremiumPopup] = useState(false); // Initially false, evaluated in useEffect
   
   useEffect(() => {
+    // Check session storage so it only shows once per login session
+    if (!sessionStorage.getItem('@belezza:premiumPopupShown')) {
+      setShowPremiumPopup(true);
+    }
+
     async function fetchDashboardData() {
       try {
         const [metricsResponse, profileResponse] = await Promise.all([
@@ -34,14 +39,19 @@ export default function PainelDashboard() {
     fetchDashboardData();
   }, []);
 
+  const handleClosePopup = () => {
+    setShowPremiumPopup(false);
+    sessionStorage.setItem('@belezza:premiumPopupShown', 'true');
+  };
+
   const upcomingAppointments = metricsData?.upcomingAppointments || [];
   const chartData = metricsData?.chartData || [];
 
   const metrics = [
     { title: 'Agendamentos Hoje', value: isLoading ? '-' : (metricsData?.todaysAppointmentsCount || '0'), icon: Calendar, color: 'var(--color-info)' },
     { title: 'Faturamento (Hoje)', value: isLoading ? '-' : `R$ ${(metricsData?.revenueToday || 0).toFixed(2)}`, icon: DollarSign, color: 'var(--color-success)' },
-    { title: 'Nota Média', value: '4.8', icon: Star, color: 'var(--color-gold-500)' },
-    { title: 'Novos Clientes', value: '12', icon: Users, color: 'var(--color-primary-500)' },
+    { title: 'Nota Média', value: isLoading ? '-' : (metricsData?.averageRating || '5.0'), icon: Star, color: 'var(--color-gold-500)' },
+    { title: 'Novos Clientes', value: isLoading ? '-' : (metricsData?.newClients || '0'), icon: Users, color: 'var(--color-primary-500)' },
   ];
 
   return (
@@ -69,7 +79,7 @@ export default function PainelDashboard() {
             position: 'relative'
           }}>
             <button 
-              onClick={() => setShowPremiumPopup(false)}
+              onClick={handleClosePopup}
               style={{
                 position: 'absolute', top: '16px', right: '16px',
                 background: 'none', border: 'none', cursor: 'pointer',
@@ -96,7 +106,7 @@ export default function PainelDashboard() {
               Ativar Plano Premium (14 dias grátis)
             </Button>
             <button 
-              onClick={() => setShowPremiumPopup(false)}
+              onClick={handleClosePopup}
               style={{
                 background: 'none', border: 'none', cursor: 'pointer',
                 marginTop: '16px', color: 'var(--color-neutral-500)', fontWeight: 500, fontSize: '14px'
@@ -110,10 +120,12 @@ export default function PainelDashboard() {
 
       <header className={styles.header}>
         <div>
-          <h1 className="heading-1 title">Olá, {user?.name?.split(' ')[0] || 'Profissional'} 👋</h1>
+          <h1 className="heading-1 title">Olá, {((user as any)?.professionalProfile?.businessName || user?.name)?.split(' ')[0] || 'Profissional'} ✨</h1>
           <p className={styles.subtitle}>Aqui está o resumo do seu negócio hoje.</p>
         </div>
-        <Button variant="primary" leftIcon={<Plus size={18} />}>Novo Agendamento</Button>
+        <Link href="/painel/agenda">
+          <Button variant="primary" leftIcon={<Plus size={18} />}>Novo Agendamento</Button>
+        </Link>
       </header>
 
       <div className={styles.metricsGrid}>
@@ -156,7 +168,7 @@ export default function PainelDashboard() {
                 <div key={i} className={styles.agendaItem}>
                   <span className={styles.agendaTime}>{format(new Date(appt.date), 'dd/MM HH:mm')}</span>
                   <div className={styles.agendaInfo}>
-                    <span className={styles.clientName}>{appt.client?.user?.name || 'Cliente'}</span>
+                    <span className={styles.clientName}>{appt.client?.user?.name || appt.clientName || 'Cliente Manual'}</span>
                     <span className={styles.serviceName}>{appt.service?.name}</span>
                   </div>
                   <div 

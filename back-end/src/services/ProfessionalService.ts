@@ -144,6 +144,16 @@ export class ProfessionalService {
   }
 
   // --- DASHBOARD METRICS ---
+  async createCustomer(userId: string, data: any) {
+    const profileId = await this.getProfileIdByUserId(userId);
+    return prisma.customer.create({
+      data: {
+        ...data,
+        professionalId: profileId
+      }
+    });
+  }
+
   async getClients(userId: string) {
     const profileId = await this.getProfileIdByUserId(userId);
     
@@ -156,20 +166,41 @@ export class ProfessionalService {
 
     const clientsMap = new Map();
     appointments.forEach(a => {
-      if (!clientsMap.has(a.clientId)) {
-        clientsMap.set(a.clientId, {
-          id: a.client.id,
-          name: a.client.user?.name || 'Cliente',
-          email: a.client.user?.email || '',
-          phone: a.client.user?.phone || '(00) 00000-0000',
-          avatar: a.client.avatar || '',
-          lastVisit: a.date,
-          totalSpent: 0
-        });
+      if (a.clientId) {
+        if (!clientsMap.has(a.clientId)) {
+          clientsMap.set(a.clientId, {
+            id: a.client.id,
+            name: a.client.user?.name || 'Cliente',
+            email: a.client.user?.email || '',
+            phone: a.client.user?.phone || '(00) 00000-0000',
+            avatar: a.client.avatar || '',
+            lastVisit: a.date,
+            totalSpent: 0
+          });
+        }
+        const clientStats = clientsMap.get(a.clientId);
+        if (a.status === 'COMPLETED' || a.status === 'CONFIRMED') {
+          clientStats.totalSpent += a.price;
+        }
       }
-      const clientStats = clientsMap.get(a.clientId);
-      if (a.status === 'COMPLETED' || a.status === 'CONFIRMED') {
-        clientStats.totalSpent += a.price;
+    });
+
+    const manualCustomers = await prisma.customer.findMany({
+      where: { professionalId: profileId }
+    });
+
+    manualCustomers.forEach(c => {
+      if (!clientsMap.has(c.id)) {
+        clientsMap.set(c.id, {
+          id: c.id,
+          name: c.name,
+          email: c.email || '',
+          phone: c.phone || '',
+          avatar: '',
+          lastVisit: c.createdAt, // Just to show some date
+          totalSpent: 0,
+          isManual: true
+        });
       }
     });
 
@@ -181,6 +212,12 @@ export class ProfessionalService {
     
     const today = new Date();
     today.setHours(0, 0, 0, 0);
+
+    const thirtyDaysAgo = new Date(today);
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    const sevenDaysAgo = new Date(today);
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
 
     const appointments = await prisma.appointment.findMany({
       where: { professionalId: profileId },
@@ -197,16 +234,47 @@ export class ProfessionalService {
       .filter(a => a.status === 'COMPLETED' || a.status === 'CONFIRMED')
       .reduce((acc, curr) => acc + curr.price, 0);
 
-    // Mock chart data for now, or calculate based on past 7 days
-    const chartData = [
-      { label: 'Seg', value: 150 },
-      { label: 'Ter', value: 300 },
-      { label: 'Qua', value: 450 },
-      { label: 'Qui', value: 200 },
-      { label: 'Sex', value: 800 },
-      { label: 'Sáb', value: 1200 },
-      { label: 'Dom', value: 0 },
-    ];
+    // Chart Data (Last 7 Days Revenue)
+    const chartData = [];
+    const daysOfWeek = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+    for (let i = 0; i <= 6; i++) {
+      const d = new Date(sevenDaysAgo);
+      d.setDate(d.getDate() + i);
+      const label = daysOfWeek[d.getDay()];
+      
+      const dayRevenue = appointments
+        .filter(a => {
+          const aDate = new Date(a.date);
+          aDate.setHours(0,0,0,0);
+          return aDate.getTime() === d.getTime() && (a.status === 'COMPLETED' || a.status === 'CONFIRMED');
+        })
+        .reduce((acc, curr) => acc + curr.price, 0);
+
+      chartData.push({ label, value: dayRevenue });
+    }
+
+    // New Clients (Unique clients in the last 30 days)
+    const recentAppointments = appointments.filter(a => {
+      return new Date(a.date) >= thirtyDaysAgo && new Date(a.date) <= new Date(today.getTime() + 86400000);
+    });
+    
+    const uniqueRecentClients = new Set();
+    recentAppointments.forEach(a => {
+      if (a.clientId) uniqueRecentClients.add(a.clientId);
+      else if (a.clientName) uniqueRecentClients.add(a.clientName);
+    });
+    const newClients = uniqueRecentClients.size;
+
+    // Average Rating
+    const reviews = await prisma.review.findMany({
+      where: { professionalId: profileId }
+    });
+    
+    let averageRating = 0;
+    if (reviews.length > 0) {
+      const totalRating = reviews.reduce((acc, curr) => acc + curr.rating, 0);
+      averageRating = Number((totalRating / reviews.length).toFixed(1));
+    }
 
     return {
       todaysAppointmentsCount: todaysAppointments.length,
@@ -215,7 +283,53 @@ export class ProfessionalService {
         .filter(a => new Date(a.date) >= today && a.status !== 'CANCELLED')
         .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
         .slice(0, 4),
-      chartData
+      chartData,
+      newClients,
+      averageRating
+    };
+  }
+
+  // --- FINANCES ---
+  async getFinances(userId: string) {
+    const profileId = await this.getProfileIdByUserId(userId);
+
+    const appointments = await prisma.appointment.findMany({
+      where: { professionalId: profileId, status: { not: 'CANCELLED' } },
+      include: { client: { include: { user: true } }, service: true },
+      orderBy: { date: 'desc' }
+    });
+
+    let totalRevenue = 0;
+    let pendingRevenue = 0;
+    const transactions: any[] = [];
+
+    appointments.forEach(a => {
+      const clientName = a.clientName || a.client?.user?.name || 'Cliente';
+      const serviceName = a.service?.name || 'Serviço';
+      
+      let statusStr = 'Pendente';
+      
+      if (a.status === 'COMPLETED') {
+        totalRevenue += a.price;
+        statusStr = 'Recebido';
+      } else if (a.status === 'CONFIRMED' || a.status === 'PENDING') {
+        pendingRevenue += a.price;
+      }
+
+      transactions.push({
+        id: a.id,
+        date: a.date,
+        client: clientName,
+        service: serviceName,
+        status: statusStr,
+        amount: a.price
+      });
+    });
+
+    return {
+      totalRevenue,
+      pendingRevenue,
+      transactions
     };
   }
 

@@ -17,17 +17,18 @@ export default function PerfilProfissional() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
-  useEffect(() => {
-    async function loadProfile() {
-      try {
-        const response = await api.get('/professionals/me');
-        setProfileData(response.data);
-      } catch (e) {
-        console.error(e);
-      } finally {
-        setIsLoading(false);
-      }
+  const loadProfile = async () => {
+    try {
+      const response = await api.get('/professionals/me');
+      setProfileData(response.data);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsLoading(false);
     }
+  };
+
+  useEffect(() => {
     if ((user as any)?.role === 'professional') {
       loadProfile();
     } else {
@@ -41,13 +42,28 @@ export default function PerfilProfissional() {
     const form = e.target as HTMLFormElement;
     
     try {
-      await api.put('/professionals/me', {
-        businessName: (form.elements.namedItem('businessName') as HTMLInputElement).value,
-        bio: (form.elements.namedItem('bio') as HTMLTextAreaElement).value,
-        categories: (form.elements.namedItem('categories') as HTMLInputElement).value,
+      const formData = new FormData();
+      formData.append('businessName', (form.elements.namedItem('businessName') as HTMLInputElement).value);
+      formData.append('bio', (form.elements.namedItem('bio') as HTMLTextAreaElement).value);
+      formData.append('categories', (form.elements.namedItem('categories') as HTMLInputElement).value);
+      
+      const avatarInput = form.elements.namedItem('avatar') as HTMLInputElement;
+      if (avatarInput && avatarInput.files && avatarInput.files[0]) {
+        formData.append('avatar', avatarInput.files[0]);
+      }
+
+      const coverInput = form.elements.namedItem('coverImage') as HTMLInputElement;
+      if (coverInput && coverInput.files && coverInput.files[0]) {
+        formData.append('coverImage', coverInput.files[0]);
+      }
+
+      await api.put('/professionals/me', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
       });
 
       addToast({ type: 'success', title: 'Perfil atualizado com sucesso!' });
+      await loadProfile();
+      await useAuthStore.getState().fetchMe();
     } catch {
       addToast({ type: 'error', title: 'Falha ao atualizar o perfil' });
     } finally {
@@ -71,6 +87,8 @@ export default function PerfilProfissional() {
       });
 
       addToast({ type: 'success', title: 'Contato atualizado com sucesso!' });
+      await loadProfile();
+      await useAuthStore.getState().fetchMe();
     } catch {
       addToast({ type: 'error', title: 'Falha ao atualizar contato' });
     } finally {
@@ -141,15 +159,17 @@ export default function PerfilProfissional() {
             <form onSubmit={handleUpdateAparencia}>
               <h2 className={styles.sectionTitle}>Aparência da Página</h2>
               
-              <div className={styles.coverUpload}>
+              <label className={styles.coverUpload} style={{ cursor: 'pointer' }}>
+                <input type="file" name="coverImage" accept="image/*" style={{ display: 'none' }} />
                 <ImageIcon size={32} />
                 <span>Clique para alterar a foto de capa</span>
                 <span style={{ fontSize: '12px' }}>Tamanho recomendado: 1200x400px</span>
-              </div>
+              </label>
               
-              <div className={styles.avatarUpload} title="Alterar foto de perfil">
+              <label className={styles.avatarUpload} title="Alterar foto de perfil" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <input type="file" name="avatar" accept="image/*" style={{ display: 'none' }} />
                 <Camera size={28} />
-              </div>
+              </label>
 
               <div className={styles.formGridFull} style={{ marginTop: 'var(--spacing-6)' }}>
                 <div className={styles.inputGroup}>

@@ -86,10 +86,14 @@ export const ProSidebar: React.FC<ProSidebarProps> = ({ isOpen, onClose }) => {
         <div className={styles.footer}>
           <div className={styles.profileSection}>
             <div className={styles.avatar}>
-              {user?.name?.charAt(0) || 'P'}
+              {(user as any)?.professionalProfile?.avatar ? (
+                <img src={(user as any).professionalProfile.avatar} alt="Profile" />
+              ) : (
+                (user as any)?.professionalProfile?.businessName?.charAt(0) || user?.name?.charAt(0) || 'P'
+              )}
             </div>
             <div className={styles.userInfo}>
-              <span className={styles.userName}>{user?.name || 'Profissional'}</span>
+              <span className={styles.userName}>{(user as any)?.professionalProfile?.businessName || user?.name || 'Profissional'}</span>
               <span className={styles.userRole}>
                 {(user as any)?.professionalProfile?.plan === 'PREMIUM' ? 'Plano Premium' : 'Plano Básico'}
               </span>
