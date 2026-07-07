@@ -69,7 +69,7 @@ export class AppointmentService {
     return slots;
   }
 
-  async createAppointment(clientId: string, professionalId: string, serviceId: string, dateTime: string, notes?: string, teamMemberId?: string) {
+  async createAppointment(clientId: string | undefined, professionalId: string, serviceId: string, dateTime: string, notes?: string, teamMemberId?: string, clientName?: string) {
     const service = await prisma.service.findUnique({ where: { id: serviceId } });
     if (!service) throw new Error('Serviço não encontrado');
 
@@ -92,11 +92,11 @@ export class AppointmentService {
       }
     }
 
-    // In a real app, we should verify again if the slot is still available right before saving
-    // For simplicity, we just create it here.
+    // Create the appointment
     const appointment = await prisma.appointment.create({
       data: {
-        clientId,
+        clientId: clientId || null,
+        clientName: clientName || null,
         professionalId,
         serviceId,
         teamMemberId: teamMemberId || null,
@@ -108,14 +108,16 @@ export class AppointmentService {
     });
 
     try {
-      const clientProfile = await prisma.clientProfile.findUnique({ where: { id: clientId }, include: { user: true } });
-      if (professional && clientProfile) {
-        await notificationService.sendNotification(
-          professional.userId,
-          'Novo Agendamento!',
-          `${clientProfile.user.name} agendou ${service.name} para ${format(new Date(dateTime), 'dd/MM/yyyy às HH:mm')}.`,
-          'APPOINTMENT'
-        );
+      if (clientId && professional) {
+        const clientProfile = await prisma.clientProfile.findUnique({ where: { id: clientId }, include: { user: true } });
+        if (clientProfile) {
+          await notificationService.sendNotification(
+            professional.userId,
+            'Novo Agendamento!',
+            `${clientProfile.user.name} agendou ${service.name} para ${format(new Date(dateTime), 'dd/MM/yyyy às HH:mm')}.`,
+            'APPOINTMENT'
+          );
+        }
       }
     } catch (e) {
       console.error('Falha ao enviar notificação de agendamento', e);

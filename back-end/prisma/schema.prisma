@@ -116,8 +116,9 @@ model PortfolioPhoto {
 
 model Appointment {
   id             String              @id @default(uuid())
-  clientId       String
-  client         ClientProfile       @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  clientId       String?
+  client         ClientProfile?      @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  clientName     String?             // For manual appointments created by professional
   professionalId String
   professional   ProfessionalProfile @relation(fields: [professionalId], references: [id], onDelete: Cascade)
   teamMemberId   String?

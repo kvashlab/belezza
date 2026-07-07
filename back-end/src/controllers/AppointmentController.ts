@@ -11,6 +11,7 @@ const createAppointmentSchema = z.object({
   dateTime: z.string(), // ISO string
   notes: z.string().optional(),
   teamMemberId: z.string().uuid().optional(),
+  clientName: z.string().optional(),
 });
 
 export class AppointmentController {
@@ -37,26 +38,43 @@ export class AppointmentController {
 
   async createAppointment(req: AuthRequest, res: Response) {
     try {
-      if (req.user?.role !== 'CLIENT') {
-        return res.status(403).json({ error: 'Apenas clientes podem criar agendamentos.' });
-      }
-      
-      // Need clientProfileId
       const { prisma } = require('../config/prisma');
-      const clientProfile = await prisma.clientProfile.findUnique({
-        where: { userId: req.user.id }
-      });
-      if (!clientProfile) return res.status(400).json({ error: 'Perfil de cliente não encontrado.' });
-
       const data = createAppointmentSchema.parse(req.body);
       
+      let clientId: string | undefined = undefined;
+
+      if (req.user?.role === 'CLIENT') {
+        const clientProfile = await prisma.clientProfile.findUnique({
+          where: { userId: req.user.id }
+        });
+        if (!clientProfile) return res.status(400).json({ error: 'Perfil de cliente não encontrado.' });
+        clientId = clientProfile.id;
+      } else if (req.user?.role === 'PROFESSIONAL') {
+        const professionalProfile = await prisma.professionalProfile.findUnique({
+          where: { userId: req.user.id }
+        });
+        if (!professionalProfile) return res.status(400).json({ error: 'Perfil profissional não encontrado.' });
+        
+        // Ensure the professional is scheduling for themselves
+        if (professionalProfile.id !== data.professionalId) {
+          return res.status(403).json({ error: 'Você só pode criar agendamentos para sua própria agenda.' });
+        }
+        
+        if (!data.clientName) {
+          return res.status(400).json({ error: 'Nome do cliente é obrigatório para agendamentos manuais.' });
+        }
+      } else {
+        return res.status(403).json({ error: 'Acesso negado.' });
+      }
+      
       const appointment = await appointmentService.createAppointment(
-        clientProfile.id,
+        clientId,
         data.professionalId,
         data.serviceId,
         data.dateTime,
         data.notes,
-        data.teamMemberId
+        data.teamMemberId,
+        data.clientName
       );
       
       res.status(201).json(appointment);

@@ -6,12 +6,24 @@ import { format, addDays, subDays, isSameDay, startOfDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useUIStore } from '@/stores/ui.store';
 import { api } from '@/lib/api';
+import { MiniCalendar } from '@/components/ui/MiniCalendar';
+import { useAuthStore } from '@/stores/auth.store';
 
 export default function AgendaPage() {
+  const { user } = useAuthStore();
+  const professionalId = (user as any)?.professionalProfile?.id;
   const [currentDate, setCurrentDate] = useState(startOfDay(new Date()));
   const [appointments, setAppointments] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { addToast } = useUIStore();
+  
+  // Modal state
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [services, setServices] = useState<any[]>([]);
+  const [modalTime, setModalTime] = useState<string>('09:00');
+  const [modalClientName, setModalClientName] = useState('');
+  const [modalServiceId, setModalServiceId] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
 
   const formattedDate = format(currentDate, "EEEE, d 'de' MMMM", { locale: ptBR });
 
@@ -28,6 +40,53 @@ export default function AgendaPage() {
       console.error(error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const fetchServices = async () => {
+    try {
+      const response = await api.get('/professionals/services');
+      setServices(response.data);
+      if (response.data.length > 0) {
+        setModalServiceId(response.data[0].id);
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const handleOpenModal = (time?: string) => {
+    if (time) setModalTime(time);
+    fetchServices();
+    setIsModalOpen(true);
+  };
+
+  const handleSaveAppointment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!professionalId || !modalServiceId || !modalClientName || !modalTime) {
+      return addToast({ type: 'error', title: 'Erro', message: 'Preencha todos os campos obrigatórios.' });
+    }
+    
+    setIsSaving(true);
+    try {
+      const dateStr = format(currentDate, 'yyyy-MM-dd');
+      const dateTime = `${dateStr}T${modalTime}:00`;
+      
+      await api.post('/appointments', {
+        professionalId,
+        serviceId: modalServiceId,
+        dateTime,
+        clientName: modalClientName
+      });
+      
+      addToast({ type: 'success', title: 'Sucesso', message: 'Agendamento criado!' });
+      setIsModalOpen(false);
+      setModalClientName('');
+      fetchAppointments();
+    } catch (error: any) {
+      addToast({ type: 'error', title: 'Erro', message: error.response?.data?.error || 'Falha ao criar agendamento' });
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -58,8 +117,8 @@ export default function AgendaPage() {
         slots.push({
           time: timeString,
           status: 'busy',
-          client: appt.client.user.name,
-          service: appt.service.name,
+          client: appt.client?.user?.name || appt.clientName || 'Manual',
+          service: appt.service?.name,
           type: appt.status.toLowerCase(), // pending, confirmed, cancelled, completed
           id: appt.id
         });
@@ -106,7 +165,7 @@ export default function AgendaPage() {
             </span>
             <button onClick={() => setCurrentDate(d => addDays(d, 1))} style={{ padding: 'var(--spacing-2)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', background: 'none', border: 'none' }}><ChevronRight size={20} /></button>
           </div>
-          <Button variant="primary" leftIcon={<Plus size={18} />}>Novo</Button>
+          <Button variant="primary" leftIcon={<Plus size={18} />} onClick={() => handleOpenModal()}>Novo</Button>
         </div>
       </div>
       
@@ -155,6 +214,7 @@ export default function AgendaPage() {
                     }}
                     onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--color-primary-300)'; e.currentTarget.style.color = 'var(--color-primary-600)'; }}
                     onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'transparent'; e.currentTarget.style.color = 'var(--color-neutral-400)'; }}
+                    onClick={() => handleOpenModal(slot.time)}
                     >
                       + Adicionar agendamento
                     </div>
@@ -193,8 +253,10 @@ export default function AgendaPage() {
       </div>
       </div>
 
-      {/* Waitlist Panel */}
+      {/* Waitlist & Calendar Panel */}
       <div style={{ width: '300px', display: 'flex', flexDirection: 'column', gap: 'var(--spacing-4)' }}>
+        <MiniCalendar value={currentDate} onChange={setCurrentDate} />
+        
         <div style={{ backgroundColor: 'var(--surface-card)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--surface-border)', padding: 'var(--spacing-4)' }}>
           <h3 style={{ fontSize: '16px', fontWeight: 600, marginBottom: 'var(--spacing-4)', display: 'flex', alignItems: 'center', gap: '8px' }}>
             Fila de Espera 
@@ -222,5 +284,59 @@ export default function AgendaPage() {
       </div>
 
     </div>
-  );
+    
+      {/* NOVO AGENDAMENTO MODAL */}
+      {isModalOpen && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 9999, display: 'flex',
+          alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)'
+        }}>
+          <div style={{
+            backgroundColor: 'var(--surface-card)', padding: '32px', borderRadius: '16px',
+            width: '90%', maxWidth: '400px', position: 'relative', boxShadow: '0 10px 25px rgba(0,0,0,0.1)'
+          }}>
+            <button onClick={() => setIsModalOpen(false)} style={{ position: 'absolute', top: '16px', right: '16px', background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer', color: 'var(--color-neutral-400)' }}>&times;</button>
+            <h2 style={{ fontSize: '20px', fontWeight: 600, marginBottom: '24px', color: 'var(--color-neutral-900)' }}>Novo Agendamento</h2>
+            <form onSubmit={handleSaveAppointment} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div>
+                <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 500, color: 'var(--color-neutral-700)' }}>Nome do Cliente</label>
+                <input 
+                  type="text" 
+                  value={modalClientName}
+                  onChange={e => setModalClientName(e.target.value)}
+                  placeholder="Ex: Maria Silva"
+                  required
+                  style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--surface-border)', outline: 'none' }}
+                />
+              </div>
+              <div>
+                <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 500, color: 'var(--color-neutral-700)' }}>Serviço</label>
+                <select 
+                  value={modalServiceId}
+                  onChange={e => setModalServiceId(e.target.value)}
+                  required
+                  style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--surface-border)', outline: 'none', backgroundColor: 'var(--surface-main)' }}
+                >
+                  {services.length === 0 && <option value="">Sem serviços cadastrados</option>}
+                  {services.map(s => <option key={s.id} value={s.id}>{s.name} - R$ {s.price}</option>)}
+                </select>
+              </div>
+              <div style={{ display: 'flex', gap: '16px' }}>
+                <div style={{ flex: 1 }}>
+                  <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 500, color: 'var(--color-neutral-700)' }}>Data</label>
+                  <input type="text" value={format(currentDate, 'dd/MM/yyyy')} disabled style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid var(--surface-border)', backgroundColor: 'var(--surface-main)', color: 'var(--color-neutral-500)' }} />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 500, color: 'var(--color-neutral-700)' }}>Horário</label>
+                  <input type="time" value={modalTime} onChange={e => setModalTime(e.target.value)} required style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid var(--surface-border)' }} />
+                </div>
+              </div>
+              
+              <Button type="submit" variant="primary" style={{ marginTop: '16px' }} isLoading={isSaving}>Salvar Agendamento</Button>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
 }
