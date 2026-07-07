@@ -35,4 +35,6 @@ router.delete('/portfolio/:id', (req, res) => controller.deletePortfolioPhoto(re
 
 router.get('/reviews', (req, res) => controller.getReviews(req, res));
 
+router.post('/upgrade', (req, res) => controller.upgradePlan(req, res));
+
 export default router;

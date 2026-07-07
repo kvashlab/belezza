@@ -2,12 +2,14 @@
 import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { useParams, useRouter } from 'next/navigation';
-import { MapPin, Star, Share2, Heart, Calendar } from 'lucide-react';
+import { MapPin, Star, Share2, Heart, Calendar, AlertTriangle, X } from 'lucide-react';
 import { Avatar } from '@/components/ui/Avatar';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
 import { Tabs } from '@/components/ui/Tabs';
 import { useUIStore } from '@/stores/ui.store';
+import { api } from '@/lib/api';
 import styles from './styles.module.css';
 
 export default function PublicProfile() {
@@ -21,6 +23,16 @@ export default function PublicProfile() {
   const [professional, setProfessional] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [activeStoryIndex, setActiveStoryIndex] = useState<number | null>(null);
+
+  // Report Modal states
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [isReporting, setIsReporting] = useState(false);
+  const [reportForm, setReportForm] = useState({
+    name: '',
+    email: '',
+    reason: '',
+    description: ''
+  });
 
   useEffect(() => {
     async function fetchProfessional() {
@@ -61,6 +73,27 @@ export default function PublicProfile() {
         text: professional.bio,
         url: window.location.href,
       });
+    }
+  };
+
+  const submitReport = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsReporting(true);
+    try {
+      await api.post('/reports', {
+        professionalId: professional.id,
+        reporterName: reportForm.name,
+        reporterEmail: reportForm.email,
+        reason: reportForm.reason,
+        description: reportForm.description
+      });
+      addToast({ type: 'success', title: 'Denúncia Enviada', message: 'Sua denúncia foi registrada e será analisada.' });
+      setIsReportModalOpen(false);
+      setReportForm({ name: '', email: '', reason: '', description: '' });
+    } catch (error: any) {
+      addToast({ type: 'error', title: 'Erro', message: error.response?.data?.error || 'Falha ao enviar denúncia' });
+    } finally {
+      setIsReporting(false);
     }
   };
 
@@ -169,6 +202,9 @@ export default function PublicProfile() {
             <button className={styles.actionBtn} onClick={handleShare}>
               <Share2 size={20} />
             </button>
+            <button className={styles.actionBtn} onClick={() => setIsReportModalOpen(true)} title="Denunciar">
+              <AlertTriangle size={20} color="var(--color-danger-500)" />
+            </button>
           </div>
         </div>
         
@@ -266,6 +302,79 @@ export default function PublicProfile() {
               className={styles.storyNextArea} 
               onClick={() => setActiveStoryIndex(prev => prev! < profPortfolio.length - 1 ? prev! + 1 : null)}
             />
+          </div>
+        </div>
+      )}
+
+      {/* Report Modal */}
+      {isReportModalOpen && (
+        <div className={styles.storiesViewer} style={{ zIndex: 1000 }}>
+          <div className={styles.storiesOverlay} onClick={() => setIsReportModalOpen(false)}></div>
+          <div style={{ position: 'relative', width: '100%', maxWidth: '500px', backgroundColor: 'var(--surface-main)', padding: 'var(--spacing-6)', borderRadius: 'var(--radius-xl)', margin: 'auto' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--spacing-4)' }}>
+              <h2 style={{ fontSize: '20px', fontWeight: 600, color: 'var(--color-neutral-900)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <AlertTriangle color="var(--color-danger-500)" />
+                Denunciar Profissional
+              </h2>
+              <button onClick={() => setIsReportModalOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px' }}>
+                <X size={24} color="var(--color-neutral-500)" />
+              </button>
+            </div>
+            
+            <p style={{ fontSize: '14px', color: 'var(--color-neutral-600)', marginBottom: 'var(--spacing-6)' }}>
+              Levamos a segurança da nossa plataforma a sério. Preencha os detalhes abaixo para que possamos analisar a situação.
+            </p>
+
+            <form onSubmit={submitReport} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-4)' }}>
+              <Input 
+                label="Seu Nome Completo" 
+                placeholder="Como devemos chamá-lo(a)?" 
+                value={reportForm.name} 
+                onChange={e => setReportForm({ ...reportForm, name: e.target.value })} 
+                required 
+              />
+              <Input 
+                label="Seu E-mail" 
+                type="email" 
+                placeholder="Para entrarmos em contato, se necessário" 
+                value={reportForm.email} 
+                onChange={e => setReportForm({ ...reportForm, email: e.target.value })} 
+                required 
+              />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-2)' }}>
+                <label style={{ fontSize: '14px', fontWeight: 500, color: 'var(--color-neutral-900)' }}>Motivo da Denúncia</label>
+                <select 
+                  className={styles.input} 
+                  value={reportForm.reason} 
+                  onChange={e => setReportForm({ ...reportForm, reason: e.target.value })} 
+                  required
+                  style={{ width: '100%', padding: '12px 16px', borderRadius: 'var(--radius-md)', border: '1px solid var(--surface-border)', backgroundColor: 'var(--surface-main)', outline: 'none', fontSize: '15px' }}
+                >
+                  <option value="" disabled>Selecione um motivo...</option>
+                  <option value="FRAUD">Fraude ou Golpe</option>
+                  <option value="INAPPROPRIATE">Conteúdo Impróprio/Ofensivo</option>
+                  <option value="HARASSMENT">Assédio ou Má Conduta</option>
+                  <option value="NO_SHOW">Profissional nunca comparece/atende</option>
+                  <option value="OTHER">Outro motivo</option>
+                </select>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-2)' }}>
+                <label style={{ fontSize: '14px', fontWeight: 500, color: 'var(--color-neutral-900)' }}>Descreva o que ocorreu</label>
+                <textarea 
+                  placeholder="Por favor, forneça o máximo de detalhes possível..." 
+                  value={reportForm.description} 
+                  onChange={e => setReportForm({ ...reportForm, description: e.target.value })} 
+                  required 
+                  minLength={10}
+                  style={{ width: '100%', padding: '12px 16px', borderRadius: 'var(--radius-md)', border: '1px solid var(--surface-border)', backgroundColor: 'var(--surface-main)', outline: 'none', fontSize: '15px', minHeight: '100px', resize: 'vertical' }}
+                />
+              </div>
+              
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 'var(--spacing-3)', marginTop: 'var(--spacing-4)' }}>
+                <Button variant="secondary" type="button" onClick={() => setIsReportModalOpen(false)}>Cancelar</Button>
+                <Button variant="danger" type="submit" isLoading={isReporting}>Enviar Denúncia</Button>
+              </div>
+            </form>
           </div>
         </div>
       )}

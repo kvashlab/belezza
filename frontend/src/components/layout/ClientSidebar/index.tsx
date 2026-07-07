@@ -8,7 +8,7 @@ import styles from './styles.module.css';
 
 const NAV_ITEMS = [
   { label: 'Visão Geral', href: '/dashboard', icon: Home },
-  { label: 'Buscar Profissionais', href: '/buscar', icon: Search },
+  { label: 'Buscar Profissionais', href: '/explorar', icon: Search },
   { label: 'Agendamentos', href: '/meus-agendamentos', icon: Calendar },
   { label: 'Favoritos', href: '/favoritos', icon: Heart },
   { label: 'Meu Perfil', href: '/perfil', icon: User },
@@ -28,11 +28,15 @@ export const ClientSidebar = () => {
     <aside className={styles.sidebar}>
       <div className={styles.profileSection}>
         <div className={styles.avatar}>
-          <User size={24} />
+          <img 
+            src={(user as any)?.clientProfile?.avatar || user?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=64&h=64'} 
+            alt="Avatar" 
+            style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} 
+          />
         </div>
         <div className={styles.userInfo}>
-          <span className={styles.userName}>{user?.name || 'Cliente Premium'}</span>
-          <span className={styles.userEmail}>{user && 'email' in user ? user.email : ''}</span>
+          <span className={styles.userName}>{user?.name || 'Cliente'}</span>
+          <span className={styles.userEmail}>{(user as any)?.email || ''}</span>
         </div>
       </div>
 

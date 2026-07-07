@@ -24,10 +24,16 @@ export default function PerfilProfissional() {
   const [usernameStatus, setUsernameStatus] = useState<'idle' | 'checking' | 'available' | 'unavailable'>('idle');
   const [isSavingUsername, setIsSavingUsername] = useState(false);
 
+  // Image previews
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [coverPreview, setCoverPreview] = useState<string | null>(null);
+
   const loadProfile = async () => {
     try {
       const response = await api.get('/professionals/me');
       setProfileData(response.data);
+      if (response.data.avatar) setAvatarPreview(response.data.avatar);
+      if (response.data.coverImage) setCoverPreview(response.data.coverImage);
     } catch (e) {
       console.error(e);
     } finally {
@@ -112,6 +118,20 @@ export default function PerfilProfissional() {
       addToast({ type: 'error', title: 'Falha ao atualizar o perfil' });
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setAvatarPreview(URL.createObjectURL(file));
+    }
+  };
+
+  const handleCoverChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setCoverPreview(URL.createObjectURL(file));
     }
   };
 
@@ -290,16 +310,41 @@ export default function PerfilProfissional() {
             <form onSubmit={handleUpdateAparencia}>
               <h2 className={styles.sectionTitle}>Aparência da Página</h2>
               
-              <label className={styles.coverUpload} style={{ cursor: 'pointer' }}>
-                <input type="file" name="coverImage" accept="image/*" style={{ display: 'none' }} />
-                <ImageIcon size={32} />
-                <span>Clique para alterar a foto de capa</span>
-                <span style={{ fontSize: '12px' }}>Tamanho recomendado: 1200x400px</span>
+              <label 
+                className={styles.coverUpload} 
+                style={{ 
+                  cursor: 'pointer', 
+                  backgroundImage: coverPreview ? `url(${coverPreview})` : 'none',
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center',
+                  color: coverPreview ? 'white' : 'inherit',
+                  textShadow: coverPreview ? '0 1px 4px rgba(0,0,0,0.8)' : 'none'
+                }}
+              >
+                <div style={{ backgroundColor: coverPreview ? 'rgba(0,0,0,0.4)' : 'transparent', width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', borderRadius: 'inherit' }}>
+                  <input type="file" name="coverImage" accept="image/*" onChange={handleCoverChange} style={{ display: 'none' }} />
+                  <ImageIcon size={32} />
+                  <span>Clique para alterar a foto de capa</span>
+                  <span style={{ fontSize: '12px' }}>Tamanho recomendado: 1200x400px</span>
+                </div>
               </label>
               
-              <label className={styles.avatarUpload} title="Alterar foto de perfil" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <input type="file" name="avatar" accept="image/*" style={{ display: 'none' }} />
-                <Camera size={28} />
+              <label 
+                className={styles.avatarUpload} 
+                title="Alterar foto de perfil" 
+                style={{ 
+                  cursor: 'pointer', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center',
+                  backgroundImage: avatarPreview ? `url(${avatarPreview})` : 'none',
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center',
+                  color: avatarPreview ? 'transparent' : 'inherit',
+                }}
+              >
+                <input type="file" name="avatar" accept="image/*" onChange={handleAvatarChange} style={{ display: 'none' }} />
+                {!avatarPreview && <Camera size={28} />}
               </label>
 
               <div className={styles.formGridFull} style={{ marginTop: 'var(--spacing-6)' }}>

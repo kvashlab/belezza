@@ -288,4 +288,17 @@ export class ProfessionalController {
       res.status(400).json({ error: error.message });
     }
   }
+
+  async upgradePlan(req: AuthRequest, res: Response) {
+    try {
+      const userId = req.user?.id;
+      if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
+      const updatedProfile = await professionalService.upgradePlan(userId);
+      res.json({ message: 'Plano atualizado para Premium com sucesso!', profile: updatedProfile });
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  }
 }
+

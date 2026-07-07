@@ -102,7 +102,7 @@ export default function PainelDashboard() {
             <p style={{ fontSize: '16px', color: 'var(--color-neutral-600)', marginBottom: '24px', lineHeight: '1.5' }}>
               Reduza faltas com lembretes automáticos pelo WhatsApp, receba pagamentos antecipados e desbloqueie agendamentos ilimitados.
             </p>
-            <Button variant="primary" size="lg" style={{ width: '100%', background: 'var(--color-gold-500)', borderColor: 'var(--color-gold-500)', color: 'white' }}>
+            <Button variant="primary" size="lg" style={{ width: '100%', background: 'var(--color-gold-500)', borderColor: 'var(--color-gold-500)', color: 'white' }} onClick={() => router.push('/painel/premium')}>
               Ativar Plano Premium (14 dias grátis)
             </Button>
             <button 

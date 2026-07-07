@@ -36,19 +36,20 @@ export class UserService {
     });
 
     // Update avatar if provided
-    if (avatar) {
+    if (avatar !== undefined) {
+      const finalAvatar = avatar === '' ? null : avatar;
       if (user.role === 'CLIENT' && user.clientProfile) {
         await prisma.clientProfile.update({
           where: { userId },
-          data: { avatar },
+          data: { avatar: finalAvatar },
         });
-        user.clientProfile.avatar = avatar;
+        user.clientProfile.avatar = finalAvatar;
       } else if (user.role === 'PROFESSIONAL' && user.professionalProfile) {
         await prisma.professionalProfile.update({
           where: { userId },
-          data: { avatar },
+          data: { avatar: finalAvatar },
         });
-        user.professionalProfile.avatar = avatar;
+        user.professionalProfile.avatar = finalAvatar;
       }
     }
 

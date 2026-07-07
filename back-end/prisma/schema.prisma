@@ -77,6 +77,7 @@ model ProfessionalProfile {
   waitlists    Waitlist[]
   customers    Customer[]
   usernameChangeLogs UsernameChangeLog[]
+  reportsReceived    Report[]
 
   @@index([city])
   @@index([rating])
@@ -237,5 +238,17 @@ model UsernameChangeLog {
   oldUsername    String
   newUsername    String
   changedAt      DateTime            @default(now())
+}
+
+model Report {
+  id             String              @id @default(uuid())
+  professionalId String
+  professional   ProfessionalProfile @relation(fields: [professionalId], references: [id], onDelete: Cascade)
+  reporterName   String
+  reporterEmail  String
+  reason         String 
+  description    String
+  status         String              @default("PENDING") // PENDING, RESOLVED
+  createdAt      DateTime            @default(now())
 }
 

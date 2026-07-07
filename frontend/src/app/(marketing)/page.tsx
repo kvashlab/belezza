@@ -4,10 +4,12 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Search, Scissors, Sparkles, Smile, Droplets, Calendar, BarChart, Smartphone, Star, CheckCircle2, ChevronDown, Bell, Zap, Clock, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import { useAuthStore } from '@/stores/auth.store';
 import styles from './styles.module.css';
 
 export default function Home() {
   const router = useRouter();
+  const { isAuthenticated } = useAuthStore();
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
@@ -268,9 +270,15 @@ export default function Home() {
             <div className={styles.price}>
               <span className={styles.currency}>R$</span> {isAnnual ? '39,90' : '49,90'} <span className={styles.period}>/mês</span>
             </div>
-            <Link href="/cadastro" style={{width: '100%', display: 'block', margin: '24px 0'}}>
+            <div style={{width: '100%', display: 'block', margin: '24px 0'}} onClick={() => {
+              if (isAuthenticated) {
+                router.push('/painel/premium');
+              } else {
+                router.push('/cadastro');
+              }
+            }}>
               <Button variant="primary" size="lg" className={styles.btnPrimary} style={{width: '100%'}}>Teste grátis por 14 dias</Button>
-            </Link>
+            </div>
             <ul className={styles.pricingFeatures}>
               <li><CheckCircle2 size={18} className={styles.iconCheck} /> Agendamentos Ilimitados</li>
               <li><CheckCircle2 size={18} className={styles.iconCheck} /> Lembretes WhatsApp 24h/2h</li>

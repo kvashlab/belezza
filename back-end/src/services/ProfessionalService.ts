@@ -440,4 +440,13 @@ export class ProfessionalService {
       include: { client: { include: { user: true } } }
     });
   }
+
+  async upgradePlan(userId: string) {
+    const profileId = await this.getProfileIdByUserId(userId);
+    
+    return prisma.professionalProfile.update({
+      where: { id: profileId },
+      data: { plan: 'PREMIUM' }
+    });
+  }
 }

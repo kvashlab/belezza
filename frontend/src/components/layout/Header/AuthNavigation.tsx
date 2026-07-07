@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { Button } from '../../ui/Button';
 import { Avatar } from '../../ui/Avatar';
 import { useAuthStore } from '@/stores/auth.store';
+import { NotificationBell } from '../../shared/NotificationBell';
 import styles from './styles.module.css';
 
 export const AuthNavigation = () => {
@@ -21,14 +22,17 @@ export const AuthNavigation = () => {
           </Link>
         </>
       ) : (
-        <Link href={role === 'professional' ? '/painel' : '/dashboard'} className={styles.userProfile}>
-          <Avatar 
-            src={user?.avatar} 
-            name={user?.name || 'User'} 
-            size="sm" 
-          />
-          <span className={styles.userName}>Olá, {user?.name?.split(' ')[0] || 'Usuário'}</span>
-        </Link>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-4)' }}>
+          <NotificationBell />
+          <Link href={role === 'professional' ? '/painel' : '/dashboard'} className={styles.userProfile}>
+            <Avatar 
+              src={user?.avatar} 
+              name={user?.name || 'User'} 
+              size="sm" 
+            />
+            <span className={styles.userName}>Olá, {user?.name?.split(' ')[0] || 'Usuário'}</span>
+          </Link>
+        </div>
       )}
     </nav>
   );

@@ -111,7 +111,7 @@ export const ProSidebar: React.FC<ProSidebarProps> = ({ isOpen, onClose }) => {
                     cursor: 'pointer',
                     width: 'fit-content'
                   }}
-                  onClick={() => alert('Upgrade para o Premium em breve!')}
+                  onClick={() => router.push('/painel/premium')}
                 >
                   Fazer Upgrade
                 </button>
