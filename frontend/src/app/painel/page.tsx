@@ -1,6 +1,7 @@
 'use client';
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Calendar, DollarSign, Star, Users, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { SimpleBarChart } from '@/components/ui/SimpleBarChart';
@@ -10,6 +11,7 @@ import { format } from 'date-fns';
 import styles from './styles.module.css';
 
 export default function PainelDashboard() {
+  const router = useRouter();
   const { user } = useAuthStore();
   const [metricsData, setMetricsData] = useState<any>(null);
   const [profileData, setProfileData] = useState<any>(null);

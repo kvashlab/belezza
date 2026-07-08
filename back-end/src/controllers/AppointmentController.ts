@@ -112,9 +112,52 @@ export class AppointmentController {
 
   async updateStatus(req: AuthRequest, res: Response) {
     try {
+      const { prisma } = require('../config/prisma');
       const { id } = req.params;
       const status = req.body.status as string;
-      // Should verify ownership, but simplified for now
+
+      // Validate status value
+      const validStatuses = ['PENDING', 'CONFIRMED', 'CANCELLED', 'COMPLETED'];
+      if (!validStatuses.includes(status)) {
+        return res.status(400).json({ error: 'Status inválido.' });
+      }
+
+      // Fetch the appointment to verify ownership
+      const appointment = await prisma.appointment.findUnique({
+        where: { id },
+        include: {
+          client: true,
+          professional: true,
+        }
+      });
+
+      if (!appointment) {
+        return res.status(404).json({ error: 'Agendamento não encontrado.' });
+      }
+
+      // Ownership check: only the professional or the booked client can update
+      if (req.user?.role === 'PROFESSIONAL') {
+        const professionalProfile = await prisma.professionalProfile.findUnique({
+          where: { userId: req.user.id }
+        });
+        if (!professionalProfile || appointment.professionalId !== professionalProfile.id) {
+          return res.status(403).json({ error: 'Acesso negado. Este agendamento não pertence a você.' });
+        }
+      } else if (req.user?.role === 'CLIENT') {
+        const clientProfile = await prisma.clientProfile.findUnique({
+          where: { userId: req.user.id }
+        });
+        if (!clientProfile || appointment.clientId !== clientProfile.id) {
+          return res.status(403).json({ error: 'Acesso negado.' });
+        }
+        // Clients can only cancel their own appointments
+        if (status !== 'CANCELLED') {
+          return res.status(403).json({ error: 'Clientes só podem cancelar agendamentos.' });
+        }
+      } else {
+        return res.status(403).json({ error: 'Acesso negado.' });
+      }
+
       const appt = await appointmentService.updateAppointmentStatus(id as string, status);
       res.json(appt);
     } catch (error: any) {

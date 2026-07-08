@@ -29,7 +29,11 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
       return;
     }
 
-    const socketInstance = io('http://localhost:3333', {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3333';
+    // Extract just the base URL (without /api path) for the socket connection
+    const socketUrl = apiUrl.replace('/api', '');
+
+    const socketInstance = io(socketUrl, {
       auth: { token },
       transports: ['websocket']
     });

@@ -1,12 +1,23 @@
 'use client';
-import React, { useEffect, useState } from 'react';
-import { TrendingUp, ArrowDownRight, ArrowUpRight, Calendar as CalendarIcon, Filter, Download, AlertCircle, Calendar } from 'lucide-react';
+import React, { useEffect, useState, useMemo } from 'react';
+import { TrendingUp, AlertCircle, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { api } from '@/lib/api';
+
+type Period = 'month' | 'quarter' | 'year' | 'all';
+
+const PERIOD_LABELS: Record<Period, string> = {
+  month: 'Este Mês',
+  quarter: 'Últimos 3 Meses',
+  year: 'Este Ano',
+  all: 'Tudo',
+};
 
 export default function FinanceiroPage() {
   const [finances, setFinances] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [period, setPeriod] = useState<Period>('month');
+  const [showPeriodMenu, setShowPeriodMenu] = useState(false);
 
   useEffect(() => {
     async function loadFinances() {
@@ -22,6 +33,40 @@ export default function FinanceiroPage() {
     loadFinances();
   }, []);
 
+  // Filter transactions by selected period (client-side filtering)
+  const filteredData = useMemo(() => {
+    if (!finances?.transactions) return { transactions: [], totalRevenue: 0, pendingRevenue: 0 };
+
+    const now = new Date();
+    const periodStart = new Date();
+
+    if (period === 'month') {
+      periodStart.setDate(1);
+      periodStart.setHours(0, 0, 0, 0);
+    } else if (period === 'quarter') {
+      periodStart.setMonth(now.getMonth() - 2);
+      periodStart.setDate(1);
+      periodStart.setHours(0, 0, 0, 0);
+    } else if (period === 'year') {
+      periodStart.setMonth(0);
+      periodStart.setDate(1);
+      periodStart.setHours(0, 0, 0, 0);
+    }
+
+    const transactions = period === 'all'
+      ? finances.transactions
+      : finances.transactions.filter((t: any) => new Date(t.date) >= periodStart);
+
+    let totalRevenue = 0;
+    let pendingRevenue = 0;
+    transactions.forEach((t: any) => {
+      if (t.status === 'Recebido') totalRevenue += t.amount;
+      else pendingRevenue += t.amount;
+    });
+
+    return { transactions, totalRevenue, pendingRevenue };
+  }, [finances, period]);
+
   if (isLoading) return <div style={{ padding: '64px', textAlign: 'center' }}>Carregando finanças...</div>;
 
   return (
@@ -31,7 +76,40 @@ export default function FinanceiroPage() {
           <h1 className="heading-2">Financeiro</h1>
           <p className="body-text">Acompanhe seus ganhos e recebimentos pendentes.</p>
         </div>
-        <Button variant="secondary" leftIcon={<Calendar size={18} />}>Este Mês</Button>
+        {/* Period selector dropdown */}
+        <div style={{ position: 'relative' }}>
+          <Button
+            variant="secondary"
+            leftIcon={<Calendar size={18} />}
+            onClick={() => setShowPeriodMenu(v => !v)}
+          >
+            {PERIOD_LABELS[period]}
+          </Button>
+          {showPeriodMenu && (
+            <div style={{
+              position: 'absolute', top: '100%', right: 0, marginTop: '8px',
+              backgroundColor: 'var(--surface-card)', border: '1px solid var(--surface-border)',
+              borderRadius: 'var(--radius-md)', boxShadow: 'var(--shadow-lg)',
+              zIndex: 50, minWidth: '160px', overflow: 'hidden'
+            }}>
+              {(Object.entries(PERIOD_LABELS) as [Period, string][]).map(([key, label]) => (
+                <button
+                  key={key}
+                  onClick={() => { setPeriod(key); setShowPeriodMenu(false); }}
+                  style={{
+                    width: '100%', textAlign: 'left', padding: '10px 16px',
+                    background: period === key ? 'var(--color-primary-50)' : 'transparent',
+                    border: 'none', cursor: 'pointer',
+                    color: period === key ? 'var(--color-primary-700)' : 'var(--color-neutral-700)',
+                    fontWeight: period === key ? 600 : 400, fontSize: '14px'
+                  }}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
       
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 'var(--spacing-4)' }}>
@@ -41,7 +119,8 @@ export default function FinanceiroPage() {
           </div>
           <div>
             <p style={{ color: 'var(--color-neutral-500)', fontSize: '14px', fontWeight: 500 }}>Receita Recebida</p>
-            <strong style={{ fontSize: '28px', color: 'var(--color-neutral-900)' }}>R$ {(finances?.totalRevenue || 0).toFixed(2)}</strong>
+            <strong style={{ fontSize: '28px', color: 'var(--color-neutral-900)' }}>R$ {filteredData.totalRevenue.toFixed(2)}</strong>
+            <p style={{ fontSize: '12px', color: 'var(--color-neutral-400)', marginTop: '2px' }}>{PERIOD_LABELS[period]}</p>
           </div>
         </div>
 
@@ -51,13 +130,16 @@ export default function FinanceiroPage() {
           </div>
           <div>
             <p style={{ color: 'var(--color-neutral-500)', fontSize: '14px', fontWeight: 500 }}>A Receber (Pendentes)</p>
-            <strong style={{ fontSize: '28px', color: 'var(--color-neutral-900)' }}>R$ {(finances?.pendingRevenue || 0).toFixed(2)}</strong>
+            <strong style={{ fontSize: '28px', color: 'var(--color-neutral-900)' }}>R$ {filteredData.pendingRevenue.toFixed(2)}</strong>
+            <p style={{ fontSize: '12px', color: 'var(--color-neutral-400)', marginTop: '2px' }}>{PERIOD_LABELS[period]}</p>
           </div>
         </div>
       </div>
 
       <div style={{ backgroundColor: 'var(--surface-card)', padding: 'var(--spacing-6)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--surface-border)' }}>
-        <h3 style={{ fontSize: '18px', fontWeight: 600, marginBottom: 'var(--spacing-4)' }}>Histórico de Transações</h3>
+        <h3 style={{ fontSize: '18px', fontWeight: 600, marginBottom: 'var(--spacing-4)' }}>
+          Histórico de Transações — {PERIOD_LABELS[period]}
+        </h3>
         
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
@@ -71,7 +153,7 @@ export default function FinanceiroPage() {
               </tr>
             </thead>
             <tbody>
-              {finances?.transactions?.map((t: any) => (
+              {filteredData.transactions.map((t: any) => (
                 <tr key={t.id} style={{ borderBottom: '1px solid var(--surface-main)' }}>
                   <td style={{ padding: 'var(--spacing-3)', fontSize: '14px' }}>
                     {new Date(t.date).toLocaleDateString()}
@@ -99,10 +181,10 @@ export default function FinanceiroPage() {
                   </td>
                 </tr>
               ))}
-              {(!finances?.transactions || finances.transactions.length === 0) && (
+              {filteredData.transactions.length === 0 && (
                 <tr>
                   <td colSpan={5} style={{ padding: 'var(--spacing-8)', textAlign: 'center', color: 'var(--color-neutral-500)' }}>
-                    Nenhuma transação encontrada.
+                    Nenhuma transação encontrada para este período.
                   </td>
                 </tr>
               )}

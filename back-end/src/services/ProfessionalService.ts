@@ -216,6 +216,35 @@ export class ProfessionalService {
     });
   }
 
+  async updateCustomer(userId: string, customerId: string, data: any) {
+    const profileId = await this.getProfileIdByUserId(userId);
+    const customer = await prisma.customer.findFirst({
+      where: { id: customerId, professionalId: profileId }
+    });
+    if (!customer) throw new Error('Cliente não encontrado ou não pertence a você.');
+
+    return prisma.customer.update({
+      where: { id: customerId },
+      data: {
+        name: data.name,
+        phone: data.phone,
+        email: data.email,
+        notes: data.notes,
+      }
+    });
+  }
+
+  async deleteCustomer(userId: string, customerId: string) {
+    const profileId = await this.getProfileIdByUserId(userId);
+    const customer = await prisma.customer.findFirst({
+      where: { id: customerId, professionalId: profileId }
+    });
+    if (!customer) throw new Error('Cliente não encontrado ou não pertence a você.');
+
+    await prisma.customer.delete({ where: { id: customerId } });
+    return { message: 'Cliente removido com sucesso.' };
+  }
+
   async getClients(userId: string) {
     const profileId = await this.getProfileIdByUserId(userId);
     
@@ -231,11 +260,11 @@ export class ProfessionalService {
       if (a.clientId) {
         if (!clientsMap.has(a.clientId)) {
           clientsMap.set(a.clientId, {
-            id: a.client.id,
-            name: a.client.user?.name || 'Cliente',
-            email: a.client.user?.email || '',
-            phone: a.client.user?.phone || '(00) 00000-0000',
-            avatar: a.client.avatar || '',
+            id: a.client?.id || a.clientId,
+            name: a.client?.user?.name || 'Cliente',
+            email: a.client?.user?.email || '',
+            phone: a.client?.user?.phone || '(00) 00000-0000',
+            avatar: a.client?.avatar || '',
             lastVisit: a.date,
             totalSpent: 0
           });

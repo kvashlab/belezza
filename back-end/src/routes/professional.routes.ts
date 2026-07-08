@@ -27,6 +27,8 @@ router.put('/working-hours', (req, res) => controller.updateWorkingHours(req, re
 router.get('/me/dashboard', (req, res) => controller.getDashboard(req, res));
 router.get('/clients', (req, res) => controller.getClients(req, res));
 router.post('/customers', (req, res) => controller.createCustomer(req, res));
+router.put('/customers/:id', (req, res) => controller.updateCustomer(req, res));
+router.delete('/customers/:id', (req, res) => controller.deleteCustomer(req, res));
 router.get('/finances', (req, res) => controller.getFinances(req, res));
 
 router.get('/portfolio', (req, res) => controller.getPortfolio(req, res));

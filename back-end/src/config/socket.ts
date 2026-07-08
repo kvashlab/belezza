@@ -1,18 +1,20 @@
 import { Server as SocketIOServer } from 'socket.io';
 import { Server as HttpServer } from 'http';
-import jwt from 'jsonwebtoken';
+import { supabase } from './supabase';
+import { prisma } from './prisma';
 
 let io: SocketIOServer;
 
 export function initSocket(server: HttpServer) {
   io = new SocketIOServer(server, {
     cors: {
-      origin: '*', // For dev, allow all
+      origin: process.env.FRONTEND_URL || 'http://localhost:3000',
       methods: ['GET', 'POST']
     }
   });
 
-  io.use((socket, next) => {
+  // Use async middleware to validate the Supabase JWT token (same strategy as HTTP auth middleware)
+  io.use(async (socket, next) => {
     const token = socket.handshake.auth?.token || socket.handshake.headers?.authorization?.split(' ')[1];
     
     if (!token) {
@@ -20,11 +22,27 @@ export function initSocket(server: HttpServer) {
     }
 
     try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret');
-      (socket as any).user = decoded;
+      // Validate with Supabase (matches the HTTP auth middleware)
+      const { data: { user }, error } = await supabase.auth.getUser(token);
+      
+      if (error || !user) {
+        return next(new Error('Authentication error: Invalid Supabase token'));
+      }
+
+      // Fetch the user from our Prisma DB to get the role and id
+      const dbUser = await prisma.user.findUnique({
+        where: { email: user.email },
+        select: { id: true, role: true }
+      });
+
+      if (!dbUser) {
+        return next(new Error('Authentication error: User not synced in database'));
+      }
+
+      (socket as any).user = dbUser;
       next();
     } catch (err) {
-      return next(new Error('Authentication error: Invalid token'));
+      return next(new Error('Authentication error: Internal error'));
     }
   });
 

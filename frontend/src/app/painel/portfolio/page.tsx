@@ -71,6 +71,7 @@ export default function PortfolioPage() {
           const newFile = new File([blob], 'portfolio.jpg', { type: 'image/jpeg' });
           const formData = new FormData();
           formData.append('photo', newFile);
+          formData.append('category', 'Geral'); // Required NOT NULL field in the DB schema
           formData.append('description', 'Nova foto do portfólio');
           formData.append('isBeforeAfter', 'false');
 

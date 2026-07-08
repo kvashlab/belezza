@@ -75,7 +75,15 @@ export default function AgendaPage() {
 
   const handleSaveAppointment = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!professionalId || !modalServiceId || !modalClientName || !modalTime) {
+    
+    if (!professionalId) {
+      return addToast({ 
+        type: 'error', 
+        title: 'Erro', 
+        message: 'Perfil profissional não carregado. Recarregue a página e tente novamente.' 
+      });
+    }
+    if (!modalServiceId || !modalClientName || !modalTime) {
       return addToast({ type: 'error', title: 'Erro', message: 'Preencha todos os campos obrigatórios.' });
     }
     
@@ -298,7 +306,21 @@ export default function AgendaPage() {
                 <div key={w.id} style={{ padding: 'var(--spacing-3)', border: '1px solid var(--surface-border)', borderRadius: 'var(--radius-md)', display: 'flex', flexDirection: 'column', gap: '4px' }}>
                   <strong style={{ fontSize: '14px', color: 'var(--color-neutral-900)' }}>{w.client.user.name}</strong>
                   <span style={{ fontSize: '12px', color: 'var(--color-neutral-500)' }}>{w.client.user.phone || 'Sem telefone'}</span>
-                  <Button size="sm" variant="secondary" style={{ marginTop: '8px' }}>Avisar Vaga</Button>
+                  <Button 
+                    size="sm" 
+                    variant="secondary" 
+                    style={{ marginTop: '8px' }}
+                    onClick={() => {
+                      const phone = w.client.user.phone;
+                      if (phone) {
+                        const cleanPhone = phone.replace(/\D/g, '');
+                        const msg = encodeURIComponent(`Olá ${w.client.user.name}! Um horário abriu na sua agenda. Deseja agendar?`);
+                        window.open(`https://wa.me/55${cleanPhone}?text=${msg}`, '_blank');
+                      } else {
+                        addToast({ type: 'error', title: 'Sem telefone', message: 'Este cliente não tem telefone cadastrado.' });
+                      }
+                    }}
+                  >Avisar Vaga</Button>
                 </div>
               ))}
             </div>

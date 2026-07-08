@@ -10,6 +10,10 @@ if (!supabaseUrl || !supabaseKey) {
 export const supabase = createClient(supabaseUrl, supabaseKey);
 
 export async function uploadFileToSupabase(file: any, path: string): Promise<string> {
+  if (!supabaseUrl || !supabaseKey) {
+    throw new Error('Supabase storage não configurado. Defina SUPABASE_URL e SUPABASE_KEY no .env do backend.');
+  }
+
   const { data, error } = await supabase.storage
     .from('belezza-uploads')
     .upload(path, file.buffer, {

@@ -8,7 +8,8 @@ import { api } from '@/lib/api';
 import styles from '../perfil/styles.module.css';
 
 export default function ServicosProfissional() {
-  const { user } = useAuthStore();
+  // role from the store is already normalized to lowercase ('professional')
+  const { role, isAuthenticated } = useAuthStore();
   const { addToast } = useUIStore();
   const [services, setServices] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -19,6 +20,7 @@ export default function ServicosProfissional() {
   const [editingService, setEditingService] = useState<any>(null);
 
   const fetchServices = async () => {
+    setIsLoading(true);
     try {
       const response = await api.get('/professionals/services');
       setServices(response.data);
@@ -29,13 +31,14 @@ export default function ServicosProfissional() {
     }
   };
 
+  // Use the `role` field from the store which is already lowercase
   useEffect(() => {
-    if ((user as any)?.role === 'professional') {
+    if (isAuthenticated && role === 'professional') {
       fetchServices();
-    } else {
+    } else if (!isAuthenticated) {
       setIsLoading(false);
     }
-  }, [user]);
+  }, [isAuthenticated, role]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -228,6 +228,28 @@ export class ProfessionalController {
     }
   }
 
+  async updateCustomer(req: AuthRequest, res: Response) {
+    try {
+      if (req.user?.role !== 'PROFESSIONAL') return res.status(403).json({ error: 'Acesso negado.' });
+      const customerId = req.params.id as string;
+      const customer = await professionalService.updateCustomer(req.user.id, customerId, req.body);
+      res.json(customer);
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  }
+
+  async deleteCustomer(req: AuthRequest, res: Response) {
+    try {
+      if (req.user?.role !== 'PROFESSIONAL') return res.status(403).json({ error: 'Acesso negado.' });
+      const customerId = req.params.id as string;
+      const result = await professionalService.deleteCustomer(req.user.id, customerId);
+      res.json(result);
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  }
+
   async getFinances(req: AuthRequest, res: Response) {
     try {
       if (req.user?.role !== 'PROFESSIONAL') return res.status(403).json({ error: 'Acesso negado.' });

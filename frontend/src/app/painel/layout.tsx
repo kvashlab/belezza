@@ -15,7 +15,7 @@ export default function PainelLayout({
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [notifications, setNotifications] = useState<any[]>([]);
-  const { user } = useAuthStore();
+  const { user, role } = useAuthStore();
   const { socket } = useSocket();
 
   useEffect(() => {
@@ -27,10 +27,10 @@ export default function PainelLayout({
         console.error('Failed to fetch notifications', err);
       }
     };
-    if (user?.role === 'professional') {
+    if (role === 'professional') {
       fetchNotifications();
     }
-  }, [user]);
+  }, [role]);
 
   useEffect(() => {
     if (!socket) return;

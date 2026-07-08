@@ -18,7 +18,7 @@ export class NotificationController {
   async markAsRead(req: AuthRequest, res: Response) {
     try {
       if (!req.user) return res.status(401).json({ error: 'Não autenticado' });
-      const updated = await notificationService.markAsRead(req.user.id, req.params.id);
+      const updated = await notificationService.markAsRead(req.user.id, req.params.id as string);
       res.json(updated);
     } catch (error: any) {
       res.status(400).json({ error: error.message });

@@ -160,21 +160,25 @@ export class AppointmentService {
     });
 
     try {
-      if (status === 'CONFIRMED') {
-        await notificationService.sendNotification(
-          updated.client.userId,
-          'Agendamento Confirmado',
-          `Seu agendamento de ${updated.service.name} com ${updated.professional.businessName || updated.professional.user.name} foi confirmado!`,
-          'APPOINTMENT'
-        );
-      } else if (status === 'CANCELLED') {
-        await notificationService.sendNotification(
-          updated.client.userId,
-          'Agendamento Cancelado',
-          `Seu agendamento de ${updated.service.name} foi cancelado.`,
-          'APPOINTMENT'
-        );
+      if (updated.client) {
+        if (status === 'CONFIRMED') {
+          await notificationService.sendNotification(
+            updated.client.userId,
+            'Agendamento Confirmado',
+            `Seu agendamento de ${updated.service.name} com ${updated.professional.businessName || updated.professional.user.name} foi confirmado!`,
+            'APPOINTMENT'
+          );
+        } else if (status === 'CANCELLED') {
+          await notificationService.sendNotification(
+            updated.client.userId,
+            'Agendamento Cancelado',
+            `Seu agendamento de ${updated.service.name} foi cancelado.`,
+            'APPOINTMENT'
+          );
+        }
+      }
 
+      if (status === 'CANCELLED') {
         // Notify Waitlist
         const dateStr = format(updated.date, 'yyyy-MM-dd');
         const waitlistUsers = await prisma.waitlist.findMany({
