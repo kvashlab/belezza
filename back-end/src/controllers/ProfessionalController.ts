@@ -101,36 +101,57 @@ export class ProfessionalController {
     try {
       if (req.user?.role !== 'PROFESSIONAL') return res.status(403).json({ error: 'Acesso negado.' });
       
-      let avatarUrl = req.body.avatar;
-      let coverUrl = req.body.coverImage;
+      let avatarUrl = req.body.avatar || undefined;
+      let coverUrl = req.body.coverImage || undefined;
       const files = req.files as { [fieldname: string]: Express.Multer.File[] } | undefined;
 
+      // Upload images independently — a Supabase failure must NOT block the text fields save
       if (files?.['avatar']?.[0]) {
-        const { uploadFileToSupabase } = require('../config/supabase');
-        avatarUrl = await uploadFileToSupabase(files['avatar'][0], `avatars/prof_${req.user.id}_${Date.now()}.jpg`);
+        try {
+          const { uploadFileToSupabase } = require('../config/supabase');
+          avatarUrl = await uploadFileToSupabase(files['avatar'][0], `avatars/prof_${req.user.id}_${Date.now()}.jpg`);
+        } catch (uploadErr: any) {
+          console.error('[updateProfile] Avatar upload failed:', uploadErr.message);
+          return res.status(400).json({ error: `Falha ao enviar foto de perfil: ${uploadErr.message}` });
+        }
       }
       if (files?.['coverImage']?.[0]) {
-        const { uploadFileToSupabase } = require('../config/supabase');
-        coverUrl = await uploadFileToSupabase(files['coverImage'][0], `covers/prof_${req.user.id}_${Date.now()}.jpg`);
+        try {
+          const { uploadFileToSupabase } = require('../config/supabase');
+          coverUrl = await uploadFileToSupabase(files['coverImage'][0], `covers/prof_${req.user.id}_${Date.now()}.jpg`);
+        } catch (uploadErr: any) {
+          console.error('[updateProfile] Cover upload failed:', uploadErr.message);
+          return res.status(400).json({ error: `Falha ao enviar foto de capa: ${uploadErr.message}` });
+        }
       }
 
-      const bodyData = { ...req.body };
-      if (avatarUrl) bodyData.avatar = avatarUrl;
-      if (coverUrl) bodyData.coverImage = coverUrl;
-      if (bodyData.lat) bodyData.lat = parseFloat(bodyData.lat);
-      if (bodyData.lng) bodyData.lng = parseFloat(bodyData.lng);
-      
-      if (bodyData.requireDeposit !== undefined) {
-        bodyData.requireDeposit = String(bodyData.requireDeposit) === 'true';
+      // Build the data object — FormData sends everything as strings, so we coerce types manually
+      const rawBody = req.body || {};
+
+      const dataToUpdate: Record<string, any> = {};
+
+      if (rawBody.businessName !== undefined) dataToUpdate.businessName = String(rawBody.businessName);
+      if (rawBody.bio !== undefined) dataToUpdate.bio = String(rawBody.bio);
+      if (rawBody.categories !== undefined) dataToUpdate.categories = String(rawBody.categories);
+      if (rawBody.city !== undefined) dataToUpdate.city = String(rawBody.city);
+      if (rawBody.state !== undefined) dataToUpdate.state = String(rawBody.state);
+      if (rawBody.neighborhood !== undefined) dataToUpdate.neighborhood = String(rawBody.neighborhood);
+      if (rawBody.socialLinks !== undefined) dataToUpdate.socialLinks = String(rawBody.socialLinks);
+      if (rawBody.serviceLocation !== undefined) dataToUpdate.serviceLocation = String(rawBody.serviceLocation);
+      if (rawBody.lat !== undefined && rawBody.lat !== '') dataToUpdate.lat = parseFloat(rawBody.lat);
+      if (rawBody.lng !== undefined && rawBody.lng !== '') dataToUpdate.lng = parseFloat(rawBody.lng);
+      if (rawBody.requireDeposit !== undefined) {
+        dataToUpdate.requireDeposit = String(rawBody.requireDeposit) === 'true';
       }
 
-      const data = updateProfileSchema.parse(bodyData);
-      const updated = await professionalService.updateProfile(req.user.id, data);
+      // Attach uploaded image URLs if available
+      if (avatarUrl) dataToUpdate.avatar = avatarUrl;
+      if (coverUrl) dataToUpdate.coverImage = coverUrl;
+
+      const updated = await professionalService.updateProfile(req.user.id, dataToUpdate);
       res.json(updated);
     } catch (error: any) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ error: (error as any).errors.map((e: any) => e.message).join(', ') });
-      }
+      console.error('[updateProfile] Error:', error.message);
       res.status(400).json({ error: error.message });
     }
   }

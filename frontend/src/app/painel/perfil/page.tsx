@@ -11,7 +11,7 @@ import styles from './styles.module.css';
 type Tab = 'aparencia' | 'contato' | 'horarios' | 'seguranca';
 
 export default function PerfilProfissional() {
-  const { user } = useAuthStore();
+  const { user, role, isAuthenticated } = useAuthStore();
   const { addToast } = useUIStore();
   const [activeTab, setActiveTab] = useState<Tab>('aparencia');
   const [profileData, setProfileData] = useState<any>(null);
@@ -41,13 +41,14 @@ export default function PerfilProfissional() {
     }
   };
 
+  // Use `role` from the store (already normalized to lowercase) — fixes case mismatch bug
   useEffect(() => {
-    if ((user as any)?.role === 'professional') {
+    if (isAuthenticated && role === 'professional') {
       loadProfile();
-    } else {
+    } else if (!isAuthenticated) {
       setIsLoading(false);
     }
-  }, [user]);
+  }, [isAuthenticated, role]);
 
   useEffect(() => {
     if (!newUsername || newUsername.length < 3) {
@@ -109,13 +110,16 @@ export default function PerfilProfissional() {
         formData.append('coverImage', coverInput.files[0]);
       }
 
-      await api.put('/professionals/me', formData);
+      await api.put('/professionals/me', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
 
       addToast({ type: 'success', title: 'Perfil atualizado com sucesso!' });
       await loadProfile();
       await useAuthStore.getState().fetchMe();
-    } catch {
-      addToast({ type: 'error', title: 'Falha ao atualizar o perfil' });
+    } catch (err: any) {
+      const message = err.response?.data?.error || err.message || 'Erro desconhecido ao salvar perfil.';
+      addToast({ type: 'error', title: 'Falha ao atualizar o perfil', message });
     } finally {
       setIsSaving(false);
     }
