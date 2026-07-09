@@ -23,6 +23,13 @@
   justify-content: space-between;
 }
 
+.sidebar.minimized .brand {
+  padding: var(--spacing-4);
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--spacing-4);
+}
+
 .logo {
   font-family: var(--font-family-display);
   color: var(--color-primary-600);
@@ -52,6 +59,14 @@
 
 .minimizeBtn:hover {
   color: var(--color-primary-600);
+}
+
+.sidebar.minimized .minimizeBtn {
+  background-color: var(--color-primary-50);
+  border-radius: 50%;
+  padding: 8px;
+  color: var(--color-primary-600);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
 }
 
 .closeBtn {
@@ -108,6 +123,10 @@
   flex-shrink: 0;
 }
 
+.sidebar.minimized .nav {
+  padding: var(--spacing-4) var(--spacing-2);
+}
+
 .sidebar.minimized .navLabel {
   display: none;
 }
@@ -153,6 +172,7 @@
   align-items: center;
   justify-content: center;
   font-weight: 600;
+  flex-shrink: 0;
 }
 
 .userInfo {

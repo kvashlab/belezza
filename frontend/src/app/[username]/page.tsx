@@ -15,8 +15,8 @@ import styles from './styles.module.css';
 export default function PublicProfile() {
   const params = useParams();
   const router = useRouter();
-  const rawUsername = params.username as string;
-  const username = rawUsername.replace('%40', '').replace('@', ''); // Remove @ for matching
+  const rawUsername = params.username as string || '';
+  const username = decodeURIComponent(rawUsername).replace(/^@/, ''); // Remove @ for matching
   
   const { favoriteIds, toggleFavorite, addToast } = useUIStore();
   

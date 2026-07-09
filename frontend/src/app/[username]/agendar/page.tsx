@@ -12,12 +12,14 @@ import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Textarea } from '@/components/ui/Textarea';
 import { useUIStore } from '@/stores/ui.store';
+import { api } from '@/lib/api';
 import styles from './styles.module.css';
 
 export default function AgendarFlow() {
   const params = useParams();
   const router = useRouter();
-  const username = (params.username as string).replace('%40', '').replace('@', '');
+  const rawUsername = params.username as string || '';
+  const username = decodeURIComponent(rawUsername).replace(/^@/, '');
   
   const { user, role } = useAuthStore();
   const { 
@@ -41,18 +43,16 @@ export default function AgendarFlow() {
   useEffect(() => {
     async function loadProf() {
       try {
-        const res = await fetch(`http://localhost:3333/api/professionals/public/${username}`);
-        if (res.ok) {
-          const data = await res.json();
-          setProfData(data);
-          setProfessional({
-            id: data.id,
+        const res = await api.get(`/professionals/public/${username}`);
+        const data = res.data;
+        setProfData(data);
+        setProfessional({
+          id: data.id,
             name: data.user?.name || data.businessName,
             username: data.username,
             avatar: data.avatar,
             rating: data.rating
           } as any);
-        }
       } catch (e) {
         console.error(e);
       } finally {
