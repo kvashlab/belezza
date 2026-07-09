@@ -440,8 +440,12 @@ export default function AgendarFlow() {
           <div className={styles.stickySummary}>
             <h3>Seu Agendamento</h3>
             <div className={styles.profSummary}>
-              <div style={{ position: 'relative', width: '48px', height: '48px', borderRadius: '50%', overflow: 'hidden' }}>
-                <Image src={profData.avatar || 'https://images.unsplash.com/photo-1522337660859-02fbefca4702?q=80&w=2069'} alt={profData.username} fill style={{ objectFit: 'cover' }} unoptimized />
+              <div style={{ position: 'relative', width: '48px', height: '48px', borderRadius: '50%', overflow: 'hidden', backgroundColor: 'var(--color-primary-100)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-primary-700)', fontWeight: 600 }}>
+                {profData.avatar ? (
+                  <Image src={profData.avatar} alt={profData.username} fill style={{ objectFit: 'cover' }} unoptimized />
+                ) : (
+                  (profData.user?.name || profData.businessName || 'P').charAt(0).toUpperCase()
+                )}
               </div>
               <div>
                 <strong>{profData.user?.name || profData.businessName}</strong>

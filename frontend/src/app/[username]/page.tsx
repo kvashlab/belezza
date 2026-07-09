@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { useParams, useRouter } from 'next/navigation';
-import { MapPin, Star, Share2, Heart, Calendar, AlertTriangle, X } from 'lucide-react';
+import { MapPin, Star, Share2, Calendar, X } from 'lucide-react';
 import { Avatar } from '@/components/ui/Avatar';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
@@ -24,15 +24,7 @@ export default function PublicProfile() {
   const [isLoading, setIsLoading] = useState(true);
   const [activeStoryIndex, setActiveStoryIndex] = useState<number | null>(null);
 
-  // Report Modal states
-  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
-  const [isReporting, setIsReporting] = useState(false);
-  const [reportForm, setReportForm] = useState({
-    name: '',
-    email: '',
-    reason: '',
-    description: ''
-  });
+
 
   useEffect(() => {
     async function fetchProfessional() {
@@ -72,42 +64,10 @@ export default function PublicProfile() {
     }
   };
 
-  const submitReport = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsReporting(true);
-    try {
-      await api.post('/reports', {
-        professionalId: professional.id,
-        reporterName: reportForm.name,
-        reporterEmail: reportForm.email,
-        reason: reportForm.reason,
-        description: reportForm.description
-      });
-      addToast({ type: 'success', title: 'Denúncia Enviada', message: 'Sua denúncia foi registrada e será analisada.' });
-      setIsReportModalOpen(false);
-      setReportForm({ name: '', email: '', reason: '', description: '' });
-    } catch (error: any) {
-      addToast({ type: 'error', title: 'Erro', message: error.response?.data?.error || 'Falha ao enviar denúncia' });
-    } finally {
-      setIsReporting(false);
-    }
-  };
+
 
   const renderServices = () => (
     <div className={styles.servicesList}>
-      {/* Premium Subscription Mock */}
-      <div className={styles.subscriptionCard}>
-        <div className={styles.subscriptionBadge}>Assinatura Mensal</div>
-        <div className={styles.subscriptionInfo}>
-          <h4 className={styles.serviceName}>Clube Unhas Perfeitas</h4>
-          <p className={styles.serviceDesc}>Manicure toda semana (4x no mês) + 1 Pedicure. Economize 20%.</p>
-        </div>
-        <div className={styles.serviceAction}>
-          <div className={styles.servicePrice}>R$ 149,90<span style={{ fontSize: '12px', color: 'var(--color-neutral-500)', fontWeight: 'normal' }}>/mês</span></div>
-          <Button size="sm" variant="secondary" onClick={() => addToast({ type: 'success', title: 'Assinatura', message: 'Assinatura adicionada ao carrinho.' })}>Assinar</Button>
-        </div>
-      </div>
-
       {profServices.map((service: any) => (
         <div key={service.id} className={styles.serviceItem}>
           <div className={styles.serviceInfo}>
@@ -180,7 +140,11 @@ export default function PublicProfile() {
   return (
     <div className={styles.page}>
       <div className={styles.coverSection}>
-        <Image src={professional.coverImage || 'https://images.unsplash.com/photo-1522337660859-02fbefca4702?q=80&w=2069&auto=format&fit=crop'} alt="Capa" fill className={styles.coverImage} unoptimized />
+        {professional.coverImage ? (
+          <Image src={professional.coverImage} alt="Capa" fill className={styles.coverImage} unoptimized />
+        ) : (
+          <div className={styles.coverImage} style={{ backgroundColor: 'var(--color-neutral-200)', position: 'absolute', inset: 0 }} />
+        )}
         <div className={styles.coverOverlay}></div>
       </div>
       
@@ -192,14 +156,11 @@ export default function PublicProfile() {
           </div>
           
           <div className={styles.actions}>
-            <button className={styles.actionBtn} onClick={() => toggleFavorite(professional.id)}>
-              <Heart size={20} fill={isFavorite ? 'currentColor' : 'none'} className={isFavorite ? styles.favorited : ''} />
+            <button className={styles.actionBtn} onClick={() => toggleFavorite(professional.id)} title={isFavorite ? "Remover dos favoritos" : "Adicionar aos favoritos"}>
+              <Star size={20} fill={isFavorite ? 'var(--color-gold-500)' : 'none'} color={isFavorite ? 'var(--color-gold-500)' : 'currentColor'} />
             </button>
-            <button className={styles.actionBtn} onClick={handleShare}>
+            <button className={styles.actionBtn} onClick={handleShare} title="Compartilhar">
               <Share2 size={20} />
-            </button>
-            <button className={styles.actionBtn} onClick={() => setIsReportModalOpen(true)} title="Denunciar">
-              <AlertTriangle size={20} color="var(--color-danger-500)" />
             </button>
           </div>
         </div>
@@ -302,78 +263,7 @@ export default function PublicProfile() {
         </div>
       )}
 
-      {/* Report Modal */}
-      {isReportModalOpen && (
-        <div className={styles.storiesViewer} style={{ zIndex: 1000 }}>
-          <div className={styles.storiesOverlay} onClick={() => setIsReportModalOpen(false)}></div>
-          <div style={{ position: 'relative', width: '100%', maxWidth: '500px', backgroundColor: 'var(--surface-main)', padding: 'var(--spacing-6)', borderRadius: 'var(--radius-xl)', margin: 'auto' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--spacing-4)' }}>
-              <h2 style={{ fontSize: '20px', fontWeight: 600, color: 'var(--color-neutral-900)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <AlertTriangle color="var(--color-danger-500)" />
-                Denunciar Profissional
-              </h2>
-              <button onClick={() => setIsReportModalOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px' }}>
-                <X size={24} color="var(--color-neutral-500)" />
-              </button>
-            </div>
-            
-            <p style={{ fontSize: '14px', color: 'var(--color-neutral-600)', marginBottom: 'var(--spacing-6)' }}>
-              Levamos a segurança da nossa plataforma a sério. Preencha os detalhes abaixo para que possamos analisar a situação.
-            </p>
 
-            <form onSubmit={submitReport} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-4)' }}>
-              <Input 
-                label="Seu Nome Completo" 
-                placeholder="Como devemos chamá-lo(a)?" 
-                value={reportForm.name} 
-                onChange={e => setReportForm({ ...reportForm, name: e.target.value })} 
-                required 
-              />
-              <Input 
-                label="Seu E-mail" 
-                type="email" 
-                placeholder="Para entrarmos em contato, se necessário" 
-                value={reportForm.email} 
-                onChange={e => setReportForm({ ...reportForm, email: e.target.value })} 
-                required 
-              />
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-2)' }}>
-                <label style={{ fontSize: '14px', fontWeight: 500, color: 'var(--color-neutral-900)' }}>Motivo da Denúncia</label>
-                <select 
-                  className={styles.input} 
-                  value={reportForm.reason} 
-                  onChange={e => setReportForm({ ...reportForm, reason: e.target.value })} 
-                  required
-                  style={{ width: '100%', padding: '12px 16px', borderRadius: 'var(--radius-md)', border: '1px solid var(--surface-border)', backgroundColor: 'var(--surface-main)', outline: 'none', fontSize: '15px' }}
-                >
-                  <option value="" disabled>Selecione um motivo...</option>
-                  <option value="FRAUD">Fraude ou Golpe</option>
-                  <option value="INAPPROPRIATE">Conteúdo Impróprio/Ofensivo</option>
-                  <option value="HARASSMENT">Assédio ou Má Conduta</option>
-                  <option value="NO_SHOW">Profissional nunca comparece/atende</option>
-                  <option value="OTHER">Outro motivo</option>
-                </select>
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-2)' }}>
-                <label style={{ fontSize: '14px', fontWeight: 500, color: 'var(--color-neutral-900)' }}>Descreva o que ocorreu</label>
-                <textarea 
-                  placeholder="Por favor, forneça o máximo de detalhes possível..." 
-                  value={reportForm.description} 
-                  onChange={e => setReportForm({ ...reportForm, description: e.target.value })} 
-                  required 
-                  minLength={10}
-                  style={{ width: '100%', padding: '12px 16px', borderRadius: 'var(--radius-md)', border: '1px solid var(--surface-border)', backgroundColor: 'var(--surface-main)', outline: 'none', fontSize: '15px', minHeight: '100px', resize: 'vertical' }}
-                />
-              </div>
-              
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 'var(--spacing-3)', marginTop: 'var(--spacing-4)' }}>
-                <Button variant="secondary" type="button" onClick={() => setIsReportModalOpen(false)}>Cancelar</Button>
-                <Button variant="danger" type="submit" isLoading={isReporting}>Enviar Denúncia</Button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

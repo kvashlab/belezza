@@ -26,7 +26,7 @@ export const AuthNavigation = () => {
           <NotificationBell />
           <Link href={role === 'professional' ? '/painel' : '/dashboard'} className={styles.userProfile}>
             <Avatar 
-              src={user?.avatar} 
+              src={(user as any)?.clientProfile?.avatar || (user as any)?.professionalProfile?.avatar} 
               name={user?.name || 'User'} 
               size="sm" 
             />
