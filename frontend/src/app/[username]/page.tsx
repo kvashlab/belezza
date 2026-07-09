@@ -37,15 +37,11 @@ export default function PublicProfile() {
   useEffect(() => {
     async function fetchProfessional() {
       try {
-        const res = await fetch(`http://localhost:3333/api/professionals/public/${username}`);
-        if (res.ok) {
-          const data = await res.json();
-          setProfessional(data);
-        } else {
-          setProfessional(null);
-        }
+        const res = await api.get(`/professionals/public/${username}`);
+        setProfessional(res.data);
       } catch (e) {
         console.error(e);
+        setProfessional(null);
       } finally {
         setIsLoading(false);
       }

@@ -8,7 +8,11 @@
   position: sticky;
   top: 0;
   z-index: 40;
-  transition: transform var(--transition-normal);
+  transition: width var(--transition-normal), transform var(--transition-normal);
+}
+
+.sidebar.minimized {
+  width: 80px;
 }
 
 .brand {
@@ -25,6 +29,29 @@
   font-size: 24px;
   font-weight: 700;
   text-decoration: none;
+  transition: opacity var(--transition-fast);
+}
+
+.brandActions {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+}
+
+.minimizeBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-neutral-500);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  transition: color var(--transition-fast);
+}
+
+.minimizeBtn:hover {
+  color: var(--color-primary-600);
 }
 
 .closeBtn {
@@ -79,6 +106,27 @@
 
 .icon {
   flex-shrink: 0;
+}
+
+.sidebar.minimized .navLabel {
+  display: none;
+}
+
+.sidebar.minimized .navItem span {
+  display: none;
+}
+
+.sidebar.minimized .navItem {
+  justify-content: center;
+  padding: var(--spacing-3);
+}
+
+.sidebar.minimized .profileSection {
+  justify-content: center;
+}
+
+.sidebar.minimized .logoutBtn {
+  justify-content: center;
 }
 
 .footer {
@@ -157,8 +205,16 @@
     transform: translateX(0);
   }
 
+  .sidebar.minimized {
+    width: 280px; /* Don't minimize on mobile */
+  }
+
   .closeBtn {
     display: block;
+  }
+
+  .minimizeBtn {
+    display: none;
   }
 
   .overlay.open {

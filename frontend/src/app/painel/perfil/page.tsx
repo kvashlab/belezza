@@ -4,7 +4,7 @@ import { useAuthStore } from '@/stores/auth.store';
 import { useUIStore } from '@/stores/ui.store';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { Image as ImageIcon, Camera, Check, X, Link as LinkIcon } from 'lucide-react';
+import { Image as ImageIcon, Camera, Check, X, Link as LinkIcon, Share2 } from 'lucide-react';
 import { api } from '@/lib/api';
 import styles from './styles.module.css';
 
@@ -235,6 +235,28 @@ export default function PerfilProfissional() {
     }
   };
 
+  const handleShare = async () => {
+    const url = `${window.location.origin}/@${profileData?.username}`;
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: profileData?.businessName || 'Meu Perfil',
+          text: 'Agende um horário comigo na Belezza!',
+          url,
+        });
+      } catch (err) {
+        console.error('Erro ao compartilhar:', err);
+      }
+    } else {
+      try {
+        await navigator.clipboard.writeText(url);
+        addToast({ type: 'success', title: 'Link copiado para a área de transferência!' });
+      } catch (err) {
+        addToast({ type: 'error', title: 'Falha ao copiar link' });
+      }
+    }
+  };
+
   if (isLoading) return <div className={styles.container}>Carregando perfil...</div>;
 
   const socialLinks = profileData?.socialLinks ? JSON.parse(profileData.socialLinks) : {};
@@ -285,6 +307,9 @@ export default function PerfilProfissional() {
                   </div>
                   <Button variant="secondary" onClick={() => setIsChangingUsername(!isChangingUsername)}>
                     {isChangingUsername ? 'Cancelar' : 'Alterar Username'}
+                  </Button>
+                  <Button variant="primary" onClick={handleShare} leftIcon={<Share2 size={18} />}>
+                    Compartilhar
                   </Button>
                 </div>
 
