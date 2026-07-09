@@ -26,15 +26,17 @@ export class ProfessionalService {
     // simplified search logic for now
     const where: any = {};
     if (query.category) {
-      where.categories = { contains: query.category };
+      where.categories = { contains: query.category, mode: 'insensitive' };
     }
     if (query.city) {
-      where.city = { contains: query.city };
+      where.city = { contains: query.city, mode: 'insensitive' };
     }
     if (query.q) {
       where.OR = [
-        { businessName: { contains: query.q } },
-        { user: { name: { contains: query.q } } }
+        { businessName: { contains: query.q, mode: 'insensitive' } },
+        { user: { name: { contains: query.q, mode: 'insensitive' } } },
+        { categories: { contains: query.q, mode: 'insensitive' } },
+        { neighborhood: { contains: query.q, mode: 'insensitive' } }
       ];
     }
     

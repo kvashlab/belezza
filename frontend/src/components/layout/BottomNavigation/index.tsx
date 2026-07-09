@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Search, Heart, Calendar, User, LayoutDashboard, Users, UserCircle } from 'lucide-react';
+import { Search, Star, Calendar, User, LayoutDashboard, Users, UserCircle } from 'lucide-react';
 import { useAuthStore } from '@/stores/auth.store';
 import styles from './styles.module.css';
 
@@ -41,7 +41,7 @@ export const BottomNavigation = () => {
 
     return [
       { href: '/explorar', label: 'Explorar', icon: Search },
-      { href: '/favoritos', label: 'Favoritos', icon: Heart },
+      { href: '/favoritos', label: 'Favoritos', icon: Star },
       { href: '/meus-agendamentos', label: 'Agenda', icon: Calendar },
       { href: '/perfil', label: 'Perfil', icon: User },
     ];

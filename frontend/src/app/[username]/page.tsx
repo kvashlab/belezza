@@ -135,6 +135,78 @@ export default function PublicProfile() {
     </div>
   );
 
+  const renderSobre = () => {
+    let socialLinks: any = {};
+    try {
+      socialLinks = typeof professional.socialLinks === 'string' ? JSON.parse(professional.socialLinks) : professional.socialLinks || {};
+    } catch (e) {
+      // ignore
+    }
+    
+    const addressParts = [professional.neighborhood, professional.city, professional.state].filter(Boolean);
+    const addressStr = addressParts.join(', ');
+
+    return (
+      <div style={{ padding: '16px 0', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+        <div>
+          <h3 style={{ fontSize: '18px', fontWeight: 600, marginBottom: '12px' }}>Sobre o Espaço</h3>
+          <p style={{ whiteSpace: 'pre-wrap', color: 'var(--color-neutral-700)', lineHeight: 1.6 }}>
+            {professional.bio || 'Este profissional ainda não adicionou uma descrição detalhada.'}
+          </p>
+        </div>
+
+        <div>
+          <h3 style={{ fontSize: '18px', fontWeight: 600, marginBottom: '12px' }}>Localização</h3>
+          {addressStr ? (
+            <>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', marginBottom: '16px', color: 'var(--color-neutral-700)' }}>
+                <MapPin size={20} style={{ flexShrink: 0, marginTop: '2px' }} />
+                <span>{addressStr}</span>
+              </div>
+              <div style={{ width: '100%', height: '250px', borderRadius: 'var(--radius-md)', overflow: 'hidden', border: '1px solid var(--surface-border)' }}>
+                <iframe 
+                  src={`https://www.google.com/maps?q=${encodeURIComponent(addressStr)}&output=embed`}
+                  width="100%" 
+                  height="100%" 
+                  style={{ border: 0 }} 
+                  allowFullScreen={false} 
+                  loading="lazy" 
+                  referrerPolicy="no-referrer-when-downgrade"
+                ></iframe>
+              </div>
+            </>
+          ) : (
+            <p style={{ color: 'var(--color-neutral-500)' }}>Localização não informada.</p>
+          )}
+        </div>
+
+        {(socialLinks.whatsapp || socialLinks.instagram) && (
+          <div>
+            <h3 style={{ fontSize: '18px', fontWeight: 600, marginBottom: '12px' }}>Contato</h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', color: 'var(--color-neutral-700)' }}>
+              {socialLinks.whatsapp && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <strong>WhatsApp:</strong> 
+                  <a href={`https://wa.me/${socialLinks.whatsapp.replace(/\\D/g, '')}`} target="_blank" rel="noreferrer" style={{ color: 'var(--color-primary-500)', textDecoration: 'none' }}>
+                    {socialLinks.whatsapp}
+                  </a>
+                </div>
+              )}
+              {socialLinks.instagram && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <strong>Instagram:</strong> 
+                  <a href={socialLinks.instagram.startsWith('http') ? socialLinks.instagram : `https://instagram.com/${socialLinks.instagram.replace('@', '')}`} target="_blank" rel="noreferrer" style={{ color: 'var(--color-primary-500)', textDecoration: 'none' }}>
+                    {socialLinks.instagram}
+                  </a>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   const cats = typeof professional.categories === 'string' ? professional.categories.split(',') : (professional.categories || []);
 
   return (
@@ -195,7 +267,7 @@ export default function PublicProfile() {
             { id: 'servicos', label: 'Serviços', content: renderServices() },
             { id: 'portfolio', label: 'Portfólio', content: renderPortfolio() },
             { id: 'avaliacoes', label: 'Avaliações', content: renderReviews() },
-            { id: 'sobre', label: 'Sobre', content: <p>Mais detalhes sobre o espaço, horários, etc.</p> }
+            { id: 'sobre', label: 'Sobre', content: renderSobre() }
           ]}
         />
       </div>

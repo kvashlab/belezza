@@ -2,7 +2,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Home, Calendar, Heart, User, LogOut, Search } from 'lucide-react';
+import { Home, Calendar, Star, User, LogOut, Search } from 'lucide-react';
 import { useAuthStore } from '@/stores/auth.store';
 import styles from './styles.module.css';
 
@@ -10,7 +10,7 @@ const NAV_ITEMS = [
   { label: 'Visão Geral', href: '/dashboard', icon: Home },
   { label: 'Buscar Profissionais', href: '/explorar', icon: Search },
   { label: 'Agendamentos', href: '/meus-agendamentos', icon: Calendar },
-  { label: 'Favoritos', href: '/favoritos', icon: Heart },
+  { label: 'Favoritos', href: '/favoritos', icon: Star },
   { label: 'Meu Perfil', href: '/perfil', icon: User },
 ];
 

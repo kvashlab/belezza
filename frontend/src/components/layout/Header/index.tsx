@@ -46,7 +46,7 @@ export const Header = () => {
             <a href="#precos" className={styles.navLink}>Preços</a>
             <a href="#faq" className={styles.navLink}>FAQ</a>
           </nav>
-        ) : (
+        ) : !pathname.startsWith('/explorar') && (
           <form className={styles.searchBar} onSubmit={handleSearch}>
             <Search size={18} className={styles.searchIcon} />
             <input 

@@ -68,16 +68,21 @@ export const useUIStore = create<UIStore>((set) => ({
     const isFavorite = useUIStore.getState().favoriteIds.includes(professionalId);
     try {
       const token = localStorage.getItem('@belezza:token');
-      if (!token) return; // Must be logged in
+      if (!token) {
+        useUIStore.getState().addToast({ type: 'info', title: 'Atenção', message: 'Faça login para favoritar profissionais.' });
+        return;
+      }
 
       if (isFavorite) {
-        await fetch(`http://localhost:3333/api/clients/favorites/${professionalId}`, {
+        const res = await fetch(`http://localhost:3333/api/clients/favorites/${professionalId}`, {
           method: 'DELETE',
           headers: { Authorization: `Bearer ${token}` }
         });
+        if (!res.ok) throw new Error('Falha ao remover favorito');
         set((state) => ({ favoriteIds: state.favoriteIds.filter(id => id !== professionalId) }));
+        useUIStore.getState().addToast({ type: 'success', title: 'Removido', message: 'Profissional removido dos favoritos.' });
       } else {
-        await fetch(`http://localhost:3333/api/clients/favorites`, {
+        const res = await fetch(`http://localhost:3333/api/clients/favorites`, {
           method: 'POST',
           headers: { 
             'Content-Type': 'application/json',
@@ -85,10 +90,13 @@ export const useUIStore = create<UIStore>((set) => ({
           },
           body: JSON.stringify({ professionalId })
         });
+        if (!res.ok) throw new Error('Falha ao adicionar favorito');
         set((state) => ({ favoriteIds: [...state.favoriteIds, professionalId] }));
+        useUIStore.getState().addToast({ type: 'success', title: 'Favorito salvo', message: 'Profissional adicionado aos favoritos!' });
       }
-    } catch (e) {
+    } catch (e: any) {
       console.error(e);
+      useUIStore.getState().addToast({ type: 'error', title: 'Erro', message: e.message || 'Não foi possível salvar o favorito.' });
     }
   },
 

@@ -3,7 +3,10 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 export class ClientService {
-  async addFavorite(clientId: string, professionalId: string) {
+  async addFavorite(userId: string, professionalId: string) {
+    const client = await prisma.clientProfile.findUnique({ where: { userId } });
+    if (!client) throw new Error('Perfil de cliente não encontrado');
+    const clientId = client.id;
     const favorite = await prisma.favorite.create({
       data: {
         clientId,
@@ -18,7 +21,10 @@ export class ClientService {
     return favorite;
   }
 
-  async removeFavorite(clientId: string, professionalId: string) {
+  async removeFavorite(userId: string, professionalId: string) {
+    const client = await prisma.clientProfile.findUnique({ where: { userId } });
+    if (!client) throw new Error('Perfil de cliente não encontrado');
+    const clientId = client.id;
     await prisma.favorite.delete({
       where: {
         clientId_professionalId: {
@@ -30,7 +36,10 @@ export class ClientService {
     return { message: 'Favorito removido' };
   }
 
-  async getFavorites(clientId: string) {
+  async getFavorites(userId: string) {
+    const client = await prisma.clientProfile.findUnique({ where: { userId } });
+    if (!client) return [];
+    const clientId = client.id;
     const favorites = await prisma.favorite.findMany({
       where: { clientId },
       include: {
@@ -44,7 +53,10 @@ export class ClientService {
     return favorites;
   }
 
-  async addReview(clientId: string, data: any) {
+  async addReview(userId: string, data: any) {
+    const client = await prisma.clientProfile.findUnique({ where: { userId } });
+    if (!client) throw new Error('Perfil de cliente não encontrado');
+    const clientId = client.id;
     const { professionalId, appointmentId, rating, comment } = data;
 
     const review = await prisma.review.create({
