@@ -4,7 +4,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(34, 29, 24, 0.5);
+  background-color: color-mix(in srgb, var(--color-neutral-900) 50%, transparent);
   display: flex;
   align-items: center;
   justify-content: center;

@@ -39,7 +39,7 @@
 }
 
 .textareaError:focus {
-  box-shadow: 0 0 0 3px rgba(214, 69, 69, 0.2);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-danger) 20%, transparent);
 }
 
 .errorMessage {

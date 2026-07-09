@@ -28,31 +28,31 @@
 }
 
 .success {
-  background-color: rgba(63, 166, 107, 0.15);
+  background-color: color-mix(in srgb, var(--color-success) 15%, transparent);
   color: var(--color-success);
 }
 
 .warning {
-  background-color: rgba(224, 160, 46, 0.15);
+  background-color: color-mix(in srgb, var(--color-warning) 15%, transparent);
   color: var(--color-warning);
 }
 
 .danger {
-  background-color: rgba(214, 69, 69, 0.15);
+  background-color: color-mix(in srgb, var(--color-danger) 15%, transparent);
   color: var(--color-danger);
 }
 
 .info {
-  background-color: rgba(74, 143, 212, 0.15);
+  background-color: color-mix(in srgb, var(--color-info) 15%, transparent);
   color: var(--color-info);
 }
 
-/* Categorias de serviço */
-.cabelo { background-color: rgba(184, 53, 106, 0.15); color: var(--color-cabelo); }
-.unhas { background-color: rgba(225, 48, 108, 0.15); color: var(--color-unhas); }
-.sobrancelhas { background-color: rgba(156, 122, 62, 0.15); color: var(--color-sobrancelhas); }
-.cilios { background-color: rgba(107, 78, 156, 0.15); color: var(--color-cilios); }
-.estetica { background-color: rgba(63, 166, 107, 0.15); color: var(--color-estetica); }
-.maquiagem { background-color: rgba(212, 72, 122, 0.15); color: var(--color-maquiagem); }
-.massoterapia { background-color: rgba(74, 143, 212, 0.15); color: var(--color-massoterapia); }
+/* Categorias específicas (opcional) */
+.cabelo { background-color: color-mix(in srgb, var(--color-cabelo) 15%, transparent); color: var(--color-cabelo); }
+.unhas { background-color: color-mix(in srgb, var(--color-unhas) 15%, transparent); color: var(--color-unhas); }
+.sobrancelhas { background-color: color-mix(in srgb, var(--color-sobrancelhas) 15%, transparent); color: var(--color-sobrancelhas); }
+.cilios { background-color: color-mix(in srgb, var(--color-cilios) 15%, transparent); color: var(--color-cilios); }
+.estetica { background-color: color-mix(in srgb, var(--color-estetica) 15%, transparent); color: var(--color-estetica); }
+.maquiagem { background-color: color-mix(in srgb, var(--color-maquiagem) 15%, transparent); color: var(--color-maquiagem); }
+.massoterapia { background-color: color-mix(in srgb, var(--color-massoterapia) 15%, transparent); color: var(--color-massoterapia); }
 .outros { background-color: var(--color-neutral-200); color: var(--color-neutral-700); }

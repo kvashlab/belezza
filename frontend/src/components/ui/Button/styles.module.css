@@ -41,12 +41,11 @@
 .primary {
   background-color: var(--color-primary-500);
   color: var(--surface-card);
-  box-shadow: 0 4px 14px 0 rgba(212, 72, 122, 0.39);
+  box-shadow: var(--shadow-sm);
 }
 .primary:hover:not(:disabled) {
   background-color: var(--color-primary-600);
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(212, 72, 122, 0.5);
+  box-shadow: var(--shadow-md);
 }
 
 .secondary {

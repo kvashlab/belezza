@@ -51,7 +51,12 @@ ul, ol {
 /* Tipografia Utilitários Globais */
 h1, h2, h3, h4, h5, h6, .font-display {
   font-family: var(--font-family-display);
-  font-weight: 600;
+  font-weight: 500; /* Medium for Fraunces */
+}
+
+.tabular-nums {
+  font-family: var(--font-family-mono);
+  font-variant-numeric: tabular-nums;
 }
 
 .heading-1 {

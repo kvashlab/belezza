@@ -1,11 +1,23 @@
 import type { Metadata } from "next";
-import { Plus_Jakarta_Sans } from "next/font/google";
+import { Fraunces, Manrope, JetBrains_Mono } from "next/font/google";
 import "@/styles/globals.css";
 import { ToastContainer } from "@/components/ui/Toast";
 
-const jakarta = Plus_Jakarta_Sans({ 
+const fraunces = Fraunces({ 
   subsets: ["latin"],
-  variable: "--font-jakarta",
+  variable: "--font-fraunces",
+  display: "swap",
+});
+
+const manrope = Manrope({ 
+  subsets: ["latin"],
+  variable: "--font-manrope",
+  display: "swap",
+});
+
+const jetbrainsMono = JetBrains_Mono({ 
+  subsets: ["latin"],
+  variable: "--font-mono",
   display: "swap",
 });
 
@@ -25,7 +37,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="pt-BR" className={jakarta.variable}>
+    <html lang="pt-BR" className={`${fraunces.variable} ${manrope.variable} ${jetbrainsMono.variable}`}>
       <body>
         <SocketProvider>
           <AppInitializer />

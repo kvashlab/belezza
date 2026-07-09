@@ -1,63 +1,68 @@
 :root {
-  /* Primária — Rosé sofisticado */
-  --color-primary-50:  #FDF2F4;
-  --color-primary-100: #FBE4E8;
-  --color-primary-300: #F0A8B8;
-  --color-primary-500: #D4487A;
-  --color-primary-600: #B8356A;
-  --color-primary-700: #922A55;
+  /* Primária — Rosé Profundo */
+  --color-primary-50:  #F7EBED;
+  --color-primary-100: #EED1D6;
+  --color-primary-300: #DCA0AA;
+  --color-primary-500: #B76E79; /* Base */
+  --color-primary-600: #9B5D66;
+  --color-primary-700: #7A4951;
 
-  /* Secundária — Dourado */
-  --color-gold-300: #E8D5A8;
-  --color-gold-500: #C9A15C;
-  --color-gold-600: #A8813C; /* Acessibilidade: maior contraste para textos */
-  --color-gold-700: #9C7A3E;
+  /* Secundária — Dourado Rosé */
+  --color-gold-300: #E6D8C0;
+  --color-gold-500: #C9A66B;
+  --color-gold-600: #B5935A;
+  --color-gold-700: #8E7445;
 
-  /* Neutros */
-  --color-cream-50:  #FFFDF9;
-  --color-neutral-100: #F7F3EF;
-  --color-neutral-200: #EDE6DE;
-  --color-neutral-300: #D9CFC4;
-  --color-neutral-500: #8A7E71;
-  --color-neutral-700: #4A423A;
-  --color-neutral-900: #221D18;
+  /* Neutros Base */
+  --color-cream-50:  #FDFBF9;
+  --color-neutral-100: #F7F1EC; /* Marfim */
+  --color-neutral-200: #E8E0D9;
+  --color-neutral-300: #D6CCC4;
+  --color-neutral-500: #9C9088; /* Cinza Quente */
+  --color-neutral-700: #5C5550;
+  --color-neutral-800: #2B2523; /* Grafite Profundo */
+  --color-neutral-900: #211C1A; /* Quase preto */
+  
+  /* Apoio */
+  --color-terracotta: #D98E73; /* Terracota Suave */
 
   /* Semânticas */
-  --color-success: #3FA66B;
-  --color-warning: #E0A02E;
-  --color-danger:  #D64545;
-  --color-info:    #4A8FD4;
+  --color-success: #6B8F71; /* Verde Sálvia */
+  --color-warning: #C98A3E; /* Âmbar Suave */
+  --color-danger:  #A64B3F; /* Terracota Escuro */
+  --color-info:    #5B7A8C; /* Azul Ardósia */
 
   /* Categorias de serviço */
-  --color-cabelo:       #B8356A;
-  --color-unhas:        #E1306C;
-  --color-sobrancelhas: #9C7A3E;
-  --color-cilios:       #6B4E9C;
-  --color-estetica:     #3FA66B;
-  --color-maquiagem:    #D4487A;
-  --color-massoterapia: #4A8FD4;
+  --color-cabelo:       var(--color-primary-600);
+  --color-unhas:        var(--color-terracotta);
+  --color-sobrancelhas: var(--color-gold-600);
+  --color-cilios:       var(--color-neutral-800);
+  --color-estetica:     var(--color-success);
+  --color-maquiagem:    var(--color-primary-500);
+  --color-massoterapia: var(--color-info);
 
   /* Superfícies */
-  --surface-header:       #FFFDF9;
-  --surface-main:         #FBF8F4;
+  --surface-header:       var(--color-neutral-100);
+  --surface-main:         #FAF7F5; /* Marfim um pouco mais claro p/ contraste */
   --surface-card:         #FFFFFF;
-  --surface-border:       #EDE6DE;
-  --surface-dark:         #221D18;
+  --surface-border:       #E8E0D9;
+  --surface-dark:         var(--color-neutral-900);
 
   /* Tipografia */
-  --font-family-display: var(--font-jakarta);
-  --font-family-base: var(--font-jakarta);
+  --font-family-display: var(--font-fraunces), serif;
+  --font-family-base: var(--font-manrope), sans-serif;
+  --font-family-mono: var(--font-mono), monospace;
 
-  /* Sombras (Estilo Premium/SaaS - ex: Stripe/Vercel) */
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.02);
-  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.08), 0 2px 6px rgba(0, 0, 0, 0.03);
-  --shadow-focus: 0 0 0 3px rgba(212, 72, 122, 0.2);
+  /* Sombras (Estilo Premium/Minimalista - mais baixas/suaves) */
+  --shadow-sm: 0 1px 2px rgba(43, 37, 35, 0.04);
+  --shadow-md: 0 4px 12px rgba(43, 37, 35, 0.04), 0 1px 2px rgba(43, 37, 35, 0.02);
+  --shadow-lg: 0 12px 32px rgba(43, 37, 35, 0.06), 0 2px 6px rgba(43, 37, 35, 0.02);
+  --shadow-focus: 0 0 0 3px rgba(183, 110, 121, 0.2);
 
-  /* Border Radius */
-  --radius-sm: 8px;
-  --radius-md: 14px;
-  --radius-lg: 24px;
+  /* Border Radius (8-12px conforme PDF) */
+  --radius-sm: 6px;
+  --radius-md: 10px; 
+  --radius-lg: 16px;
   --radius-full: 9999px;
 
   /* Espaçamento Base 4px */
@@ -75,39 +80,41 @@
   --spacing-24: 96px;
   --spacing-32: 128px;
 
-  /* Transições Globais */
-  --transition-normal: 300ms ease-in-out;
-  --transition-fast: 150ms ease-in-out;
+  /* Transições Globais (ease-in-out longo) */
+  --transition-normal: 400ms ease-in-out;
+  --transition-fast: 200ms ease-in-out;
 }
 
 [data-theme="dark"] {
-  --color-primary-50:  #2B1B20;
-  --color-primary-100: #421F2A;
-  --color-primary-300: #8E2B4A;
-  --color-primary-500: #DE5386;
-  --color-primary-600: #EB79A5;
-  --color-primary-700: #F3A8C5;
+  /* Construindo a partir do Grafite Profundo */
+  --color-primary-50:  #3A2428;
+  --color-primary-100: #553338;
+  --color-primary-300: #9B5D66;
+  --color-primary-500: #C2848D;
+  --color-primary-600: #DCA0AA;
+  --color-primary-700: #EED1D6;
 
-  --color-gold-300: #574B29;
-  --color-gold-500: #CBA25D;
-  --color-gold-700: #E6C88D;
+  --color-gold-300: #6B5532;
+  --color-gold-500: #D3B685;
+  --color-gold-700: #E6D8C0;
 
-  --color-cream-50:  #1A1613;
-  --color-neutral-100: #221D18;
-  --color-neutral-200: #2E2822;
-  --color-neutral-300: #3C352E;
-  --color-neutral-500: #8A7E71;
-  --color-neutral-700: #D9CFC4;
-  --color-neutral-900: #F7F3EF;
+  --color-cream-50:  #141110;
+  --color-neutral-100: #211C1A; /* Quase preto */
+  --color-neutral-200: #2B2523; /* Grafite Profundo */
+  --color-neutral-300: #423936;
+  --color-neutral-500: #9C9088;
+  --color-neutral-700: #D6CCC4;
+  --color-neutral-800: #F7F1EC;
+  --color-neutral-900: #FDFBF9;
 
-  --surface-header:       #1A1613;
-  --surface-main:         #151210;
-  --surface-card:         #221D18;
-  --surface-border:       #2E2822;
-  --surface-dark:         #0F0D0B;
+  --surface-header:       #211C1A;
+  --surface-main:         #1C1715;
+  --surface-card:         #2B2523; /* Grafite Profundo */
+  --surface-border:       #423936;
+  --surface-dark:         #141110;
 
   --shadow-sm: 0 1px 3px rgba(0,0,0,0.4);
   --shadow-md: 0 6px 16px rgba(0,0,0,0.5);
   --shadow-lg: 0 12px 40px rgba(0,0,0,0.6);
-  --shadow-focus: 0 0 0 3px rgba(222,83,134,0.35);
+  --shadow-focus: 0 0 0 3px rgba(194, 132, 141, 0.35);
 }
