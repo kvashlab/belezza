@@ -11,18 +11,16 @@ export class AppointmentService {
     const targetDate = new Date(year, month - 1, day);
     const dayOfWeek = targetDate.getDay();
 
-    const workingHourWhere = teamMemberId 
-      ? { professionalId, teamMemberId, dayOfWeek, isOpen: true }
-      : { professionalId, teamMemberId: null, dayOfWeek, isOpen: true };
+
+
+    const startOfDayLocal = new Date(year, month - 1, day, 0, 0, 0);
+    const endOfDayLocal = new Date(year, month - 1, day, 23, 59, 59, 999);
 
     const appointmentWhere = teamMemberId
-      ? { professionalId, teamMemberId, date: { gte: new Date(`${date}T00:00:00.000Z`), lt: new Date(`${date}T23:59:59.999Z`) }, status: { not: 'CANCELLED' } }
-      : { professionalId, teamMemberId: null, date: { gte: new Date(`${date}T00:00:00.000Z`), lt: new Date(`${date}T23:59:59.999Z`) }, status: { not: 'CANCELLED' } };
+      ? { professionalId, teamMemberId, date: { gte: startOfDayLocal, lt: endOfDayLocal }, status: { not: 'CANCELLED' } }
+      : { professionalId, teamMemberId: null, date: { gte: startOfDayLocal, lt: endOfDayLocal }, status: { not: 'CANCELLED' } };
 
-    const [workingHours, service, existingAppointments, customSlots] = await Promise.all([
-      prisma.workingHour.findMany({
-        where: workingHourWhere as any,
-      }),
+    const [service, existingAppointments, customSlots] = await Promise.all([
       prisma.service.findUnique({
         where: { id: serviceId },
       }),
@@ -34,7 +32,7 @@ export class AppointmentService {
           professionalId,
           OR: [
             { date: null },
-            { date: { gte: new Date(`${date}T00:00:00.000Z`), lt: new Date(`${date}T23:59:59.999Z`) } }
+            { date: { gte: startOfDayLocal, lt: endOfDayLocal } }
           ]
         }
       })
@@ -45,18 +43,19 @@ export class AppointmentService {
     const duration = service.duration;
     const potentialDateTimes: Date[] = [];
 
-    if (workingHours.length > 0) {
-      for (const workingHour of workingHours) {
-        const start = parse(workingHour.startTime, 'HH:mm', targetDate);
-        const end = parse(workingHour.endTime, 'HH:mm', targetDate);
-        let currentSlot = start;
-
-        while (isBefore(addMinutes(currentSlot, duration), end) || isEqual(addMinutes(currentSlot, duration), end)) {
-          // Add only if not already in array (avoid duplicates if shifts overlap or edge cases)
-          if (!potentialDateTimes.some(d => isEqual(d, currentSlot))) {
-            potentialDateTimes.push(currentSlot);
-          }
-          currentSlot = addMinutes(currentSlot, 30);
+    // Build 30min grid from 8 to 20 (matching professional agenda logic)
+    for (let hour = 8; hour <= 20; hour++) {
+      const timeStr = `${hour.toString().padStart(2, '0')}:00`;
+      const parsed = parse(timeStr, 'HH:mm', targetDate);
+      if (!potentialDateTimes.some(d => isEqual(d, parsed))) {
+        potentialDateTimes.push(parsed);
+      }
+      
+      if (hour !== 20) {
+        const timeStr30 = `${hour.toString().padStart(2, '0')}:30`;
+        const parsed30 = parse(timeStr30, 'HH:mm', targetDate);
+        if (!potentialDateTimes.some(d => isEqual(d, parsed30))) {
+          potentialDateTimes.push(parsed30);
         }
       }
     }
