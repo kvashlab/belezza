@@ -48,7 +48,7 @@ const Map: React.FC<MapProps> = ({ professionals }) => {
   const defaultCenter: [number, number] = userLoc 
     ? userLoc 
     : (firstWithAddress 
-      ? [firstWithAddress.address.lat, firstWithAddress.address.lng]
+      ? [firstWithAddress.address!.lat, firstWithAddress.address!.lng]
       : [-23.5505, -46.6333]); // Sao Paulo default
 
   return (
@@ -81,7 +81,7 @@ const Map: React.FC<MapProps> = ({ professionals }) => {
       />
       <MapUpdater center={defaultCenter} />
       {validProfessionals.map(prof => (
-        <Marker key={prof.id} position={[prof.address.lat, prof.address.lng]}>
+        <Marker key={prof.id} position={[prof.address!.lat, prof.address!.lng]}>
           <Popup>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', minWidth: '150px' }}>
               <strong style={{ fontSize: '14px', color: 'var(--color-neutral-900)' }}>{prof.businessName || prof.name}</strong>

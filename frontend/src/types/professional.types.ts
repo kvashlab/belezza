@@ -26,13 +26,18 @@ export interface Professional {
   categories: ServiceCategory[];
   rating: number;
   reviewsCount: number;
-  address: {
+  address?: {
     city: string;
     state: string;
     neighborhood: string;
     lat: number;
     lng: number;
   };
+  city?: string;
+  state?: string;
+  neighborhood?: string;
+  lat?: number;
+  lng?: number;
   serviceLocation: ServiceLocation;
   verified: boolean;
   socialLinks?: { instagram?: string; whatsapp?: string; tiktok?: string };
