@@ -5,6 +5,7 @@ import { useUIStore } from '@/stores/ui.store';
 import { Button } from '@/components/ui/Button';
 import { Plus, Edit2, Trash2 } from 'lucide-react';
 import { api } from '@/lib/api';
+import { VALID_CATEGORIES } from '@/constants/categories';
 import styles from '../perfil/styles.module.css';
 
 export default function ServicosProfissional() {
@@ -234,7 +235,12 @@ export default function ServicosProfissional() {
               </div>
               <div>
                 <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 500, color: 'var(--color-neutral-700)' }}>Categoria</label>
-                <input required name="category" type="text" defaultValue={editingService?.category || ''} placeholder="Ex: Cabelo" style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--surface-border)', outline: 'none' }} />
+                <select required name="category" defaultValue={editingService?.category || ''} style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--surface-border)', outline: 'none', backgroundColor: 'var(--surface-main)' }}>
+                  <option value="" disabled>Selecione uma categoria</option>
+                  {VALID_CATEGORIES.map(cat => (
+                    <option key={cat} value={cat}>{cat}</option>
+                  ))}
+                </select>
               </div>
               <div>
                 <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 500, color: 'var(--color-neutral-700)' }}>Descrição (Opcional)</label>

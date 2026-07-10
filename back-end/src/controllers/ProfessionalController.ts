@@ -3,6 +3,8 @@ import { ProfessionalService } from '../services/ProfessionalService';
 import { z } from 'zod';
 import { AuthRequest } from '../middlewares/auth.middleware';
 
+import { VALID_CATEGORIES } from '../constants/categories';
+
 const professionalService = new ProfessionalService();
 
 const updateProfileSchema = z.object({
@@ -26,7 +28,9 @@ const serviceSchema = z.object({
   description: z.string().optional(),
   price: z.number().min(0),
   duration: z.number().min(1),
-  category: z.string(),
+  category: z.string().refine(val => VALID_CATEGORIES.includes(val), {
+    message: "Categoria de serviço inválida."
+  }),
 });
 
 const workingHoursSchema = z.array(z.object({
@@ -105,13 +109,11 @@ export class ProfessionalController {
       let coverUrl = req.body.coverImage || undefined;
       const files = req.files as { [fieldname: string]: Express.Multer.File[] } | undefined;
 
-      // Upload images independently — a Supabase failure must NOT block the text fields save
       if (files?.['avatar']?.[0]) {
         try {
           const { uploadFileToSupabase } = require('../config/supabase');
           avatarUrl = await uploadFileToSupabase(files['avatar'][0], `avatars/prof_${req.user.id}_${Date.now()}.jpg`);
         } catch (uploadErr: any) {
-          console.error('[updateProfile] Avatar upload failed:', uploadErr.message);
           return res.status(400).json({ error: `Falha ao enviar foto de perfil: ${uploadErr.message}` });
         }
       }
@@ -120,19 +122,15 @@ export class ProfessionalController {
           const { uploadFileToSupabase } = require('../config/supabase');
           coverUrl = await uploadFileToSupabase(files['coverImage'][0], `covers/prof_${req.user.id}_${Date.now()}.jpg`);
         } catch (uploadErr: any) {
-          console.error('[updateProfile] Cover upload failed:', uploadErr.message);
           return res.status(400).json({ error: `Falha ao enviar foto de capa: ${uploadErr.message}` });
         }
       }
 
-      // Build the data object — FormData sends everything as strings, so we coerce types manually
       const rawBody = req.body || {};
-
       const dataToUpdate: Record<string, any> = {};
 
       if (rawBody.businessName !== undefined) dataToUpdate.businessName = String(rawBody.businessName);
       if (rawBody.bio !== undefined) dataToUpdate.bio = String(rawBody.bio);
-      if (rawBody.categories !== undefined) dataToUpdate.categories = String(rawBody.categories);
       if (rawBody.city !== undefined) dataToUpdate.city = String(rawBody.city);
       if (rawBody.state !== undefined) dataToUpdate.state = String(rawBody.state);
       if (rawBody.neighborhood !== undefined) dataToUpdate.neighborhood = String(rawBody.neighborhood);
@@ -142,6 +140,24 @@ export class ProfessionalController {
       if (rawBody.lng !== undefined && rawBody.lng !== '') dataToUpdate.lng = parseFloat(rawBody.lng);
       if (rawBody.requireDeposit !== undefined) {
         dataToUpdate.requireDeposit = String(rawBody.requireDeposit) === 'true';
+      }
+
+      if (rawBody.categories !== undefined) {
+        let cats: string[] = [];
+        try {
+          cats = JSON.parse(rawBody.categories);
+        } catch(e) {
+          cats = String(rawBody.categories).split(',').map(c => c.trim());
+        }
+        
+        const invalidCats = cats.filter(c => !VALID_CATEGORIES.includes(c));
+        if (invalidCats.length > 0) {
+          return res.status(400).json({ error: `Categorias inválidas enviadas: ${invalidCats.join(', ')}. Use apenas categorias permitidas.` });
+        }
+        
+        // Save as JSON string or comma separated? The frontend expects comma separated in some places, 
+        // but let's store it exactly as the parsed valid string joined by commas to maintain standard
+        dataToUpdate.categories = cats.join(',');
       }
 
       // Attach uploaded image URLs if available

@@ -5,10 +5,10 @@ import { Search, Map as MapIcon, List, MapPin, SlidersHorizontal } from 'lucide-
 import { ProfessionalCard } from '@/components/shared/ProfessionalCard';
 import { InteractiveMap } from '@/components/shared/InteractiveMap';
 
-import { Button } from '@/components/ui/Button';
 import { Select } from '@/components/ui/Select';
 import { api } from '@/lib/api';
 import styles from './styles.module.css';
+import { VALID_CATEGORIES } from '@/constants/categories';
 
 function ExplorarContent() {
   const searchParams = useSearchParams();
@@ -23,11 +23,7 @@ function ExplorarContent() {
   const [isLoading, setIsLoading] = useState(false);
   const [isFilterExpanded, setIsFilterExpanded] = useState(false);
 
-  const CATEGORIES = [
-    'Todas', 'Cabelo', 'Unhas', 'Maquiagem', 'Estética', 
-    'Sobrancelhas', 'Cílios', 'Depilação', 'Barbearia', 
-    'Massagem', 'Tatuagem / Piercing'
-  ];
+  const CATEGORIES = ['Todas', ...VALID_CATEGORIES];
   
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 1024);

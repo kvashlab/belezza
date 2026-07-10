@@ -146,63 +146,107 @@ export default function PublicProfile() {
     const addressParts = [professional.neighborhood, professional.city, professional.state].filter(Boolean);
     const addressStr = addressParts.join(', ');
 
+    const daysOfWeek = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
+    const sortedHours = (professional.workingHours || []).sort((a: any, b: any) => a.dayOfWeek - b.dayOfWeek);
+
     return (
-      <div style={{ padding: '16px 0', display: 'flex', flexDirection: 'column', gap: '24px' }}>
-        <div>
-          <h3 style={{ fontSize: '18px', fontWeight: 600, marginBottom: '12px' }}>Sobre o Espaço</h3>
-          <p style={{ whiteSpace: 'pre-wrap', color: 'var(--color-neutral-700)', lineHeight: 1.6 }}>
+      <div style={{ padding: '24px 0', display: 'flex', flexDirection: 'column', gap: '32px' }}>
+        {/* Bio Section */}
+        <div style={{ backgroundColor: 'var(--surface-card)', borderRadius: 'var(--radius-lg)', padding: '24px', border: '1px solid var(--surface-border)' }}>
+          <h3 style={{ fontSize: '18px', fontWeight: 600, marginBottom: '16px', color: 'var(--color-neutral-900)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ display: 'inline-block', width: '4px', height: '18px', backgroundColor: 'var(--color-primary-500)', borderRadius: '2px' }}></span>
+            Sobre o Espaço
+          </h3>
+          <p style={{ whiteSpace: 'pre-wrap', color: 'var(--color-neutral-600)', lineHeight: 1.7, fontSize: '15px' }}>
             {professional.bio || 'Este profissional ainda não adicionou uma descrição detalhada.'}
           </p>
         </div>
 
-        <div>
-          <h3 style={{ fontSize: '18px', fontWeight: 600, marginBottom: '12px' }}>Localização</h3>
-          {addressStr ? (
-            <>
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', marginBottom: '16px', color: 'var(--color-neutral-700)' }}>
-                <MapPin size={20} style={{ flexShrink: 0, marginTop: '2px' }} />
-                <span>{addressStr}</span>
-              </div>
-              <div style={{ width: '100%', height: '250px', borderRadius: 'var(--radius-md)', overflow: 'hidden', border: '1px solid var(--surface-border)' }}>
-                <iframe 
-                  src={`https://www.google.com/maps?q=${encodeURIComponent(addressStr)}&output=embed`}
-                  width="100%" 
-                  height="100%" 
-                  style={{ border: 0 }} 
-                  allowFullScreen={false} 
-                  loading="lazy" 
-                  referrerPolicy="no-referrer-when-downgrade"
-                ></iframe>
-              </div>
-            </>
-          ) : (
-            <p style={{ color: 'var(--color-neutral-500)' }}>Localização não informada.</p>
-          )}
-        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px' }}>
+          {/* Horários de Atendimento */}
+          <div style={{ backgroundColor: 'var(--surface-card)', borderRadius: 'var(--radius-lg)', padding: '24px', border: '1px solid var(--surface-border)' }}>
+            <h3 style={{ fontSize: '18px', fontWeight: 600, marginBottom: '16px', color: 'var(--color-neutral-900)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ display: 'inline-block', width: '4px', height: '18px', backgroundColor: 'var(--color-primary-500)', borderRadius: '2px' }}></span>
+              Horários de Atendimento
+            </h3>
+            
+            {sortedHours.length > 0 ? (
+              <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {sortedHours.map((wh: any) => (
+                  <li key={wh.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '12px', borderBottom: '1px solid var(--surface-border)', fontSize: '14px' }}>
+                    <span style={{ fontWeight: 500, color: 'var(--color-neutral-700)' }}>{daysOfWeek[wh.dayOfWeek]}</span>
+                    {wh.isClosed ? (
+                      <Badge variant="error">Fechado</Badge>
+                    ) : (
+                      <span style={{ color: 'var(--color-neutral-600)' }}>{wh.startTime} às {wh.endTime}</span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p style={{ color: 'var(--color-neutral-500)', fontSize: '14px', fontStyle: 'italic' }}>Horários não informados.</p>
+            )}
+          </div>
 
-        {(socialLinks.whatsapp || socialLinks.instagram) && (
-          <div>
-            <h3 style={{ fontSize: '18px', fontWeight: 600, marginBottom: '12px' }}>Contato</h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', color: 'var(--color-neutral-700)' }}>
-              {socialLinks.whatsapp && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <strong>WhatsApp:</strong> 
-                  <a href={`https://wa.me/${socialLinks.whatsapp.replace(/\\D/g, '')}`} target="_blank" rel="noreferrer" style={{ color: 'var(--color-primary-500)', textDecoration: 'none' }}>
-                    {socialLinks.whatsapp}
-                  </a>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+            {/* Contato */}
+            {(socialLinks.whatsapp || socialLinks.instagram) && (
+              <div style={{ backgroundColor: 'var(--surface-card)', borderRadius: 'var(--radius-lg)', padding: '24px', border: '1px solid var(--surface-border)' }}>
+                <h3 style={{ fontSize: '18px', fontWeight: 600, marginBottom: '16px', color: 'var(--color-neutral-900)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ display: 'inline-block', width: '4px', height: '18px', backgroundColor: 'var(--color-primary-500)', borderRadius: '2px' }}></span>
+                  Redes Sociais
+                </h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  {socialLinks.whatsapp && (
+                    <a href={`https://wa.me/${socialLinks.whatsapp.replace(/\D/g, '')}`} target="_blank" rel="noreferrer" style={{ display: 'flex', alignItems: 'center', gap: '12px', textDecoration: 'none', color: 'var(--color-neutral-700)', fontSize: '15px' }}>
+                      <div style={{ width: '40px', height: '40px', borderRadius: '50%', backgroundColor: '#E8F5E9', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#4CAF50' }}>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                      </div>
+                      <span style={{ fontWeight: 500 }}>WhatsApp</span>
+                    </a>
+                  )}
+                  {socialLinks.instagram && (
+                    <a href={socialLinks.instagram.startsWith('http') ? socialLinks.instagram : `https://instagram.com/${socialLinks.instagram.replace('@', '')}`} target="_blank" rel="noreferrer" style={{ display: 'flex', alignItems: 'center', gap: '12px', textDecoration: 'none', color: 'var(--color-neutral-700)', fontSize: '15px' }}>
+                      <div style={{ width: '40px', height: '40px', borderRadius: '50%', backgroundColor: '#FCE4EC', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#E91E63' }}>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
+                      </div>
+                      <span style={{ fontWeight: 500 }}>Instagram</span>
+                    </a>
+                  )}
                 </div>
-              )}
-              {socialLinks.instagram && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <strong>Instagram:</strong> 
-                  <a href={socialLinks.instagram.startsWith('http') ? socialLinks.instagram : `https://instagram.com/${socialLinks.instagram.replace('@', '')}`} target="_blank" rel="noreferrer" style={{ color: 'var(--color-primary-500)', textDecoration: 'none' }}>
-                    {socialLinks.instagram}
-                  </a>
-                </div>
+              </div>
+            )}
+            
+            {/* Localização */}
+            <div style={{ backgroundColor: 'var(--surface-card)', borderRadius: 'var(--radius-lg)', padding: '24px', border: '1px solid var(--surface-border)' }}>
+              <h3 style={{ fontSize: '18px', fontWeight: 600, marginBottom: '16px', color: 'var(--color-neutral-900)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ display: 'inline-block', width: '4px', height: '18px', backgroundColor: 'var(--color-primary-500)', borderRadius: '2px' }}></span>
+                Localização
+              </h3>
+              {addressStr ? (
+                <>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', marginBottom: '16px', color: 'var(--color-neutral-700)' }}>
+                    <MapPin size={20} style={{ flexShrink: 0, marginTop: '2px', color: 'var(--color-primary-500)' }} />
+                    <span style={{ fontSize: '15px', lineHeight: 1.5 }}>{addressStr}</span>
+                  </div>
+                  <div style={{ width: '100%', height: '200px', borderRadius: 'var(--radius-md)', overflow: 'hidden', border: '1px solid var(--surface-border)' }}>
+                    <iframe 
+                      src={`https://www.google.com/maps?q=${encodeURIComponent(addressStr)}&output=embed`}
+                      width="100%" 
+                      height="100%" 
+                      style={{ border: 0 }} 
+                      allowFullScreen={false} 
+                      loading="lazy" 
+                      referrerPolicy="no-referrer-when-downgrade"
+                    ></iframe>
+                  </div>
+                </>
+              ) : (
+                <p style={{ color: 'var(--color-neutral-500)', fontSize: '14px', fontStyle: 'italic' }}>Endereço completo não disponível.</p>
               )}
             </div>
           </div>
-        )}
+        </div>
       </div>
     );
   };

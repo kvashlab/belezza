@@ -384,7 +384,10 @@ export class ProfessionalService {
       todaysAppointmentsCount: todaysAppointments.length,
       revenueToday,
       upcomingAppointments: appointments
-        .filter(a => new Date(a.date) >= today && a.status !== 'CANCELLED')
+        .filter(a => {
+          if (a.status === 'COMPLETED' || a.status === 'CANCELLED') return false;
+          return new Date(a.date) >= new Date();
+        })
         .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
         .slice(0, 4),
       chartData,

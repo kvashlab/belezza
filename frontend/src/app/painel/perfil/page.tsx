@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Image as ImageIcon, Camera, Check, X, Link as LinkIcon, Share2 } from 'lucide-react';
 import { api } from '@/lib/api';
+import { VALID_CATEGORIES } from '@/constants/categories';
 import styles from './styles.module.css';
 
 type Tab = 'aparencia' | 'contato' | 'horarios' | 'seguranca';
@@ -27,6 +28,9 @@ export default function PerfilProfissional() {
   // Image previews
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
+  
+  // Categories
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
 
   const loadProfile = async () => {
     try {
@@ -34,6 +38,14 @@ export default function PerfilProfissional() {
       setProfileData(response.data);
       if (response.data.avatar) setAvatarPreview(response.data.avatar);
       if (response.data.coverImage) setCoverPreview(response.data.coverImage);
+      if (response.data.categories) {
+        try {
+          const parsed = JSON.parse(response.data.categories);
+          setSelectedCategories(Array.isArray(parsed) ? parsed : [parsed]);
+        } catch {
+          setSelectedCategories(response.data.categories.split(',').map((c:string) => c.trim()));
+        }
+      }
     } catch (e) {
       console.error(e);
     } finally {
@@ -98,7 +110,7 @@ export default function PerfilProfissional() {
       const formData = new FormData();
       formData.append('businessName', (form.elements.namedItem('businessName') as HTMLInputElement).value);
       formData.append('bio', (form.elements.namedItem('bio') as HTMLTextAreaElement).value);
-      formData.append('categories', (form.elements.namedItem('categories') as HTMLInputElement).value);
+      formData.append('categories', JSON.stringify(selectedCategories));
       
       const avatarInput = form.elements.namedItem('avatar') as HTMLInputElement;
       if (avatarInput && avatarInput.files && avatarInput.files[0]) {
@@ -385,9 +397,24 @@ export default function PerfilProfissional() {
                   <label className={styles.label}>Biografia (Bio)</label>
                   <textarea name="bio" className={styles.textarea} placeholder="Conte um pouco sobre você, suas especialidades e seu espaço..." defaultValue={profileData?.bio || ''} />
                 </div>
-                <div className={styles.inputGroup}>
-                  <label className={styles.label}>Categorias de Serviço Principais (Separadas por vírgula)</label>
-                  <input name="categories" type="text" className={styles.input} defaultValue={profileData?.categories || ''} />
+                <div className={styles.inputGroup} style={{ gridColumn: '1 / -1' }}>
+                  <label className={styles.label}>Categorias de Serviço Principais</label>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '12px', marginTop: '8px' }}>
+                    {VALID_CATEGORIES.map(cat => (
+                      <label key={cat} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '14px', color: 'var(--color-neutral-700)' }}>
+                        <input 
+                          type="checkbox" 
+                          checked={selectedCategories.includes(cat)}
+                          onChange={(e) => {
+                            if (e.target.checked) setSelectedCategories(prev => [...prev, cat]);
+                            else setSelectedCategories(prev => prev.filter(c => c !== cat));
+                          }}
+                          style={{ accentColor: 'var(--color-primary-600)', width: '16px', height: '16px' }}
+                        />
+                        {cat}
+                      </label>
+                    ))}
+                  </div>
                 </div>
               </div>
 

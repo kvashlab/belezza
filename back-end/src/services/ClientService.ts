@@ -59,12 +59,12 @@ export class ClientService {
     const clientId = client.id;
     const { professionalId, appointmentId, rating, comment } = data;
 
-    if (appointmentId) {
-      const appointment = await prisma.appointment.findUnique({ where: { id: appointmentId } });
-      if (!appointment) throw new Error('Agendamento não encontrado');
-      if (appointment.clientId !== clientId) throw new Error('Este agendamento não pertence a você');
-      if (appointment.status !== 'COMPLETED') throw new Error('Você só pode avaliar um agendamento após ele ser concluído');
-    }
+    if (!appointmentId) throw new Error('ID do agendamento é obrigatório para avaliar.');
+
+    const appointment = await prisma.appointment.findUnique({ where: { id: appointmentId } });
+    if (!appointment) throw new Error('Agendamento não encontrado.');
+    if (appointment.clientId !== clientId) throw new Error('Este agendamento não pertence a você.');
+    if (appointment.status !== 'COMPLETED') throw new Error('Você só pode avaliar um agendamento após ele ser concluído.');
 
     const review = await prisma.review.create({
       data: {
