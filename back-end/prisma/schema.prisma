@@ -104,6 +104,7 @@ model Service {
   price          Float
   duration       Int                 // in minutes
   category       String
+  imageUrl       String?
   appointments   Appointment[]
 }
 

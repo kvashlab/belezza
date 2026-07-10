@@ -133,6 +133,7 @@ export default function AgendaPage() {
   // Build schedule list for the current date
   const generateSchedule = () => {
     const slots = [];
+    const now = new Date();
     // From 08:00 to 20:00
     for (let hour = 8; hour <= 20; hour++) {
       const timeString = `${hour.toString().padStart(2, '0')}:00`;
@@ -143,6 +144,10 @@ export default function AgendaPage() {
         return isSameDay(aDate, currentDate) && aDate.getHours() === hour;
       });
 
+      const slotDate = new Date(currentDate);
+      slotDate.setHours(hour, 0, 0, 0);
+      const isPast = slotDate < now;
+
       if (appt) {
         slots.push({
           time: timeString,
@@ -150,10 +155,11 @@ export default function AgendaPage() {
           client: appt.client?.user?.name || appt.clientName || 'Manual',
           service: appt.service?.name,
           type: appt.status.toLowerCase(), // pending, confirmed, cancelled, completed
-          id: appt.id
+          id: appt.id,
+          isPast
         });
       } else {
-        slots.push({ time: timeString, status: 'available', client: null, service: null, type: null, id: null });
+        slots.push({ time: timeString, status: isPast ? 'past' : 'available', client: null, service: null, type: null, id: null, isPast });
       }
     }
     return slots;
@@ -248,6 +254,17 @@ export default function AgendaPage() {
                     onClick={() => handleOpenModal(slot.time)}
                     >
                       + Adicionar agendamento
+                    </div>
+                  ) : slot.status === 'past' ? (
+                    <div style={{ 
+                      height: '100%', 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      color: 'var(--color-neutral-300)',
+                      fontSize: '14px',
+                      padding: '0 var(--spacing-3)',
+                    }}>
+                      Horário Indisponível
                     </div>
                   ) : (
                     <div style={{ 

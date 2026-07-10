@@ -159,8 +159,24 @@ export class ProfessionalController {
   async createService(req: AuthRequest, res: Response) {
     try {
       if (req.user?.role !== 'PROFESSIONAL') return res.status(403).json({ error: 'Acesso negado.' });
-      const data = serviceSchema.parse(req.body);
-      const service = await professionalService.createService(req.user.id, data);
+      
+      let imageUrl = undefined;
+      if (req.file) {
+        const { uploadFileToSupabase } = require('../config/supabase');
+        imageUrl = await uploadFileToSupabase(req.file, `services/prof_${req.user.id}_${Date.now()}.jpg`);
+      }
+
+      const rawBody = req.body || {};
+      const parsedData = serviceSchema.parse({
+        name: rawBody.name,
+        description: rawBody.description,
+        price: parseFloat(rawBody.price),
+        duration: parseInt(rawBody.duration, 10),
+        category: rawBody.category,
+      });
+
+      const finalData = { ...parsedData, imageUrl };
+      const service = await professionalService.createService(req.user.id, finalData);
       res.status(201).json(service);
     } catch (error: any) {
       if (error instanceof z.ZodError) {
@@ -183,9 +199,31 @@ export class ProfessionalController {
   async updateService(req: AuthRequest, res: Response) {
     try {
       if (req.user?.role !== 'PROFESSIONAL') return res.status(403).json({ error: 'Acesso negado.' });
-      const data = serviceSchema.partial().parse(req.body);
+      
+      let imageUrl = undefined;
+      if (req.file) {
+        const { uploadFileToSupabase } = require('../config/supabase');
+        imageUrl = await uploadFileToSupabase(req.file, `services/prof_${req.user.id}_${Date.now()}.jpg`);
+      }
+
+      const rawBody = req.body || {};
+      const objectToValidate: any = {};
+      if (rawBody.name) objectToValidate.name = rawBody.name;
+      if (rawBody.description !== undefined) objectToValidate.description = rawBody.description;
+      if (rawBody.price) objectToValidate.price = parseFloat(rawBody.price);
+      if (rawBody.duration) objectToValidate.duration = parseInt(rawBody.duration, 10);
+      if (rawBody.category) objectToValidate.category = rawBody.category;
+
+      const data = serviceSchema.partial().parse(objectToValidate);
+      const finalData: any = { ...data };
+      if (imageUrl) finalData.imageUrl = imageUrl;
+      // If user sends 'null' or empty string as imageUrl explicitly, we clear it (for deletion)
+      if (rawBody.imageUrl === 'null' || rawBody.imageUrl === '') {
+        finalData.imageUrl = null;
+      }
+
       const serviceId = req.params.id as string;
-      const updated = await professionalService.updateService(req.user.id, serviceId, data);
+      const updated = await professionalService.updateService(req.user.id, serviceId, finalData);
       res.json(updated);
     } catch (error: any) {
       if (error instanceof z.ZodError) {

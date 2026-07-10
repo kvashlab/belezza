@@ -259,11 +259,13 @@ export class ProfessionalService {
 
     const clientsMap = new Map();
     appointments.forEach(a => {
-      if (a.clientId) {
-        if (!clientsMap.has(a.clientId)) {
-          clientsMap.set(a.clientId, {
-            id: a.client?.id || a.clientId,
-            name: a.client?.user?.name || 'Cliente',
+      // Use clientId if available, fallback to clientName for manual appointments
+      const mapKey = a.clientId || a.clientName;
+      if (mapKey) {
+        if (!clientsMap.has(mapKey)) {
+          clientsMap.set(mapKey, {
+            id: a.clientId || `manual_${mapKey}`,
+            name: a.client?.user?.name || a.clientName || 'Cliente',
             email: a.client?.user?.email || '',
             phone: a.client?.user?.phone || '(00) 00000-0000',
             avatar: a.client?.avatar || '',
@@ -271,8 +273,8 @@ export class ProfessionalService {
             totalSpent: 0
           });
         }
-        const clientStats = clientsMap.get(a.clientId);
-        if (a.status === 'COMPLETED' || a.status === 'CONFIRMED') {
+        const clientStats = clientsMap.get(mapKey);
+        if (a.status === 'COMPLETED') {
           clientStats.totalSpent += a.price;
         }
       }
@@ -283,8 +285,10 @@ export class ProfessionalService {
     });
 
     manualCustomers.forEach(c => {
-      if (!clientsMap.has(c.id)) {
-        clientsMap.set(c.id, {
+      // Try to merge with manual appointment entry if name matches exactly, else create new
+      const mapKey = c.name;
+      if (!clientsMap.has(mapKey)) {
+        clientsMap.set(mapKey, {
           id: c.id,
           name: c.name,
           email: c.email || '',
@@ -294,6 +298,13 @@ export class ProfessionalService {
           totalSpent: 0,
           isManual: true
         });
+      } else {
+        // If we found a match by name (from an appointment), use the customer ID instead of manual_ string
+        const existing = clientsMap.get(mapKey);
+        existing.id = c.id;
+        if (c.email) existing.email = c.email;
+        if (c.phone) existing.phone = c.phone;
+        existing.isManual = true;
       }
     });
 

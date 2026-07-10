@@ -70,6 +70,11 @@ export class AppointmentService {
   }
 
   async createAppointment(clientId: string | undefined, professionalId: string, serviceId: string, dateTime: string, notes?: string, teamMemberId?: string, clientName?: string) {
+    const appointmentDate = new Date(dateTime);
+    if (isBefore(appointmentDate, new Date())) {
+      throw new Error('Não é possível agendar um compromisso no passado.');
+    }
+
     const service = await prisma.service.findUnique({ where: { id: serviceId } });
     if (!service) throw new Error('Serviço não encontrado');
 

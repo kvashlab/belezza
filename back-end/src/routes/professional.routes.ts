@@ -18,8 +18,8 @@ router.put('/me', upload.fields([{ name: 'avatar', maxCount: 1 }, { name: 'cover
 router.put('/me/username', (req, res) => controller.changeUsername(req, res));
 
 router.get('/services', (req, res) => controller.getServices(req, res));
-router.post('/services', (req, res) => controller.createService(req, res));
-router.put('/services/:id', (req, res) => controller.updateService(req, res));
+router.post('/services', upload.single('image'), (req, res) => controller.createService(req, res));
+router.put('/services/:id', upload.single('image'), (req, res) => controller.updateService(req, res));
 router.delete('/services/:id', (req, res) => controller.deleteService(req, res));
 
 router.put('/working-hours', (req, res) => controller.updateWorkingHours(req, res));

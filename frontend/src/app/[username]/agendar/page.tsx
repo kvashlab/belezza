@@ -301,7 +301,10 @@ export default function AgendarFlow() {
               <h3 className={styles.timeTitle}>Horários disponíveis:</h3>
               {isLoadingSlots ? <p>Carregando horários...</p> : (
                 <div className={styles.timeGrid}>
-                  {availableSlots.map(time => (
+                  {availableSlots.filter(time => {
+                    const slotDate = new Date(`${selectedDate}T${time}:00`);
+                    return slotDate > new Date();
+                  }).map(time => (
                     <button
                       key={time}
                       className={`${styles.timeSlot} ${selectedTime === time ? styles.timeSelected : ''}`}
@@ -310,7 +313,7 @@ export default function AgendarFlow() {
                       {time}
                     </button>
                   ))}
-                  {availableSlots.length === 0 && <p style={{ gridColumn: '1 / -1', color: 'var(--gray-500)' }}>Nenhum horário disponível para esta data.</p>}
+                  {availableSlots.filter(time => new Date(`${selectedDate}T${time}:00`) > new Date()).length === 0 && <p style={{ gridColumn: '1 / -1', color: 'var(--gray-500)' }}>Nenhum horário disponível para esta data a partir de agora.</p>}
                 </div>
               )}
               

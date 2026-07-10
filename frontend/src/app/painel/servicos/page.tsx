@@ -45,19 +45,32 @@ export default function ServicosProfissional() {
     setIsSaving(true);
     const form = e.target as HTMLFormElement;
     
-    const payload = {
-      name: (form.elements.namedItem('name') as HTMLInputElement).value,
-      description: (form.elements.namedItem('description') as HTMLInputElement).value,
-      category: (form.elements.namedItem('category') as HTMLInputElement).value,
-      price: parseFloat((form.elements.namedItem('price') as HTMLInputElement).value),
-      duration: parseInt((form.elements.namedItem('duration') as HTMLInputElement).value),
-    };
+    const formData = new FormData();
+    formData.append('name', (form.elements.namedItem('name') as HTMLInputElement).value);
+    formData.append('description', (form.elements.namedItem('description') as HTMLInputElement).value);
+    formData.append('category', (form.elements.namedItem('category') as HTMLInputElement).value);
+    formData.append('price', (form.elements.namedItem('price') as HTMLInputElement).value);
+    formData.append('duration', (form.elements.namedItem('duration') as HTMLInputElement).value);
+
+    const imageFile = (form.elements.namedItem('image') as HTMLInputElement)?.files?.[0];
+    if (imageFile) {
+      formData.append('image', imageFile);
+    } else if (editingService) {
+      const removeImage = (form.elements.namedItem('removeImage') as HTMLInputElement)?.checked;
+      if (removeImage) {
+        formData.append('imageUrl', 'null');
+      }
+    }
 
     try {
       if (editingService) {
-        await api.put(`/professionals/services/${editingService.id}`, payload);
+        await api.put(`/professionals/services/${editingService.id}`, formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
       } else {
-        await api.post('/professionals/services', payload);
+        await api.post('/professionals/services', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
       }
       
       addToast({ type: 'success', title: editingService ? 'Serviço atualizado!' : 'Serviço criado!' });
@@ -89,7 +102,10 @@ export default function ServicosProfissional() {
   return (
     <div className={styles.container}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--spacing-6)' }}>
-        <h1 className="heading-2 title" style={{ marginBottom: 0 }}>Meus Serviços</h1>
+        <div>
+          <h1 className="heading-2" style={{ color: 'var(--color-neutral-900)' }}>Meus Serviços</h1>
+          <p className="body-text" style={{ color: 'var(--color-neutral-500)' }}>Gerencie os serviços que você oferece aos seus clientes.</p>
+        </div>
         <Button 
           variant="primary"
           leftIcon={<Plus size={18} />}
@@ -101,36 +117,79 @@ export default function ServicosProfissional() {
       
       <div className={styles.content} style={{ display: 'block' }}>
         {services.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: 'var(--spacing-8)', color: 'var(--gray-500)' }}>
-            <p>Você ainda não tem serviços cadastrados.</p>
+          <div style={{ textAlign: 'center', padding: 'var(--spacing-8)', color: 'var(--color-neutral-500)', backgroundColor: 'var(--surface-card)', borderRadius: 'var(--radius-lg)', border: '1px dashed var(--surface-border)' }}>
+            <div style={{ width: '64px', height: '64px', backgroundColor: 'var(--color-neutral-100)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+              <Plus size={24} color="var(--color-neutral-400)" />
+            </div>
+            <p style={{ fontSize: '16px', fontWeight: 500, color: 'var(--color-neutral-700)' }}>Você ainda não tem serviços cadastrados.</p>
+            <p style={{ fontSize: '14px', marginTop: '4px' }}>Adicione seu primeiro serviço para começar a receber agendamentos.</p>
+            <Button variant="primary" style={{ marginTop: '16px' }} onClick={() => { setEditingService(null); setIsModalOpen(true); }}>
+              Adicionar Serviço
+            </Button>
           </div>
         ) : (
-          <div style={{ display: 'grid', gap: 'var(--spacing-4)' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 'var(--spacing-4)' }}>
             {services.map((service) => (
-              <div key={service.id} style={{ display: 'flex', justifyContent: 'space-between', padding: 'var(--spacing-4)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-lg)' }}>
-                <div>
-                  <h3 style={{ fontWeight: 600, fontSize: '1.1rem' }}>{service.name}</h3>
-                  <p style={{ color: 'var(--gray-500)', fontSize: '0.9rem', margin: '4px 0' }}>{service.category}</p>
-                  <div style={{ display: 'flex', gap: '16px', marginTop: '8px', fontSize: '0.9rem', fontWeight: 500 }}>
-                    <span style={{ color: 'var(--primary-600)' }}>R$ {service.price.toFixed(2)}</span>
-                    <span>{service.duration} min</span>
+              <div key={service.id} style={{ 
+                backgroundColor: 'var(--surface-card)', 
+                border: '1px solid var(--surface-border)', 
+                borderRadius: 'var(--radius-lg)',
+                overflow: 'hidden',
+                transition: 'transform 0.2s, box-shadow 0.2s',
+                display: 'flex',
+                flexDirection: 'column'
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none'; }}
+              >
+                {service.imageUrl ? (
+                  <div style={{ width: '100%', height: '160px', position: 'relative', backgroundColor: 'var(--surface-main)' }}>
+                    <img src={service.imageUrl} alt={service.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   </div>
-                </div>
-                <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
-                  <button 
-                    type="button"
-                    onClick={() => { setEditingService(service); setIsModalOpen(true); }}
-                    style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--gray-500)' }}
-                  >
-                    <Edit2 size={18} />
-                  </button>
-                  <button 
-                    type="button"
-                    onClick={() => handleDelete(service.id)}
-                    style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--danger-500)' }}
-                  >
-                    <Trash2 size={18} />
-                  </button>
+                ) : (
+                  <div style={{ width: '100%', height: '120px', backgroundColor: 'var(--color-primary-50)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <span style={{ color: 'var(--color-primary-300)', fontSize: '14px', fontWeight: 500 }}>Sem Imagem</span>
+                  </div>
+                )}
+                
+                <div style={{ padding: 'var(--spacing-4)', flex: 1, display: 'flex', flexDirection: 'column' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <div>
+                      <span style={{ display: 'inline-block', padding: '2px 8px', backgroundColor: 'var(--color-neutral-100)', color: 'var(--color-neutral-600)', borderRadius: '12px', fontSize: '12px', fontWeight: 500, marginBottom: '8px' }}>
+                        {service.category}
+                      </span>
+                      <h3 style={{ fontWeight: 600, fontSize: '16px', color: 'var(--color-neutral-900)' }}>{service.name}</h3>
+                    </div>
+                    <div style={{ display: 'flex', gap: '4px' }}>
+                      <button 
+                        type="button"
+                        onClick={() => { setEditingService(service); setIsModalOpen(true); }}
+                        style={{ padding: '6px', background: 'var(--color-primary-50)', borderRadius: '6px', border: 'none', cursor: 'pointer', color: 'var(--color-primary-600)' }}
+                      >
+                        <Edit2 size={16} />
+                      </button>
+                      <button 
+                        type="button"
+                        onClick={() => handleDelete(service.id)}
+                        style={{ padding: '6px', background: 'var(--color-danger-50)', borderRadius: '6px', border: 'none', cursor: 'pointer', color: 'var(--color-danger-600)' }}
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  </div>
+                  
+                  {service.description && (
+                    <p style={{ color: 'var(--color-neutral-500)', fontSize: '13px', margin: '12px 0', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                      {service.description}
+                    </p>
+                  )}
+                  
+                  <div style={{ marginTop: 'auto', paddingTop: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--surface-border)' }}>
+                    <span style={{ color: 'var(--color-primary-700)', fontWeight: 700, fontSize: '18px' }}>R$ {service.price.toFixed(2)}</span>
+                    <span style={{ color: 'var(--color-neutral-500)', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      ⏱ {service.duration} min
+                    </span>
+                  </div>
                 </div>
               </div>
             ))}
@@ -146,12 +205,29 @@ export default function ServicosProfissional() {
         }}>
           <div style={{
             backgroundColor: 'var(--surface-card)', padding: '32px', borderRadius: '16px',
-            width: '90%', maxWidth: '500px', position: 'relative', boxShadow: '0 10px 25px rgba(0,0,0,0.1)'
+            width: '90%', maxWidth: '500px', position: 'relative', boxShadow: '0 10px 25px rgba(0,0,0,0.1)',
+            maxHeight: '90vh', overflowY: 'auto'
           }}>
             <button onClick={() => setIsModalOpen(false)} style={{ position: 'absolute', top: '16px', right: '16px', background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer', color: 'var(--color-neutral-400)' }}>&times;</button>
             <h2 style={{ fontSize: '20px', fontWeight: 600, marginBottom: '24px', color: 'var(--color-neutral-900)' }}>{editingService ? 'Editar Serviço' : 'Novo Serviço'}</h2>
             
             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div>
+                <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 500, color: 'var(--color-neutral-700)' }}>Imagem do Serviço</label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  {editingService?.imageUrl && (
+                    <img src={editingService.imageUrl} alt="Atual" style={{ width: '60px', height: '60px', borderRadius: '8px', objectFit: 'cover' }} />
+                  )}
+                  <input type="file" name="image" accept="image/*" style={{ fontSize: '14px' }} />
+                </div>
+                {editingService?.imageUrl && (
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px', fontSize: '13px', color: 'var(--color-danger-600)', cursor: 'pointer' }}>
+                    <input type="checkbox" name="removeImage" />
+                    Remover imagem atual
+                  </label>
+                )}
+              </div>
+              
               <div>
                 <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 500, color: 'var(--color-neutral-700)' }}>Nome do Serviço</label>
                 <input required name="name" type="text" defaultValue={editingService?.name || ''} placeholder="Ex: Corte Degrade" style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--surface-border)', outline: 'none' }} />

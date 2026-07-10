@@ -28,7 +28,10 @@ export const NotificationBell = () => {
   useEffect(() => {
     if (!socket) return;
     const handleNotification = (data: any) => {
-      setNotifications(prev => [data, ...prev]);
+      setNotifications(prev => {
+        if (prev.some(n => n.id === data.id)) return prev;
+        return [data, ...prev];
+      });
     };
     socket.on('notification', handleNotification);
     return () => {
