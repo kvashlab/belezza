@@ -183,7 +183,7 @@ export default function AgendarFlow() {
               professionalId: profData.id,
               serviceId: service.id,
               teamMemberId: selectedTeamMember?.id,
-              dateTime: `${selectedDate}T${selectedTime}:00.000Z`,
+              dateTime: `${selectedDate}T${selectedTime}:00`,
               notes
             })
           });

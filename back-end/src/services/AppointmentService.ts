@@ -19,8 +19,8 @@ export class AppointmentService {
       ? { professionalId, teamMemberId, date: { gte: new Date(`${date}T00:00:00.000Z`), lt: new Date(`${date}T23:59:59.999Z`) }, status: { not: 'CANCELLED' } }
       : { professionalId, teamMemberId: null, date: { gte: new Date(`${date}T00:00:00.000Z`), lt: new Date(`${date}T23:59:59.999Z`) }, status: { not: 'CANCELLED' } };
 
-    const [workingHour, service, existingAppointments, customSlots] = await Promise.all([
-      prisma.workingHour.findFirst({
+    const [workingHours, service, existingAppointments, customSlots] = await Promise.all([
+      prisma.workingHour.findMany({
         where: workingHourWhere as any,
       }),
       prisma.service.findUnique({
@@ -45,14 +45,19 @@ export class AppointmentService {
     const duration = service.duration;
     const potentialDateTimes: Date[] = [];
 
-    if (workingHour) {
-      const start = parse(workingHour.startTime, 'HH:mm', targetDate);
-      const end = parse(workingHour.endTime, 'HH:mm', targetDate);
-      let currentSlot = start;
+    if (workingHours.length > 0) {
+      for (const workingHour of workingHours) {
+        const start = parse(workingHour.startTime, 'HH:mm', targetDate);
+        const end = parse(workingHour.endTime, 'HH:mm', targetDate);
+        let currentSlot = start;
 
-      while (isBefore(addMinutes(currentSlot, duration), end) || isEqual(addMinutes(currentSlot, duration), end)) {
-        potentialDateTimes.push(currentSlot);
-        currentSlot = addMinutes(currentSlot, 30);
+        while (isBefore(addMinutes(currentSlot, duration), end) || isEqual(addMinutes(currentSlot, duration), end)) {
+          // Add only if not already in array (avoid duplicates if shifts overlap or edge cases)
+          if (!potentialDateTimes.some(d => isEqual(d, currentSlot))) {
+            potentialDateTimes.push(currentSlot);
+          }
+          currentSlot = addMinutes(currentSlot, 30);
+        }
       }
     }
 
@@ -83,10 +88,7 @@ export class AppointmentService {
       });
 
       if (!isOverlapping) {
-        // Also check if slot is in the past if it's today
-        if (isAfter(currentSlot, new Date())) {
-          slots.push(format(currentSlot, 'HH:mm'));
-        }
+        slots.push(format(currentSlot, 'HH:mm'));
       }
     }
 
