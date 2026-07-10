@@ -302,7 +302,9 @@ export default function AgendarFlow() {
               {isLoadingSlots ? <p>Carregando horários...</p> : (
                 <div className={styles.timeGrid}>
                   {availableSlots.filter(time => {
-                    const slotDate = new Date(`${selectedDate}T${time}:00`);
+                    const [year, month, day] = selectedDate.split('-').map(Number);
+                    const [hours, minutes] = time.split(':').map(Number);
+                    const slotDate = new Date(year, month - 1, day, hours, minutes, 0);
                     return slotDate > new Date();
                   }).map(time => (
                     <button
@@ -313,7 +315,12 @@ export default function AgendarFlow() {
                       {time}
                     </button>
                   ))}
-                  {availableSlots.filter(time => new Date(`${selectedDate}T${time}:00`) > new Date()).length === 0 && <p style={{ gridColumn: '1 / -1', color: 'var(--gray-500)' }}>Nenhum horário disponível para esta data a partir de agora.</p>}
+                  {availableSlots.filter(time => {
+                    const [year, month, day] = selectedDate.split('-').map(Number);
+                    const [hours, minutes] = time.split(':').map(Number);
+                    const slotDate = new Date(year, month - 1, day, hours, minutes, 0);
+                    return slotDate > new Date();
+                  }).length === 0 && <p style={{ gridColumn: '1 / -1', color: 'var(--gray-500)' }}>Nenhum horário disponível para esta data a partir de agora.</p>}
                 </div>
               )}
               

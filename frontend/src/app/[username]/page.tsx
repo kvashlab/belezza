@@ -69,8 +69,17 @@ export default function PublicProfile() {
   const renderServices = () => (
     <div className={styles.servicesList}>
       {profServices.map((service: any) => (
-        <div key={service.id} className={styles.serviceItem}>
-          <div className={styles.serviceInfo}>
+        <div key={service.id} className={styles.serviceItem} style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+          <div style={{ width: '80px', height: '80px', flexShrink: 0, borderRadius: '12px', overflow: 'hidden', backgroundColor: 'var(--color-primary-50)', position: 'relative' }}>
+            {service.imageUrl ? (
+              <Image src={service.imageUrl} alt={service.name} fill style={{ objectFit: 'cover' }} unoptimized />
+            ) : (
+              <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-primary-300)' }}>
+                 <span style={{ fontSize: '10px', fontWeight: 600 }}>Sem Imagem</span>
+              </div>
+            )}
+          </div>
+          <div className={styles.serviceInfo} style={{ flex: 1 }}>
             <h4 className={styles.serviceName}>{service.name}</h4>
             <p className={styles.serviceDesc}>{service.description}</p>
             <span className={styles.serviceDuration}>{service.duration} min</span>

@@ -76,6 +76,7 @@ model ProfessionalProfile {
   reviews      Review[]
   waitlists    Waitlist[]
   customers    Customer[]
+  customTimeSlots CustomTimeSlot[]
   usernameChangeLogs UsernameChangeLog[]
   reportsReceived    Report[]
 
@@ -118,6 +119,15 @@ model WorkingHour {
   startTime      String              // "09:00"
   endTime        String              // "19:00"
   isOpen         Boolean             @default(true)
+}
+
+model CustomTimeSlot {
+  id             String              @id @default(uuid())
+  professionalId String
+  professional   ProfessionalProfile @relation(fields: [professionalId], references: [id], onDelete: Cascade)
+  time           String              // "09:15"
+  date           DateTime?           // Se null, aplica-se a todos os dias disponíveis da agenda. Se preenchido, é apenas para este dia.
+  createdAt      DateTime            @default(now())
 }
 
 model PortfolioPhoto {

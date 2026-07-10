@@ -7,8 +7,9 @@ const notificationService = new NotificationService();
 export class AppointmentService {
   async getAvailableSlots(professionalId: string, serviceId: string, date: string, teamMemberId?: string) {
     // date format: YYYY-MM-DD
-    const targetDate = new Date(date);
-    const dayOfWeek = targetDate.getUTCDay();
+    const [year, month, day] = date.split('-').map(Number);
+    const targetDate = new Date(year, month - 1, day);
+    const dayOfWeek = targetDate.getDay();
 
     const workingHourWhere = teamMemberId 
       ? { professionalId, teamMemberId, dayOfWeek, isOpen: true }
@@ -18,7 +19,7 @@ export class AppointmentService {
       ? { professionalId, teamMemberId, date: { gte: new Date(`${date}T00:00:00.000Z`), lt: new Date(`${date}T23:59:59.999Z`) }, status: { not: 'CANCELLED' } }
       : { professionalId, teamMemberId: null, date: { gte: new Date(`${date}T00:00:00.000Z`), lt: new Date(`${date}T23:59:59.999Z`) }, status: { not: 'CANCELLED' } };
 
-    const [workingHour, service, existingAppointments] = await Promise.all([
+    const [workingHour, service, existingAppointments, customSlots] = await Promise.all([
       prisma.workingHour.findFirst({
         where: workingHourWhere as any,
       }),
@@ -28,19 +29,45 @@ export class AppointmentService {
       prisma.appointment.findMany({
         where: appointmentWhere,
       }),
+      prisma.customTimeSlot.findMany({
+        where: {
+          professionalId,
+          OR: [
+            { date: null },
+            { date: { gte: new Date(`${date}T00:00:00.000Z`), lt: new Date(`${date}T23:59:59.999Z`) } }
+          ]
+        }
+      })
     ]);
 
-    if (!workingHour || !service) return [];
+    if (!service) return [];
 
-    // Parse start and end times
-    const start = parse(workingHour.startTime, 'HH:mm', targetDate);
-    const end = parse(workingHour.endTime, 'HH:mm', targetDate);
     const duration = service.duration;
+    const potentialDateTimes: Date[] = [];
+
+    if (workingHour) {
+      const start = parse(workingHour.startTime, 'HH:mm', targetDate);
+      const end = parse(workingHour.endTime, 'HH:mm', targetDate);
+      let currentSlot = start;
+
+      while (isBefore(addMinutes(currentSlot, duration), end) || isEqual(addMinutes(currentSlot, duration), end)) {
+        potentialDateTimes.push(currentSlot);
+        currentSlot = addMinutes(currentSlot, 30);
+      }
+    }
+
+    for (const cSlot of customSlots) {
+      const parsed = parse(cSlot.time, 'HH:mm', targetDate);
+      if (!potentialDateTimes.some(d => isEqual(d, parsed))) {
+        potentialDateTimes.push(parsed);
+      }
+    }
+
+    potentialDateTimes.sort((a, b) => a.getTime() - b.getTime());
 
     const slots: string[] = [];
-    let currentSlot = start;
 
-    while (isBefore(addMinutes(currentSlot, duration), end) || isEqual(addMinutes(currentSlot, duration), end)) {
+    for (const currentSlot of potentialDateTimes) {
       const slotEnd = addMinutes(currentSlot, duration);
 
       // Check for overlap with existing appointments
@@ -61,9 +88,6 @@ export class AppointmentService {
           slots.push(format(currentSlot, 'HH:mm'));
         }
       }
-
-      // Increment by a fixed interval, e.g., 30 mins, or just the duration
-      currentSlot = addMinutes(currentSlot, 30);
     }
 
     return slots;

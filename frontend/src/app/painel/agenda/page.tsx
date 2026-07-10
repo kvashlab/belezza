@@ -14,6 +14,8 @@ export default function AgendaPage() {
   const professionalId = (user as any)?.professionalProfile?.id;
   const [currentDate, setCurrentDate] = useState(startOfDay(new Date()));
   const [appointments, setAppointments] = useState<any[]>([]);
+  const [customSlots, setCustomSlots] = useState<any[]>([]);
+  const [showAllHours, setShowAllHours] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const { addToast } = useUIStore();
   
@@ -26,18 +28,30 @@ export default function AgendaPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [saveAsClient, setSaveAsClient] = useState(false);
   const [clientsList, setClientsList] = useState<any[]>([]);
+  const [modalTab, setModalTab] = useState<'appointment' | 'custom'>('appointment');
+  const [customPermanent, setCustomPermanent] = useState(false);
 
   const formattedDate = format(currentDate, "EEEE, d 'de' MMMM", { locale: ptBR });
 
   useEffect(() => {
     fetchAppointments();
     fetchClients();
+    fetchCustomSlots();
   }, [currentDate]);
 
   const fetchClients = async () => {
     try {
       const response = await api.get('/professionals/clients');
       setClientsList(response.data);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const fetchCustomSlots = async () => {
+    try {
+      const response = await api.get('/professionals/custom-slots');
+      setCustomSlots(response.data);
     } catch (e) {
       console.error(e);
     }
@@ -120,6 +134,23 @@ export default function AgendaPage() {
     }
   };
 
+  const handleSaveCustomSlot = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!modalTime) return addToast({ type: 'error', title: 'Erro', message: 'Preencha o horário.' });
+    setIsSaving(true);
+    try {
+      const dateStr = customPermanent ? undefined : format(currentDate, 'yyyy-MM-dd');
+      await api.post('/professionals/custom-slots', { time: modalTime, date: dateStr });
+      addToast({ type: 'success', title: 'Sucesso', message: 'Horário personalizado criado!' });
+      setIsModalOpen(false);
+      fetchCustomSlots();
+    } catch (error: any) {
+      addToast({ type: 'error', title: 'Erro', message: error.response?.data?.error || 'Falha ao criar horário' });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const updateStatus = async (id: string, status: string) => {
     try {
       await api.put(`/appointments/${id}/status`, { status });
@@ -134,19 +165,59 @@ export default function AgendaPage() {
   const generateSchedule = () => {
     const slots = [];
     const now = new Date();
-    // From 08:00 to 20:00
+    const isToday = isSameDay(currentDate, now);
+    
+    // Build set of times
+    const times = new Set<string>();
+    
+    // Add 30min grid
     for (let hour = 8; hour <= 20; hour++) {
-      const timeString = `${hour.toString().padStart(2, '0')}:00`;
-      
+      times.add(`${hour.toString().padStart(2, '0')}:00`);
+      if (hour !== 20) {
+        times.add(`${hour.toString().padStart(2, '0')}:30`);
+      }
+    }
+
+    // Add custom slots that apply today
+    customSlots.forEach(cs => {
+      if (!cs.date || isSameDay(new Date(cs.date), currentDate)) {
+        times.add(cs.time);
+      }
+    });
+
+    // Add appointment times that might be off-grid
+    appointments.forEach(appt => {
+      const aDate = new Date(appt.date);
+      if (isSameDay(aDate, currentDate)) {
+        const timeStr = format(aDate, 'HH:mm');
+        times.add(timeStr);
+      }
+    });
+
+    const sortedTimes = Array.from(times).sort();
+
+    let nextAvailableFound = false;
+
+    for (const timeString of sortedTimes) {
       // Find appointment in this slot
       const appt = appointments.find(a => {
         const aDate = new Date(a.date);
-        return isSameDay(aDate, currentDate) && aDate.getHours() === hour;
+        return isSameDay(aDate, currentDate) && format(aDate, 'HH:mm') === timeString;
       });
 
+      const [hh, mm] = timeString.split(':').map(Number);
       const slotDate = new Date(currentDate);
-      slotDate.setHours(hour, 0, 0, 0);
+      slotDate.setHours(hh, mm, 0, 0);
+      
       const isPast = slotDate < now;
+      
+      let isOngoing = false;
+      if (appt && isToday && slotDate <= now) {
+         const endSlotDate = new Date(slotDate.getTime() + ((appt.service?.duration || 30) * 60000));
+         if (endSlotDate > now) {
+            isOngoing = true;
+         }
+      }
 
       if (appt) {
         slots.push({
@@ -156,16 +227,32 @@ export default function AgendaPage() {
           service: appt.service?.name,
           type: appt.status.toLowerCase(), // pending, confirmed, cancelled, completed
           id: appt.id,
-          isPast
+          isPast: !isOngoing && isPast,
+          isOngoing
         });
       } else {
-        slots.push({ time: timeString, status: isPast ? 'past' : 'available', client: null, service: null, type: null, id: null, isPast });
+        let isNextAvailable = false;
+        if (isToday && !isPast && !nextAvailableFound) {
+          isNextAvailable = true;
+          nextAvailableFound = true;
+        }
+        slots.push({ 
+           time: timeString, 
+           status: isPast ? 'past' : 'available', 
+           client: null, 
+           service: null, 
+           type: null, 
+           id: null, 
+           isPast, 
+           isNextAvailable 
+        });
       }
     }
     return slots;
   };
 
   const schedule = generateSchedule();
+  const visibleSchedule = showAllHours ? schedule : schedule.filter(s => !s.isPast || s.status === 'busy' || s.isOngoing);
 
   const [waitlist, setWaitlist] = useState<any[]>([]);
 
@@ -216,7 +303,7 @@ export default function AgendaPage() {
           <div style={{ padding: '40px', textAlign: 'center', color: 'var(--color-neutral-500)' }}>Carregando agenda...</div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column' }}>
-            {schedule.map((slot, i) => (
+            {visibleSchedule.map((slot, i) => (
               <div key={i} style={{ 
                 display: 'flex', 
                 borderBottom: '1px solid var(--surface-border)', 
@@ -230,10 +317,12 @@ export default function AgendaPage() {
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center',
-                  color: 'var(--color-neutral-700)',
-                  fontWeight: 500
+                  color: slot.isOngoing ? 'var(--color-primary-600)' : (slot.isPast ? 'var(--color-neutral-400)' : 'var(--color-neutral-700)'),
+                  fontWeight: slot.isOngoing ? 700 : 500,
+                  backgroundColor: slot.isOngoing ? 'var(--color-primary-50)' : 'transparent'
                 }}>
                   {slot.time}
+                  {slot.isOngoing && <span style={{ fontSize: '10px', color: 'var(--color-primary-500)', marginTop: '4px' }}>Agora</span>}
                 </div>
                 <div style={{ flex: 1, padding: 'var(--spacing-3)' }}>
                   {slot.status === 'available' ? (
@@ -241,19 +330,21 @@ export default function AgendaPage() {
                       height: '100%', 
                       display: 'flex', 
                       alignItems: 'center', 
-                      color: 'var(--color-neutral-400)',
+                      color: slot.isNextAvailable ? 'var(--color-primary-600)' : 'var(--color-neutral-400)',
+                      backgroundColor: slot.isNextAvailable ? 'rgba(var(--color-primary-50-rgb), 0.5)' : 'transparent',
                       fontSize: '14px',
+                      fontWeight: slot.isNextAvailable ? 500 : 400,
                       cursor: 'pointer',
                       padding: '0 var(--spacing-3)',
                       borderRadius: 'var(--radius-md)',
-                      border: '1px dashed transparent',
+                      border: slot.isNextAvailable ? '1px dashed var(--color-primary-300)' : '1px dashed transparent',
                       transition: 'all 0.2s'
                     }}
-                    onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--color-primary-300)'; e.currentTarget.style.color = 'var(--color-primary-600)'; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'transparent'; e.currentTarget.style.color = 'var(--color-neutral-400)'; }}
+                    onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--color-primary-400)'; e.currentTarget.style.color = 'var(--color-primary-700)'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = slot.isNextAvailable ? 'var(--color-primary-300)' : 'transparent'; e.currentTarget.style.color = slot.isNextAvailable ? 'var(--color-primary-600)' : 'var(--color-neutral-400)'; }}
                     onClick={() => handleOpenModal(slot.time)}
                     >
-                      + Adicionar agendamento
+                      {slot.isNextAvailable ? '+ Agendar Próximo Horário' : '+ Adicionar agendamento'}
                     </div>
                   ) : slot.status === 'past' ? (
                     <div style={{ 
@@ -275,11 +366,16 @@ export default function AgendaPage() {
                       padding: 'var(--spacing-3) var(--spacing-4)',
                       display: 'flex',
                       justifyContent: 'space-between',
-                      alignItems: 'center'
+                      alignItems: 'center',
+                      opacity: (slot.isPast && !slot.isOngoing) ? 0.6 : 1
                     }}>
                       <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
                         <strong style={{ color: 'var(--color-neutral-900)', fontSize: '15px', textDecoration: slot.type === 'cancelled' ? 'line-through' : 'none' }}>{slot.client}</strong>
-                        {slot.service && <span style={{ color: 'var(--color-neutral-600)', fontSize: '13px' }}>{slot.service}</span>}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          {slot.service && <span style={{ color: 'var(--color-neutral-600)', fontSize: '13px' }}>{slot.service}</span>}
+                          {slot.type === 'completed' && <span style={{ backgroundColor: 'var(--color-success-100)', color: 'var(--color-success-700)', padding: '2px 6px', borderRadius: '4px', fontSize: '11px', fontWeight: 600 }}>Concluído</span>}
+                          {slot.type === 'cancelled' && <span style={{ backgroundColor: 'var(--color-danger-100)', color: 'var(--color-danger-700)', padding: '2px 6px', borderRadius: '4px', fontSize: '11px', fontWeight: 600 }}>Cancelado</span>}
+                        </div>
                       </div>
                       
                       {slot.type === 'pending' && (
@@ -296,6 +392,18 @@ export default function AgendaPage() {
                 </div>
               </div>
             ))}
+            
+            {schedule.some(s => s.isPast && s.status !== 'busy' && !s.isOngoing) && (
+              <div style={{ padding: 'var(--spacing-4)', textAlign: 'center' }}>
+                <Button 
+                  variant="secondary" 
+                  size="sm"
+                  onClick={() => setShowAllHours(!showAllHours)}
+                >
+                  {showAllHours ? 'Ocultar horários passados' : 'Ver todos os horários'}
+                </Button>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -355,11 +463,24 @@ export default function AgendaPage() {
           alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)'
         }}>
           <div style={{
-            backgroundColor: 'var(--surface-card)', padding: '32px', borderRadius: '16px',
-            width: '90%', maxWidth: '400px', position: 'relative', boxShadow: '0 10px 25px rgba(0,0,0,0.1)'
+            backgroundColor: 'var(--surface-card)', padding: '0', borderRadius: '16px',
+            width: '90%', maxWidth: '400px', position: 'relative', boxShadow: '0 10px 25px rgba(0,0,0,0.1)', overflow: 'hidden'
           }}>
+            <div style={{ display: 'flex', borderBottom: '1px solid var(--surface-border)' }}>
+               <button 
+                  onClick={() => setModalTab('appointment')} 
+                  style={{ flex: 1, padding: '16px', background: modalTab === 'appointment' ? 'var(--surface-main)' : 'transparent', border: 'none', borderBottom: modalTab === 'appointment' ? '2px solid var(--color-primary-500)' : '2px solid transparent', fontWeight: 600, color: modalTab === 'appointment' ? 'var(--color-primary-700)' : 'var(--color-neutral-500)', cursor: 'pointer' }}
+               >Agendamento</button>
+               <button 
+                  onClick={() => setModalTab('custom')} 
+                  style={{ flex: 1, padding: '16px', background: modalTab === 'custom' ? 'var(--surface-main)' : 'transparent', border: 'none', borderBottom: modalTab === 'custom' ? '2px solid var(--color-primary-500)' : '2px solid transparent', fontWeight: 600, color: modalTab === 'custom' ? 'var(--color-primary-700)' : 'var(--color-neutral-500)', cursor: 'pointer' }}
+               >Horário Extra</button>
+            </div>
+            
             <button onClick={() => setIsModalOpen(false)} style={{ position: 'absolute', top: '16px', right: '16px', background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer', color: 'var(--color-neutral-400)' }}>&times;</button>
-            <h2 style={{ fontSize: '20px', fontWeight: 600, marginBottom: '24px', color: 'var(--color-neutral-900)' }}>Novo Agendamento</h2>
+            
+            <div style={{ padding: '24px' }}>
+            {modalTab === 'appointment' ? (
             <form onSubmit={handleSaveAppointment} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <div>
                 <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 500, color: 'var(--color-neutral-700)' }}>Nome do Cliente</label>
@@ -416,6 +537,41 @@ export default function AgendaPage() {
               
               <Button type="submit" variant="primary" style={{ marginTop: '16px' }} isLoading={isSaving}>Salvar Agendamento</Button>
             </form>
+            ) : (
+            <form onSubmit={handleSaveCustomSlot} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <p style={{ fontSize: '13px', color: 'var(--color-neutral-500)', marginBottom: '8px' }}>
+                Crie um horário quebrado (ex: 09:15) ou um horário fora da sua grade padrão para atender uma exceção.
+              </p>
+              
+              <div style={{ display: 'flex', gap: '16px' }}>
+                <div style={{ flex: 1 }}>
+                  <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 500, color: 'var(--color-neutral-700)' }}>Data Base</label>
+                  <input type="text" value={format(currentDate, 'dd/MM/yyyy')} disabled style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid var(--surface-border)', backgroundColor: 'var(--surface-main)', color: 'var(--color-neutral-500)' }} />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 500, color: 'var(--color-neutral-700)' }}>Horário Específico</label>
+                  <input type="time" value={modalTime} onChange={e => setModalTime(e.target.value)} required style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid var(--surface-border)' }} />
+                </div>
+              </div>
+              
+              <div style={{ marginTop: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <input 
+                  type="checkbox" 
+                  id="customPermanent"
+                  checked={customPermanent}
+                  onChange={(e) => setCustomPermanent(e.target.checked)}
+                  style={{ width: '16px', height: '16px', cursor: 'pointer', accentColor: 'var(--color-primary-600)' }}
+                />
+                <label htmlFor="customPermanent" style={{ fontSize: '13px', color: 'var(--color-neutral-700)', cursor: 'pointer' }}>
+                  <strong style={{ display: 'block' }}>Tornar Permanente</strong>
+                  <span style={{ color: 'var(--color-neutral-500)' }}>Aplicar esse horário para todos os dias disponíveis.</span>
+                </label>
+              </div>
+
+              <Button type="submit" variant="primary" style={{ marginTop: '16px' }} isLoading={isSaving}>Criar Horário Extra</Button>
+            </form>
+            )}
+            </div>
           </div>
         </div>
       )}

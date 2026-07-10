@@ -486,6 +486,39 @@ export class ProfessionalService {
     });
   }
 
+  // --- CUSTOM SLOTS ---
+  async getCustomSlots(userId: string) {
+    const profileId = await this.getProfileIdByUserId(userId);
+    return prisma.customTimeSlot.findMany({
+      where: { professionalId: profileId },
+      orderBy: [
+        { date: 'asc' },
+        { time: 'asc' }
+      ]
+    });
+  }
+
+  async createCustomSlot(userId: string, data: { time: string, date?: string }) {
+    const profileId = await this.getProfileIdByUserId(userId);
+    
+    return prisma.customTimeSlot.create({
+      data: {
+        professionalId: profileId,
+        time: data.time,
+        date: data.date ? new Date(data.date) : null
+      }
+    });
+  }
+
+  async deleteCustomSlot(userId: string, slotId: string) {
+    const profileId = await this.getProfileIdByUserId(userId);
+    const slot = await prisma.customTimeSlot.findFirst({ where: { id: slotId, professionalId: profileId } });
+    if (!slot) throw new Error('Horário personalizado não encontrado');
+    
+    await prisma.customTimeSlot.delete({ where: { id: slotId } });
+    return { message: 'Horário deletado' };
+  }
+
   async upgradePlan(userId: string) {
     const profileId = await this.getProfileIdByUserId(userId);
     

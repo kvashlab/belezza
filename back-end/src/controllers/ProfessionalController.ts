@@ -386,6 +386,42 @@ export class ProfessionalController {
     }
   }
 
+  async getCustomSlots(req: AuthRequest, res: Response) {
+    try {
+      if (req.user?.role !== 'PROFESSIONAL') return res.status(403).json({ error: 'Acesso negado.' });
+      const slots = await professionalService.getCustomSlots(req.user.id);
+      res.json(slots);
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  }
+
+  async createCustomSlot(req: AuthRequest, res: Response) {
+    try {
+      if (req.user?.role !== 'PROFESSIONAL') return res.status(403).json({ error: 'Acesso negado.' });
+      
+      const { time, date } = req.body;
+      if (!time) {
+        return res.status(400).json({ error: 'Horário (time) é obrigatório.' });
+      }
+
+      const slot = await professionalService.createCustomSlot(req.user.id, { time, date });
+      res.status(201).json(slot);
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  }
+
+  async deleteCustomSlot(req: AuthRequest, res: Response) {
+    try {
+      if (req.user?.role !== 'PROFESSIONAL') return res.status(403).json({ error: 'Acesso negado.' });
+      await professionalService.deleteCustomSlot(req.user.id, req.params.id as string);
+      res.status(204).send();
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  }
+
   async upgradePlan(req: AuthRequest, res: Response) {
     try {
       const userId = req.user?.id;

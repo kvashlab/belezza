@@ -37,6 +37,10 @@ router.delete('/portfolio/:id', (req, res) => controller.deletePortfolioPhoto(re
 
 router.get('/reviews', (req, res) => controller.getReviews(req, res));
 
+router.get('/custom-slots', (req, res) => controller.getCustomSlots(req, res));
+router.post('/custom-slots', (req, res) => controller.createCustomSlot(req, res));
+router.delete('/custom-slots/:id', (req, res) => controller.deleteCustomSlot(req, res));
+
 router.post('/upgrade', (req, res) => controller.upgradePlan(req, res));
 
 export default router;

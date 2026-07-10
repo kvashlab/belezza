@@ -326,6 +326,20 @@
   }
 }
 
+@media (min-width: 769px) {
+  .stickyFooter {
+    position: static;
+    box-shadow: none;
+    border-top: none;
+    padding: var(--spacing-4) 0;
+    justify-content: flex-start;
+    background: transparent;
+  }
+  .bookBtn {
+    max-width: 300px;
+  }
+}
+
 .bookBtn {
   width: 100%;
   max-width: 400px;

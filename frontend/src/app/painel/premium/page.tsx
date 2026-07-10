@@ -11,8 +11,10 @@ export default function PremiumCheckoutPage() {
   const router = useRouter();
   const { addToast } = useUIStore();
   const { fetchMe } = useAuthStore();
+
   
   const [isProcessing, setIsProcessing] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<'credit' | 'debit' | null>(null);
   const [formData, setFormData] = useState({
     cardNumber: '',
     cardName: '',
@@ -127,9 +129,53 @@ export default function PremiumCheckoutPage() {
               </div>
               <h2 style={{ fontSize: '22px', fontWeight: 600, color: 'var(--color-neutral-900)' }}>Pagamento</h2>
             </div>
-            <p style={{ color: 'var(--color-neutral-500)', fontSize: '14px', marginLeft: '46px' }}>Aceitamos cartões de crédito e débito.</p>
+            <p style={{ color: 'var(--color-neutral-500)', fontSize: '14px', marginLeft: '46px' }}>Escolha como deseja pagar sua assinatura.</p>
           </div>
 
+          <div style={{ display: 'flex', gap: '16px', marginBottom: '32px' }}>
+            <div 
+              onClick={() => setPaymentMethod('credit')}
+              style={{ 
+                flex: 1, 
+                padding: '24px', 
+                borderRadius: '16px', 
+                border: paymentMethod === 'credit' ? '2px solid var(--color-primary-500)' : '2px solid var(--surface-border)', 
+                backgroundColor: paymentMethod === 'credit' ? 'var(--color-primary-50)' : 'transparent',
+                cursor: 'pointer',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: '12px',
+                transition: 'all 0.2s'
+              }}
+            >
+              <CreditCard size={32} color={paymentMethod === 'credit' ? 'var(--color-primary-600)' : 'var(--color-neutral-400)'} />
+              <span style={{ fontWeight: 600, color: paymentMethod === 'credit' ? 'var(--color-primary-700)' : 'var(--color-neutral-700)' }}>Cartão de Crédito</span>
+              {paymentMethod === 'credit' && <CheckCircle2 size={20} color="var(--color-primary-600)" style={{ position: 'absolute', marginTop: '-40px', marginLeft: '120px' }} />}
+            </div>
+            <div 
+              onClick={() => setPaymentMethod('debit')}
+              style={{ 
+                flex: 1, 
+                padding: '24px', 
+                borderRadius: '16px', 
+                border: paymentMethod === 'debit' ? '2px solid var(--color-primary-500)' : '2px solid var(--surface-border)', 
+                backgroundColor: paymentMethod === 'debit' ? 'var(--color-primary-50)' : 'transparent',
+                cursor: 'pointer',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: '12px',
+                transition: 'all 0.2s'
+              }}
+            >
+              <CreditCard size={32} color={paymentMethod === 'debit' ? 'var(--color-primary-600)' : 'var(--color-neutral-400)'} />
+              <span style={{ fontWeight: 600, color: paymentMethod === 'debit' ? 'var(--color-primary-700)' : 'var(--color-neutral-700)' }}>Cartão de Débito</span>
+              {paymentMethod === 'debit' && <CheckCircle2 size={20} color="var(--color-primary-600)" style={{ position: 'absolute', marginTop: '-40px', marginLeft: '120px' }} />}
+            </div>
+          </div>
+
+          {paymentMethod && (
           <form onSubmit={handleCheckout} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-5)' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-2)' }}>
               <label style={{ fontSize: '14px', fontWeight: 500, color: 'var(--color-neutral-800)' }}>Número do Cartão</label>

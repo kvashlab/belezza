@@ -141,10 +141,12 @@ function ExplorarContent() {
       <div className={styles.content}>
         {(viewMode === 'list' || !isMobile) && (
           <div className={styles.listContainer}>
-            <div className={styles.resultsHeader}>
-              <h2>Profissionais encontrados</h2>
-              <span className={styles.resultsCount}>{professionals.length} resultados</span>
-            </div>
+            {!isLoading && cityTerm && cityTerm.trim() !== '' && (
+              <div className={styles.resultsHeader}>
+                <h2>Profissionais encontrados</h2>
+                <span className={styles.resultsCount}>{professionals.length} resultados</span>
+              </div>
+            )}
             
             {isLoading ? (
               <div style={{ padding: '24px', textAlign: 'center' }}>Buscando profissionais...</div>
