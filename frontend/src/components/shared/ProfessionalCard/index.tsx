@@ -75,7 +75,13 @@ export const ProfessionalCard: React.FC<ProfessionalCardProps> = ({ professional
         <div className={styles.footer}>
           <div className={styles.location}>
             <MapPin size={14} className={styles.locationIcon} />
-            <span>{professional.address ? `${professional.address.neighborhood}, ${professional.address.city}` : 'Endereço não informado'}</span>
+            <span>{
+              professional.address 
+                ? `${professional.address.neighborhood}, ${professional.address.city}`
+                : professional.city 
+                  ? `${professional.neighborhood}, ${professional.city}`
+                  : 'Endereço não informado'
+            }</span>
           </div>
         </div>
       </div>

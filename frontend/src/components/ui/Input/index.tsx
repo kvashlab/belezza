@@ -10,7 +10,9 @@ export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> 
 
 export const Input = React.forwardRef<HTMLInputElement, InputProps>(
   ({ className = '', label, error, leftIcon, rightIcon, id, ...props }, ref) => {
-    const inputId = id || Math.random().toString(36).substring(7);
+    const generatedId = React.useId();
+    const inputId = id || generatedId;
+    const errorId = `${inputId}-error`;
 
     return (
       <div className={`${styles.wrapper} ${className}`}>
@@ -21,11 +23,13 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
             id={inputId}
             ref={ref}
             className={`${styles.input} ${error ? styles.inputError : ''} ${leftIcon ? styles.hasLeftIcon : ''} ${rightIcon ? styles.hasRightIcon : ''}`}
+            aria-invalid={!!error}
+            aria-describedby={error ? errorId : undefined}
             {...props}
           />
           {rightIcon && <span className={styles.rightIcon}>{rightIcon}</span>}
         </div>
-        {error && <span className={styles.errorMessage}>{error}</span>}
+        {error && <span id={errorId} className={styles.errorMessage} role="alert">{error}</span>}
       </div>
     );
   }
