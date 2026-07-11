@@ -5,7 +5,7 @@ import { NotificationService } from './NotificationService';
 const notificationService = new NotificationService();
 
 export class AppointmentService {
-  async getAvailableSlots(professionalId: string, serviceId: string, date: string, teamMemberId?: string) {
+  async getAvailableSlots(professionalId: string, serviceIds: string[], date: string, teamMemberId?: string) {
     // date format: YYYY-MM-DD
     const [year, month, day] = date.split('-').map(Number);
     const targetDate = new Date(year, month - 1, day);
@@ -20,9 +20,9 @@ export class AppointmentService {
       ? { professionalId, teamMemberId, date: { gte: startOfDayLocal, lt: endOfDayLocal }, status: { not: 'CANCELLED' } }
       : { professionalId, teamMemberId: null, date: { gte: startOfDayLocal, lt: endOfDayLocal }, status: { not: 'CANCELLED' } };
 
-    const [service, existingAppointments, customSlots] = await Promise.all([
-      prisma.service.findUnique({
-        where: { id: serviceId },
+    const [services, existingAppointments, customSlots] = await Promise.all([
+      prisma.service.findMany({
+        where: { id: { in: serviceIds } },
       }),
       prisma.appointment.findMany({
         where: appointmentWhere,
@@ -38,9 +38,9 @@ export class AppointmentService {
       })
     ]);
 
-    if (!service) return [];
+    if (!services || services.length === 0) return [];
 
-    const duration = service.duration;
+    const duration = services.reduce((acc, curr) => acc + curr.duration, 0);
     const potentialDateTimes: Date[] = [];
 
     // Build 30min grid from 8 to 20 (matching professional agenda logic)
@@ -94,17 +94,17 @@ export class AppointmentService {
     return slots;
   }
 
-  async createAppointment(clientId: string | undefined, professionalId: string, serviceId: string, dateTime: string, notes?: string, teamMemberId?: string, clientName?: string) {
+  async createAppointment(clientId: string | undefined, professionalId: string, serviceIds: string[], dateTime: string, notes?: string, teamMemberId?: string, clientName?: string) {
     const appointmentDate = new Date(dateTime);
     if (isBefore(appointmentDate, new Date())) {
       throw new Error('Não é possível agendar um compromisso no passado.');
     }
 
-    const service = await prisma.service.findUnique({ where: { id: serviceId } });
-    if (!service) throw new Error('Serviço não encontrado');
+    const services = await prisma.service.findMany({ where: { id: { in: serviceIds } } });
+    if (!services || services.length === 0) throw new Error('Serviço não encontrado');
 
     // Premium Check: FREE plans can only have 50 appointments per month
-    const professional = await prisma.professionalProfile.findUnique({ where: { id: professionalId } });
+    const professional = await prisma.professionalProfile.findUnique({ where: { id: professionalId }, include: { user: true } });
     if (professional?.plan === 'FREE') {
       const startOfMonth = new Date();
       startOfMonth.setDate(1);
@@ -117,34 +117,53 @@ export class AppointmentService {
         }
       });
 
-      if (appointmentsThisMonth >= 50) {
+      if (appointmentsThisMonth + services.length > 50) {
         throw new Error('Este profissional atingiu o limite de agendamentos mensais do plano gratuito.');
       }
     }
 
-    // Create the appointment
-    const appointment = await prisma.appointment.create({
-      data: {
-        clientId: clientId || null,
-        clientName: clientName || null,
-        professionalId,
-        serviceId,
-        teamMemberId: teamMemberId || null,
-        date: new Date(dateTime),
-        price: service.price,
-        duration: service.duration,
-        notes,
-      },
-    });
+    // Create the sequential appointments
+    const createdAppointments = [];
+    let currentStart = new Date(dateTime);
+
+    // To preserve order as sent by client, map them:
+    const orderedServices = serviceIds.map(id => services.find(s => s.id === id)).filter(Boolean) as any[];
+
+    for (const service of orderedServices) {
+      const appointment = await prisma.appointment.create({
+        data: {
+          clientId: clientId || null,
+          clientName: clientName || null,
+          professionalId,
+          serviceId: service.id,
+          teamMemberId: teamMemberId || null,
+          date: new Date(currentStart), // copy to avoid reference issues
+          price: service.price,
+          duration: service.duration,
+          notes,
+        },
+      });
+      createdAppointments.push(appointment);
+      currentStart = addMinutes(currentStart, service.duration);
+    }
 
     try {
-      if (clientId && professional) {
+      if (clientId) {
         const clientProfile = await prisma.clientProfile.findUnique({ where: { id: clientId }, include: { user: true } });
-        if (clientProfile) {
+        if (clientProfile && professional) {
+          // Notify Professional
           await notificationService.sendNotification(
             professional.userId,
             'Novo Agendamento!',
-            `${clientProfile.user.name} agendou ${service.name} para ${format(new Date(dateTime), 'dd/MM/yyyy às HH:mm')}.`,
+            `${clientProfile.user.name} agendou ${orderedServices.length} serviço(s) para ${format(new Date(dateTime), 'dd/MM/yyyy às HH:mm')}.`,
+            'APPOINTMENT'
+          );
+          
+          // Notify Client (confirmation inside platform)
+          await notificationService.sendNotification(
+            clientProfile.userId,
+            'Agendamento Confirmado',
+            `Seu agendamento de ${orderedServices.length} serviço(s) com ${professional.businessName || professional.user.name} foi realizado com sucesso para ${format(new Date(dateTime), 'dd/MM/yyyy às HH:mm')}.`,
             'APPOINTMENT'
           );
         }
@@ -153,7 +172,7 @@ export class AppointmentService {
       console.error('Falha ao enviar notificação de agendamento', e);
     }
 
-    return appointment;
+    return createdAppointments;
   }
 
   async getClientAppointments(clientId: string) {
@@ -162,6 +181,7 @@ export class AppointmentService {
       include: {
         professional: { include: { user: true } },
         service: true,
+        review: true,
       },
       orderBy: { date: 'asc' },
     });

@@ -69,10 +69,10 @@ export default function AgendarFlow() {
       if (!selectedDate || selectedServices.length === 0 || !profData) return;
       setIsLoadingSlots(true);
       try {
-        // We fetch slots based on the first selected service duration
-        const serviceId = selectedServices[0].id;
+        // We fetch slots based on all selected services duration
+        const serviceIds = selectedServices.map(s => s.id).join(',');
         const teamMemberParam = selectedTeamMember ? `&teamMemberId=${selectedTeamMember.id}` : '';
-        const res = await fetch(`http://localhost:3333/api/appointments/slots?professionalId=${profData.id}&serviceId=${serviceId}&date=${selectedDate}${teamMemberParam}`);
+        const res = await fetch(`http://localhost:3333/api/appointments/slots?professionalId=${profData.id}&serviceIds=${serviceIds}&date=${selectedDate}${teamMemberParam}`);
         if (res.ok) {
           const data = await res.json();
           setAvailableSlots(data);
@@ -169,30 +169,26 @@ export default function AgendarFlow() {
     };
   
     const submitAppointment = async () => {
+      if (isSubmitting) return;
       setIsSubmitting(true);
       try {
         const token = localStorage.getItem('@belezza:token');
-        const promises = selectedServices.map(service => {
-          return fetch('http://localhost:3333/api/appointments', {
-            method: 'POST',
-            headers: { 
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${token}` 
-            },
-            body: JSON.stringify({
-              professionalId: profData.id,
-              serviceId: service.id,
-              teamMemberId: selectedTeamMember?.id,
-              dateTime: `${selectedDate}T${selectedTime}:00`,
-              notes
-            })
-          });
+        const res = await fetch('http://localhost:3333/api/appointments', {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}` 
+          },
+          body: JSON.stringify({
+            professionalId: profData.id,
+            serviceIds: selectedServices.map(s => s.id),
+            teamMemberId: selectedTeamMember?.id,
+            dateTime: `${selectedDate}T${selectedTime}:00`,
+            notes
+          })
         });
   
-        const responses = await Promise.all(promises);
-        const allOk = responses.every(r => r.ok);
-  
-        if (!allOk) throw new Error('Erro ao confirmar agendamento');
+        if (!res.ok) throw new Error('Erro ao confirmar agendamento');
   
         addToast({ type: 'success', title: 'Sucesso!', message: 'Seu agendamento foi confirmado.' });
         router.push('/dashboard'); 
@@ -340,7 +336,7 @@ export default function AgendarFlow() {
   const renderDados = () => (
     <div className={styles.stepContent}>
       <h2 className={styles.stepTitle}>Seus Dados</h2>
-      {!user || (user as any).role !== 'client' ? (
+      {!user || role !== 'client' ? (
         <div style={{ padding: '24px', background: 'var(--color-danger-50)', color: 'var(--color-danger-700)', borderRadius: '8px' }}>
           Você precisa estar logado como Cliente para agendar!
           <Button style={{ marginTop: 16 }} onClick={() => router.push('/login')}>Ir para o Login</Button>

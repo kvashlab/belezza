@@ -1,9 +1,8 @@
 'use client';
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { Search, Map as MapIcon, List, MapPin, SlidersHorizontal } from 'lucide-react';
+import { Search, MapPin, SlidersHorizontal } from 'lucide-react';
 import { ProfessionalCard } from '@/components/shared/ProfessionalCard';
-import { InteractiveMap } from '@/components/shared/InteractiveMap';
 
 import { Select } from '@/components/ui/Select';
 import { api } from '@/lib/api';
@@ -14,7 +13,6 @@ function ExplorarContent() {
   const searchParams = useSearchParams();
   const initialCategory = searchParams.get('categoria') || '';
   
-  const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
   const [isMobile, setIsMobile] = useState(false);
   const [categoryFilter, setCategoryFilter] = useState(initialCategory);
   const [searchTerm, setSearchTerm] = useState(searchParams.get('q') || '');
@@ -97,14 +95,6 @@ function ExplorarContent() {
               <SlidersHorizontal size={18} />
               <span style={{ display: isMobile ? 'none' : 'inline' }}>Filtros</span>
             </button>
-            {isMobile && (
-              <button 
-                className={styles.filterToggleBtn}
-                onClick={() => setViewMode(v => v === 'list' ? 'map' : 'list')}
-              >
-                {viewMode === 'list' ? <MapIcon size={18} /> : <List size={18} />}
-              </button>
-            )}
           </div>
         </div>
       </div>
@@ -139,48 +129,40 @@ function ExplorarContent() {
       </div>
 
       <div className={styles.content}>
-        {(viewMode === 'list' || !isMobile) && (
-          <div className={styles.listContainer}>
-            {!isLoading && cityTerm && cityTerm.trim() !== '' && (
-              <div className={styles.resultsHeader}>
-                <h2>Profissionais encontrados</h2>
-                <span className={styles.resultsCount}>{professionals.length} resultados</span>
-              </div>
-            )}
-            
-            {isLoading ? (
-              <div style={{ padding: '24px', textAlign: 'center' }}>Buscando profissionais...</div>
-            ) : (!cityTerm || cityTerm.trim() === '') ? (
-              <div style={{ padding: '48px 24px', textAlign: 'center', backgroundColor: 'var(--surface-card)', borderRadius: 'var(--radius-md)', border: '1px solid var(--surface-border)' }}>
-                <MapPin size={48} style={{ color: 'var(--color-neutral-300)', margin: '0 auto 16px' }} />
-                <h3 style={{ fontSize: '18px', fontWeight: 600, color: 'var(--color-neutral-900)', marginBottom: '8px' }}>Qual é a sua cidade?</h3>
-                <p style={{ color: 'var(--color-neutral-500)', maxWidth: '400px', margin: '0 auto' }}>
-                  Para começarmos, digite o nome da sua cidade na barra de busca acima para ver os profissionais mais próximos de você.
-                </p>
-              </div>
-            ) : professionals.length > 0 ? (
-              <div className={styles.grid}>
-                {professionals.map(prof => (
-                  <ProfessionalCard key={prof.id} professional={prof} />
-                ))}
-              </div>
-            ) : (
-              <div style={{ padding: '48px 24px', textAlign: 'center', backgroundColor: 'var(--surface-card)', borderRadius: 'var(--radius-md)', border: '1px solid var(--surface-border)' }}>
-                <Search size={48} style={{ color: 'var(--color-neutral-300)', margin: '0 auto 16px' }} />
-                <h3 style={{ fontSize: '18px', fontWeight: 600, color: 'var(--color-neutral-900)', marginBottom: '8px' }}>Nenhum profissional encontrado</h3>
-                <p style={{ color: 'var(--color-neutral-500)', maxWidth: '400px', margin: '0 auto' }}>
-                  Não encontramos profissionais na cidade de <strong>{cityTerm}</strong> com os filtros aplicados.
-                </p>
-              </div>
-            )}
-          </div>
-        )}
-
-        {(viewMode === 'map' || !isMobile) && (
-          <div className={styles.mapContainer}>
-            <InteractiveMap professionals={professionals} />
-          </div>
-        )}
+        <div className={styles.listContainer}>
+          {!isLoading && cityTerm && cityTerm.trim() !== '' && (
+            <div className={styles.resultsHeader}>
+              <h2>Profissionais encontrados</h2>
+              <span className={styles.resultsCount}>{professionals.length} resultados</span>
+            </div>
+          )}
+          
+          {isLoading ? (
+            <div style={{ padding: '24px', textAlign: 'center' }}>Buscando profissionais...</div>
+          ) : (!cityTerm || cityTerm.trim() === '') ? (
+            <div style={{ padding: '48px 24px', textAlign: 'center', backgroundColor: 'var(--surface-card)', borderRadius: 'var(--radius-md)', border: '1px solid var(--surface-border)' }}>
+              <MapPin size={48} style={{ color: 'var(--color-neutral-300)', margin: '0 auto 16px' }} />
+              <h3 style={{ fontSize: '18px', fontWeight: 600, color: 'var(--color-neutral-900)', marginBottom: '8px' }}>Qual é a sua cidade?</h3>
+              <p style={{ color: 'var(--color-neutral-500)', maxWidth: '400px', margin: '0 auto' }}>
+                Para começarmos, digite o nome da sua cidade na barra de busca acima para ver os profissionais mais próximos de você.
+              </p>
+            </div>
+          ) : professionals.length > 0 ? (
+            <div className={styles.grid}>
+              {professionals.map(prof => (
+                <ProfessionalCard key={prof.id} professional={prof} />
+              ))}
+            </div>
+          ) : (
+            <div style={{ padding: '48px 24px', textAlign: 'center', backgroundColor: 'var(--surface-card)', borderRadius: 'var(--radius-md)', border: '1px solid var(--surface-border)' }}>
+              <Search size={48} style={{ color: 'var(--color-neutral-300)', margin: '0 auto 16px' }} />
+              <h3 style={{ fontSize: '18px', fontWeight: 600, color: 'var(--color-neutral-900)', marginBottom: '8px' }}>Nenhum profissional encontrado</h3>
+              <p style={{ color: 'var(--color-neutral-500)', maxWidth: '400px', margin: '0 auto' }}>
+                Não encontramos profissionais na cidade de <strong>{cityTerm}</strong> com os filtros aplicados.
+              </p>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Tabs } from '@/components/ui/Tabs';
 import { AppointmentCard } from '@/components/cliente/AppointmentCard';
+import { ReviewModal } from '@/components/cliente/ReviewModal';
 import { format, isAfter, isBefore } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useUIStore } from '@/stores/ui.store';
@@ -11,6 +12,11 @@ export default function MeusAgendamentosPage() {
   const router = useRouter();
   const [appointments, setAppointments] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+  const [reviewAppointmentId, setReviewAppointmentId] = useState<string | null>(null);
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+
   const { addToast } = useUIStore();
 
   useEffect(() => {
@@ -57,7 +63,44 @@ export default function MeusAgendamentosPage() {
 
   const handleCancel = (id: string) => updateStatus(id, 'CANCELLED');
   const handleReschedule = (id: string) => alert(`Reagendar agendamento ${id}`);
-  const handleReview = (id: string) => alert(`Avaliar agendamento ${id}`);
+  
+  const handleReviewClick = (id: string) => {
+    setReviewAppointmentId(id);
+    setIsReviewModalOpen(true);
+  };
+
+  const handleReviewSubmit = async (rating: number, comment: string) => {
+    if (!reviewAppointmentId) return;
+    setIsSubmittingReview(true);
+    try {
+      const token = localStorage.getItem('@belezza:token');
+      const res = await fetch('http://localhost:3333/api/reviews', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}` 
+        },
+        body: JSON.stringify({
+          appointmentId: reviewAppointmentId,
+          rating,
+          comment
+        })
+      });
+      if (res.ok) {
+        addToast({ type: 'success', title: 'Avaliação enviada!', message: 'Obrigado pelo seu feedback.' });
+        setIsReviewModalOpen(false);
+        fetchAppointments(); // Refresh to show as "Avaliado"
+      } else {
+        const errorData = await res.json();
+        throw new Error(errorData.error || 'Falha ao enviar avaliação');
+      }
+    } catch (error: any) {
+      addToast({ type: 'error', title: 'Erro', message: error.message });
+    } finally {
+      setIsSubmittingReview(false);
+    }
+  };
+
   const handleRebook = (username: string) => router.push(`/@${username}/agendar`);
 
   const now = new Date();
@@ -75,7 +118,8 @@ export default function MeusAgendamentosPage() {
       price: `R$ ${a.price.toFixed(2)}`,
       location: a.professional?.city ? `${a.professional.city}` : 'Local',
       status: a.status.toLowerCase(), // PENDING -> pending
-      rawDate: d
+      rawDate: d,
+      hasReview: !!a.review
     };
   });
 
@@ -90,7 +134,7 @@ export default function MeusAgendamentosPage() {
           {...item} 
           onCancel={() => handleCancel(item.id)}
           onReschedule={() => handleReschedule(item.id)}
-          onReview={() => handleReview(item.id)}
+          onReview={() => handleReviewClick(item.id)}
           onRebook={() => handleRebook(item.username)}
         />
       ))}
@@ -134,6 +178,13 @@ export default function MeusAgendamentosPage() {
           ]}
         />
       )}
+
+      <ReviewModal 
+        isOpen={isReviewModalOpen}
+        onClose={() => setIsReviewModalOpen(false)}
+        onSubmit={handleReviewSubmit}
+        isSubmitting={isSubmittingReview}
+      />
     </div>
   );
 }

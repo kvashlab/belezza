@@ -21,6 +21,7 @@ interface AppointmentCardProps {
   onReschedule?: (id: string) => void;
   onReview?: (id: string) => void;
   onRebook?: (id: string) => void;
+  hasReview?: boolean;
 }
 
 export const AppointmentCard: React.FC<AppointmentCardProps> = ({
@@ -36,7 +37,8 @@ export const AppointmentCard: React.FC<AppointmentCardProps> = ({
   onCancel,
   onReschedule,
   onReview,
-  onRebook
+  onRebook,
+  hasReview
 }) => {
   const getStatusBadge = () => {
     switch (status) {
@@ -105,9 +107,15 @@ export const AppointmentCard: React.FC<AppointmentCardProps> = ({
         {status === 'completed' && (
           <>
             <div className={styles.actionBtn}>
-              <Button variant="secondary" onClick={() => onReview?.(id)}>
-                Avaliar
-              </Button>
+              {hasReview ? (
+                <Button variant="secondary" disabled style={{ opacity: 0.7, cursor: 'not-allowed' }}>
+                  Avaliado
+                </Button>
+              ) : (
+                <Button variant="secondary" onClick={() => onReview?.(id)}>
+                  Avaliar
+                </Button>
+              )}
             </div>
             <div className={styles.actionBtn}>
               <Button variant="primary" onClick={() => onRebook?.(id)}>

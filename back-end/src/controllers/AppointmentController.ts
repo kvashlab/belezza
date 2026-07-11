@@ -7,7 +7,7 @@ const appointmentService = new AppointmentService();
 
 const createAppointmentSchema = z.object({
   professionalId: z.string().uuid(),
-  serviceId: z.string().uuid(),
+  serviceIds: z.array(z.string().uuid()),
   dateTime: z.string(), // ISO string
   notes: z.string().optional(),
   teamMemberId: z.string().uuid().optional(),
@@ -17,15 +17,15 @@ const createAppointmentSchema = z.object({
 export class AppointmentController {
   async getAvailableSlots(req: Request, res: Response) {
     try {
-      const { professionalId, serviceId, date, teamMemberId } = req.query;
+      const { professionalId, serviceIds, date, teamMemberId } = req.query;
       
-      if (!professionalId || !serviceId || !date) {
+      if (!professionalId || !serviceIds || !date) {
         return res.status(400).json({ error: 'Parâmetros ausentes' });
       }
 
       const slots = await appointmentService.getAvailableSlots(
         professionalId as string,
-        serviceId as string,
+        (serviceIds as string).split(','),
         date as string,
         teamMemberId as string | undefined
       );
@@ -70,7 +70,7 @@ export class AppointmentController {
       const appointment = await appointmentService.createAppointment(
         clientId,
         data.professionalId,
-        data.serviceId,
+        data.serviceIds,
         data.dateTime,
         data.notes,
         data.teamMemberId,

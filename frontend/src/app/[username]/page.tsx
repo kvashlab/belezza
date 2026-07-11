@@ -129,8 +129,10 @@ export default function PublicProfile() {
               ))}
             </div>
           </div>
-          <p className={styles.reviewComment}>{review.comment}</p>
-          <span className={styles.reviewService}>{review.serviceName}</span>
+          {review.comment && review.comment.trim() !== '' && (
+            <p className={styles.reviewComment}>{review.comment}</p>
+          )}
+          <span className={styles.reviewService}>{review.serviceName || 'Atendimento'}</span>
           
           {review.reply && (
             <div className={styles.reviewReply}>
@@ -185,7 +187,7 @@ export default function PublicProfile() {
                   <li key={wh.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '12px', borderBottom: '1px solid var(--surface-border)', fontSize: '14px' }}>
                     <span style={{ fontWeight: 500, color: 'var(--color-neutral-700)' }}>{daysOfWeek[wh.dayOfWeek]}</span>
                     {wh.isClosed ? (
-                      <Badge variant="error">Fechado</Badge>
+                      <Badge variant="danger">Fechado</Badge>
                     ) : (
                       <span style={{ color: 'var(--color-neutral-600)' }}>{wh.startTime} às {wh.endTime}</span>
                     )}

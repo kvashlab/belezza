@@ -7,6 +7,7 @@ import clientRoutes from './client.routes';
 import teamRoutes from './team.routes';
 import notificationRoutes from './notification.routes';
 import reportRoutes from './report.routes';
+import reviewRoutes from './review.routes';
 
 const router = Router();
 
@@ -18,5 +19,6 @@ router.use('/appointments', appointmentRoutes);
 router.use('/team', teamRoutes);
 router.use('/notifications', notificationRoutes);
 router.use('/reports', reportRoutes);
+router.use('/reviews', reviewRoutes);
 
 export default router;

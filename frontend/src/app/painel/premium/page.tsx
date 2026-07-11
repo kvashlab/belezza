@@ -271,6 +271,7 @@ export default function PremiumCheckoutPage() {
               Você pode cancelar a qualquer momento.
             </p>
           </form>
+          )}
         </div>
       </div>
       
