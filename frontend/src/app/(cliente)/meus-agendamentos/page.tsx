@@ -111,6 +111,7 @@ export default function MeusAgendamentosPage() {
     return {
       id: a.id,
       professionalName: a.professional?.businessName || a.professional?.user?.name || 'Profissional',
+      professionalPhoto: a.professional?.avatar,
       username: a.professional?.username,
       serviceName: a.service?.name || 'Serviço',
       date: format(d, "dd 'de' MMMM", { locale: ptBR }),

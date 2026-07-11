@@ -64,6 +64,7 @@ export default function ClientDashboard() {
     nextAppointment = {
       id: nextApptData.id,
       professionalName: nextApptData.professional?.businessName || nextApptData.professional?.user?.name || 'Profissional',
+      professionalPhoto: nextApptData.professional?.avatar,
       username: nextApptData.professional?.username,
       serviceName: nextApptData.service?.name || 'Serviço',
       date: format(d, "dd 'de' MMMM", { locale: ptBR }),

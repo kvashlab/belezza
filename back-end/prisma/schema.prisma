@@ -39,6 +39,7 @@ model ClientProfile {
   favorites     Favorite[]
   reviews       Review[]
   waitlists     Waitlist[]
+  customers     Customer[]
 }
 
 model ProfessionalProfile {
@@ -88,12 +89,17 @@ model Customer {
   id             String              @id @default(uuid())
   professionalId String
   professional   ProfessionalProfile @relation(fields: [professionalId], references: [id], onDelete: Cascade)
+  linkedClientId String?
+  client         ClientProfile?      @relation(fields: [linkedClientId], references: [id], onDelete: SetNull)
   name           String
   phone          String?
   email          String?
   notes          String?
+  isHidden       Boolean             @default(false)
   createdAt      DateTime            @default(now())
   updatedAt      DateTime            @updatedAt
+  
+  @@unique([professionalId, linkedClientId])
 }
 
 model Service {

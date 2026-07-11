@@ -243,72 +243,86 @@ export class ProfessionalService {
     });
     if (!customer) throw new Error('Cliente não encontrado ou não pertence a você.');
 
-    await prisma.customer.delete({ where: { id: customerId } });
+    if (customer.linkedClientId) {
+      // Soft delete for platform clients to preserve history
+      await prisma.customer.update({
+        where: { id: customerId },
+        data: { isHidden: true }
+      });
+    } else {
+      // Hard delete for manual clients
+      await prisma.customer.delete({ where: { id: customerId } });
+    }
     return { message: 'Cliente removido com sucesso.' };
+  }
+
+  private async syncPlatformClientsToCustomers(profileId: string) {
+    // Find all distinct clients who booked with this professional
+    const appointments = await prisma.appointment.findMany({
+      where: { professionalId: profileId, clientId: { not: null } },
+      include: { client: { include: { user: true } } }
+    });
+
+    for (const a of appointments) {
+      if (a.clientId && a.client) {
+        await prisma.customer.upsert({
+          where: { professionalId_linkedClientId: { professionalId: profileId, linkedClientId: a.clientId } },
+          update: {}, // Don't overwrite if it already exists, let professional's edits persist
+          create: {
+            professionalId: profileId,
+            linkedClientId: a.clientId,
+            name: a.client.user.name,
+            email: a.client.user.email,
+            phone: a.client.user.phone
+          }
+        });
+      }
+    }
   }
 
   async getClients(userId: string) {
     const profileId = await this.getProfileIdByUserId(userId);
     
-    // Retrieve distinct clients from appointments
+    // Sync platform clients into Customer table
+    await this.syncPlatformClientsToCustomers(profileId);
+    
+    // Retrieve all non-hidden customers
+    const customers = await prisma.customer.findMany({
+      where: { professionalId: profileId, isHidden: false },
+      include: { client: { include: { user: true } } },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    // We still need to aggregate totalSpent and lastVisit from appointments
     const appointments = await prisma.appointment.findMany({
       where: { professionalId: profileId },
-      include: { client: { include: { user: true } } },
       orderBy: { date: 'desc' }
     });
 
-    const clientsMap = new Map();
-    appointments.forEach(a => {
-      // Use clientId if available, fallback to clientName for manual appointments
-      const mapKey = a.clientId || a.clientName;
-      if (mapKey) {
-        if (!clientsMap.has(mapKey)) {
-          clientsMap.set(mapKey, {
-            id: a.clientId || `manual_${mapKey}`,
-            name: a.client?.user?.name || a.clientName || 'Cliente',
-            email: a.client?.user?.email || '',
-            phone: a.client?.user?.phone || '(00) 00000-0000',
-            avatar: a.client?.avatar || '',
-            lastVisit: a.date,
-            totalSpent: 0
-          });
-        }
-        const clientStats = clientsMap.get(mapKey);
-        if (a.status === 'COMPLETED') {
-          clientStats.totalSpent += a.price;
-        }
-      }
+    const clientsMap = customers.map(c => {
+      // Find appointments for this customer
+      // If linkedClientId exists, match by clientId. If not, match by clientName.
+      const appts = appointments.filter(a => 
+        (c.linkedClientId && a.clientId === c.linkedClientId) || 
+        (!c.linkedClientId && a.clientName === c.name)
+      );
+
+      const totalSpent = appts.filter(a => a.status === 'COMPLETED').reduce((acc, a) => acc + a.price, 0);
+      const lastVisit = appts.length > 0 ? appts[0].date : c.createdAt;
+
+      return {
+        id: c.id,
+        name: c.name,
+        email: c.email || '',
+        phone: c.phone || '(00) 00000-0000',
+        avatar: c.client?.avatar || '',
+        lastVisit,
+        totalSpent,
+        isManual: true // We set to true so frontend allows editing/deleting all of them
+      };
     });
 
-    const manualCustomers = await prisma.customer.findMany({
-      where: { professionalId: profileId }
-    });
-
-    manualCustomers.forEach(c => {
-      // Try to merge with manual appointment entry if name matches exactly, else create new
-      const mapKey = c.name;
-      if (!clientsMap.has(mapKey)) {
-        clientsMap.set(mapKey, {
-          id: c.id,
-          name: c.name,
-          email: c.email || '',
-          phone: c.phone || '',
-          avatar: '',
-          lastVisit: c.createdAt, // Just to show some date
-          totalSpent: 0,
-          isManual: true
-        });
-      } else {
-        // If we found a match by name (from an appointment), use the customer ID instead of manual_ string
-        const existing = clientsMap.get(mapKey);
-        existing.id = c.id;
-        if (c.email) existing.email = c.email;
-        if (c.phone) existing.phone = c.phone;
-        existing.isManual = true;
-      }
-    });
-
-    return Array.from(clientsMap.values());
+    return clientsMap;
   }
 
   async getDashboardMetrics(userId: string) {

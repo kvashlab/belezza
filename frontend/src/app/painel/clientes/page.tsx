@@ -56,7 +56,7 @@ export default function ClientesPage() {
 
   const handleEditClient = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!editingClient?.id || !editingClient.isManual) return;
+    if (!editingClient?.id) return;
     setIsSaving(true);
     const form = e.target as HTMLFormElement;
 
@@ -80,10 +80,6 @@ export default function ClientesPage() {
   };
 
   const handleDeleteClient = async (client: any) => {
-    if (!client.isManual) {
-      addToast({ type: 'error', title: 'Atenção', message: 'Apenas clientes adicionados manualmente podem ser removidos.' });
-      return;
-    }
     if (!confirm(`Deseja realmente remover "${client.name}"?`)) return;
 
     try {
@@ -189,7 +185,6 @@ export default function ClientesPage() {
                       <Avatar name={client.name} src={client.avatar} size="sm" />
                       <div>
                         <span style={{ fontWeight: 600, color: 'var(--color-neutral-900)', display: 'block' }}>{client.name}</span>
-                        {client.isManual && <span style={{ fontSize: '11px', color: 'var(--color-neutral-500)', background: 'var(--surface-border)', padding: '2px 6px', borderRadius: '4px' }}>Manual</span>}
                       </div>
                     </div>
                   </td>
@@ -207,8 +202,6 @@ export default function ClientesPage() {
                   </td>
                   <td style={{ padding: 'var(--spacing-3)' }}>
                     <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                      {client.isManual && (
-                        <>
                           <button
                             title="Editar cliente"
                             onClick={() => { setEditingClient(client); setIsEditModalOpen(true); }}
@@ -223,8 +216,6 @@ export default function ClientesPage() {
                           >
                             <Trash2 size={16} />
                           </button>
-                        </>
-                      )}
                     </div>
                   </td>
                 </tr>
