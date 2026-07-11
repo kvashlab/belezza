@@ -43,15 +43,4 @@ export class ClientController {
     }
   }
 
-  async addReview(req: AuthRequest, res: Response) {
-    try {
-      const clientId = req.user?.id;
-      if (!clientId) return res.status(403).json({ error: 'Only clients can leave reviews' });
-
-      const review = await clientService.addReview(clientId, req.body);
-      res.status(201).json(review);
-    } catch (error: any) {
-      res.status(400).json({ error: error.message });
-    }
-  }
 }

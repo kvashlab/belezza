@@ -53,42 +53,4 @@ export class ClientService {
     return favorites;
   }
 
-  async addReview(userId: string, data: any) {
-    const client = await prisma.clientProfile.findUnique({ where: { userId } });
-    if (!client) throw new Error('Perfil de cliente não encontrado');
-    const clientId = client.id;
-    const { professionalId, appointmentId, rating, comment } = data;
-
-    if (!appointmentId) throw new Error('ID do agendamento é obrigatório para avaliar.');
-
-    const appointment = await prisma.appointment.findUnique({ where: { id: appointmentId } });
-    if (!appointment) throw new Error('Agendamento não encontrado.');
-    if (appointment.clientId !== clientId) throw new Error('Este agendamento não pertence a você.');
-    if (appointment.status !== 'COMPLETED') throw new Error('Você só pode avaliar um agendamento após ele ser concluído.');
-
-    const review = await prisma.review.create({
-      data: {
-        clientId,
-        professionalId,
-        appointmentId,
-        rating,
-        comment
-      }
-    });
-
-    // Update professional rating
-    const reviews = await prisma.review.findMany({ where: { professionalId } });
-    const totalRating = reviews.reduce((acc, curr) => acc + curr.rating, 0);
-    const avgRating = totalRating / reviews.length;
-
-    await prisma.professionalProfile.update({
-      where: { id: professionalId },
-      data: {
-        rating: avgRating,
-        reviewsCount: reviews.length
-      }
-    });
-
-    return review;
-  }
 }

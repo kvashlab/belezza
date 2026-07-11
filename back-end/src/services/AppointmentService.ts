@@ -129,6 +129,38 @@ export class AppointmentService {
     // To preserve order as sent by client, map them:
     const orderedServices = serviceIds.map(id => services.find(s => s.id === id)).filter(Boolean) as any[];
 
+    // --- Double Booking Protection ---
+    const startOfDayLocal = new Date(appointmentDate);
+    startOfDayLocal.setHours(0,0,0,0);
+    const endOfDayLocal = new Date(appointmentDate);
+    endOfDayLocal.setHours(23,59,59,999);
+
+    const existingAppointments = await prisma.appointment.findMany({
+      where: { professionalId, date: { gte: startOfDayLocal, lte: endOfDayLocal }, status: { not: 'CANCELLED' } }
+    });
+
+    let checkStart = new Date(dateTime);
+    for (const service of orderedServices) {
+      const checkEnd = addMinutes(checkStart, service.duration);
+      
+      const isOverlapping = existingAppointments.some(appt => {
+        const apptStart = appt.date;
+        const apptEnd = addMinutes(apptStart, appt.duration);
+        
+        return (
+          (isAfter(checkStart, apptStart) || isEqual(checkStart, apptStart)) && isBefore(checkStart, apptEnd) ||
+          isAfter(checkEnd, apptStart) && (isBefore(checkEnd, apptEnd) || isEqual(checkEnd, apptEnd)) ||
+          (isBefore(checkStart, apptStart) || isEqual(checkStart, apptStart)) && (isAfter(checkEnd, apptEnd) || isEqual(checkEnd, apptEnd))
+        );
+      });
+
+      if (isOverlapping) {
+        throw new Error('O horário selecionado não está mais disponível. Por favor, escolha outro horário.');
+      }
+      checkStart = addMinutes(checkStart, service.duration);
+    }
+    // --- End Double Booking Protection ---
+
     for (const service of orderedServices) {
       const appointment = await prisma.appointment.create({
         data: {
