@@ -9,7 +9,7 @@ import { api } from '@/lib/api';
 import { VALID_CATEGORIES } from '@/constants/categories';
 import styles from './styles.module.css';
 
-type Tab = 'aparencia' | 'contato' | 'horarios' | 'seguranca';
+type Tab = 'aparencia' | 'contato' | 'horarios' | 'agendamentos' | 'seguranca';
 
 export default function PerfilProfissional() {
   const { user, role, isAuthenticated } = useAuthStore();
@@ -182,15 +182,19 @@ export default function PerfilProfissional() {
     const form = e.target as HTMLFormElement;
     
     try {
-      const requireDeposit = (form.elements.namedItem('requireDeposit') as HTMLInputElement).checked;
+      const requireDeposit = (form.elements.namedItem('requireDeposit') as HTMLInputElement)?.checked || false;
+      const autoConfirmValue = (form.elements.namedItem('autoConfirm') as RadioNodeList)?.value;
+      const autoConfirm = autoConfirmValue === 'true';
+
       await api.put('/professionals/me', {
-        requireDeposit
+        requireDeposit,
+        autoConfirm
       });
 
       addToast({ type: 'success', title: 'Preferências atualizadas com sucesso!' });
       
       // Update local state to reflect change
-      setProfileData({ ...profileData, requireDeposit });
+      setProfileData({ ...profileData, requireDeposit, autoConfirm });
     } catch {
       addToast({ type: 'error', title: 'Falha ao atualizar preferências' });
     } finally {
@@ -296,6 +300,12 @@ export default function PerfilProfissional() {
             onClick={() => setActiveTab('horarios')}
           >
             Horários de Atendimento
+          </button>
+          <button 
+            className={`${styles.tab} ${activeTab === 'agendamentos' ? styles.active : ''}`}
+            onClick={() => setActiveTab('agendamentos')}
+          >
+            Preferências de Agendamento
           </button>
           <button 
             className={`${styles.tab} ${activeTab === 'seguranca' ? styles.active : ''}`}
@@ -484,10 +494,48 @@ export default function PerfilProfissional() {
             </form>
           )}
 
-          {activeTab === 'seguranca' && (
+          {activeTab === 'agendamentos' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
               <form onSubmit={handleUpdatePreferencias}>
                 <h2 className={styles.sectionTitle}>Preferências de Agendamento</h2>
+                
+                <div style={{ backgroundColor: 'var(--surface-card)', padding: 'var(--spacing-4)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--surface-border)', marginBottom: '16px' }}>
+                  <h3 style={{ fontSize: '15px', fontWeight: 600, color: 'var(--color-neutral-900)', marginBottom: '12px' }}>Como você deseja confirmar novos agendamentos?</h3>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <label style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', cursor: 'pointer', padding: '12px', borderRadius: '8px', border: '1px solid var(--surface-border)', backgroundColor: profileData?.autoConfirm !== false ? 'var(--color-primary-50)' : 'transparent', borderColor: profileData?.autoConfirm !== false ? 'var(--color-primary-300)' : 'var(--surface-border)' }}>
+                      <input 
+                        type="radio" 
+                        name="autoConfirm" 
+                        value="true"
+                        defaultChecked={profileData?.autoConfirm !== false}
+                        style={{ marginTop: '4px', width: '18px', height: '18px', accentColor: 'var(--color-primary-600)' }} 
+                      />
+                      <div>
+                        <strong style={{ display: 'block', color: 'var(--color-neutral-900)', marginBottom: '4px' }}>Confirmar automaticamente</strong>
+                        <span style={{ fontSize: '13px', color: 'var(--color-neutral-500)', lineHeight: '1.4' }}>
+                          Todo novo agendamento terá o horário reservado imediatamente e o cliente receberá a notificação de confirmação.
+                        </span>
+                      </div>
+                    </label>
+
+                    <label style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', cursor: 'pointer', padding: '12px', borderRadius: '8px', border: '1px solid var(--surface-border)', backgroundColor: profileData?.autoConfirm === false ? 'var(--color-primary-50)' : 'transparent', borderColor: profileData?.autoConfirm === false ? 'var(--color-primary-300)' : 'var(--surface-border)' }}>
+                      <input 
+                        type="radio" 
+                        name="autoConfirm" 
+                        value="false"
+                        defaultChecked={profileData?.autoConfirm === false}
+                        style={{ marginTop: '4px', width: '18px', height: '18px', accentColor: 'var(--color-primary-600)' }} 
+                      />
+                      <div>
+                        <strong style={{ display: 'block', color: 'var(--color-neutral-900)', marginBottom: '4px' }}>Confirmar manualmente</strong>
+                        <span style={{ fontSize: '13px', color: 'var(--color-neutral-500)', lineHeight: '1.4' }}>
+                          Agendamentos entrarão como Pendentes. Você deverá aprovar ou cancelar as solicitações de novos clientes.
+                        </span>
+                      </div>
+                    </label>
+                  </div>
+                </div>
+
                 <div style={{ backgroundColor: 'var(--surface-card)', padding: 'var(--spacing-4)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--surface-border)' }}>
                   <label style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', cursor: 'pointer' }}>
                     <input 
@@ -508,7 +556,11 @@ export default function PerfilProfissional() {
                   <Button variant="primary" type="submit" isLoading={isSaving}>Salvar Preferências</Button>
                 </div>
               </form>
+            </div>
+          )}
 
+          {activeTab === 'seguranca' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
               <form onSubmit={handleUpdateSenha}>
                 <h2 className={styles.sectionTitle}>Segurança da Conta</h2>
                 <div className={styles.formGrid}>

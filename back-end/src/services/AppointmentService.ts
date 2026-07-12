@@ -20,7 +20,7 @@ export class AppointmentService {
       ? { professionalId, teamMemberId, date: { gte: startOfDayLocal, lt: endOfDayLocal }, status: { not: 'CANCELLED' } }
       : { professionalId, teamMemberId: null, date: { gte: startOfDayLocal, lt: endOfDayLocal }, status: { not: 'CANCELLED' } };
 
-    const [services, existingAppointments, customSlots] = await Promise.all([
+    const [services, existingAppointments, customSlots, workingHour] = await Promise.all([
       prisma.service.findMany({
         where: { id: { in: serviceIds } },
       }),
@@ -35,29 +35,42 @@ export class AppointmentService {
             { date: { gte: startOfDayLocal, lt: endOfDayLocal } }
           ]
         }
+      }),
+      prisma.workingHour.findFirst({
+        where: {
+          professionalId,
+          teamMemberId: teamMemberId || null,
+          dayOfWeek
+        }
       })
     ]);
 
     if (!services || services.length === 0) return [];
+    
+    // If professional is closed on this day, return no slots
+    if (!workingHour || !workingHour.isOpen) return [];
 
     const duration = services.reduce((acc, curr) => acc + curr.duration, 0);
     const potentialDateTimes: Date[] = [];
 
-    // Build 30min grid from 8 to 20 (matching professional agenda logic)
-    for (let hour = 8; hour <= 20; hour++) {
-      const timeStr = `${hour.toString().padStart(2, '0')}:00`;
-      const parsed = parse(timeStr, 'HH:mm', targetDate);
-      if (!potentialDateTimes.some(d => isEqual(d, parsed))) {
-        potentialDateTimes.push(parsed);
+    // Parse start and end times from workingHour
+    const parsedStart = parse(workingHour.startTime, 'HH:mm', targetDate);
+    const parsedEnd = parse(workingHour.endTime, 'HH:mm', targetDate);
+    
+    // Build 30min grid from workingHour.startTime to workingHour.endTime
+    let currentInterval = new Date(parsedStart);
+    while (isBefore(currentInterval, parsedEnd) || isEqual(currentInterval, parsedEnd)) {
+      const slotEndTime = addMinutes(currentInterval, duration);
+      // Ensure the slot finishes before or exactly at the end of the working day
+      if (isAfter(slotEndTime, parsedEnd)) {
+        break; 
       }
       
-      if (hour !== 20) {
-        const timeStr30 = `${hour.toString().padStart(2, '0')}:30`;
-        const parsed30 = parse(timeStr30, 'HH:mm', targetDate);
-        if (!potentialDateTimes.some(d => isEqual(d, parsed30))) {
-          potentialDateTimes.push(parsed30);
-        }
+      if (!potentialDateTimes.some(d => isEqual(d, currentInterval))) {
+        potentialDateTimes.push(currentInterval);
       }
+      
+      currentInterval = addMinutes(currentInterval, 30);
     }
 
     for (const cSlot of customSlots) {
@@ -70,8 +83,14 @@ export class AppointmentService {
     potentialDateTimes.sort((a, b) => a.getTime() - b.getTime());
 
     const slots: string[] = [];
+    const now = new Date();
 
     for (const currentSlot of potentialDateTimes) {
+      // Filter out slots that are in the past
+      if (isBefore(currentSlot, now)) {
+        continue;
+      }
+
       const slotEnd = addMinutes(currentSlot, duration);
 
       // Check for overlap with existing appointments
@@ -172,6 +191,7 @@ export class AppointmentService {
           date: new Date(currentStart), // copy to avoid reference issues
           price: service.price,
           duration: service.duration,
+          status: professional?.autoConfirm === false ? 'PENDING' : 'CONFIRMED',
           notes,
         },
       });
@@ -183,21 +203,39 @@ export class AppointmentService {
       if (clientId) {
         const clientProfile = await prisma.clientProfile.findUnique({ where: { id: clientId }, include: { user: true } });
         if (clientProfile && professional) {
-          // Notify Professional
-          await notificationService.sendNotification(
-            professional.userId,
-            'Novo Agendamento!',
-            `${clientProfile.user.name} agendou ${orderedServices.length} serviço(s) para ${format(new Date(dateTime), 'dd/MM/yyyy às HH:mm')}.`,
-            'APPOINTMENT'
-          );
-          
-          // Notify Client (confirmation inside platform)
-          await notificationService.sendNotification(
-            clientProfile.userId,
-            'Agendamento Confirmado',
-            `Seu agendamento de ${orderedServices.length} serviço(s) com ${professional.businessName || professional.user.name} foi realizado com sucesso para ${format(new Date(dateTime), 'dd/MM/yyyy às HH:mm')}.`,
-            'APPOINTMENT'
-          );
+          if (professional.autoConfirm === false) {
+            // Notify Professional
+            await notificationService.sendNotification(
+              professional.userId,
+              'Nova Solicitação de Agendamento!',
+              `${clientProfile.user.name} solicitou ${orderedServices.length} serviço(s) para ${format(new Date(dateTime), 'dd/MM/yyyy às HH:mm')}. Aprovação pendente.`,
+              'APPOINTMENT'
+            );
+            
+            // Notify Client (pending)
+            await notificationService.sendNotification(
+              clientProfile.userId,
+              'Solicitação Enviada',
+              `Sua solicitação de agendamento de ${orderedServices.length} serviço(s) com ${professional.businessName || professional.user.name} para ${format(new Date(dateTime), 'dd/MM/yyyy às HH:mm')} foi enviada e aguarda confirmação do profissional.`,
+              'APPOINTMENT'
+            );
+          } else {
+            // Notify Professional
+            await notificationService.sendNotification(
+              professional.userId,
+              'Novo Agendamento Confirmado!',
+              `${clientProfile.user.name} agendou ${orderedServices.length} serviço(s) para ${format(new Date(dateTime), 'dd/MM/yyyy às HH:mm')}.`,
+              'APPOINTMENT'
+            );
+            
+            // Notify Client (confirmed)
+            await notificationService.sendNotification(
+              clientProfile.userId,
+              'Agendamento Confirmado',
+              `Seu agendamento de ${orderedServices.length} serviço(s) com ${professional.businessName || professional.user.name} foi confirmado para ${format(new Date(dateTime), 'dd/MM/yyyy às HH:mm')}.`,
+              'APPOINTMENT'
+            );
+          }
         }
       }
     } catch (e) {

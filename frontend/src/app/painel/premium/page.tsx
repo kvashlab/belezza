@@ -146,12 +146,13 @@ export default function PremiumCheckoutPage() {
                 flexDirection: 'column',
                 alignItems: 'center',
                 gap: '12px',
-                transition: 'all 0.2s'
+                transition: 'all 0.2s',
+                position: 'relative'
               }}
             >
               <CreditCard size={32} color={paymentMethod === 'credit' ? 'var(--color-primary-600)' : 'var(--color-neutral-400)'} />
               <span style={{ fontWeight: 600, color: paymentMethod === 'credit' ? 'var(--color-primary-700)' : 'var(--color-neutral-700)' }}>Cartão de Crédito</span>
-              {paymentMethod === 'credit' && <CheckCircle2 size={20} color="var(--color-primary-600)" style={{ position: 'absolute', marginTop: '-40px', marginLeft: '120px' }} />}
+              {paymentMethod === 'credit' && <CheckCircle2 size={24} color="var(--color-primary-600)" style={{ position: 'absolute', top: '16px', right: '16px' }} />}
             </div>
             <div 
               onClick={() => setPaymentMethod('debit')}
@@ -166,12 +167,13 @@ export default function PremiumCheckoutPage() {
                 flexDirection: 'column',
                 alignItems: 'center',
                 gap: '12px',
-                transition: 'all 0.2s'
+                transition: 'all 0.2s',
+                position: 'relative'
               }}
             >
               <CreditCard size={32} color={paymentMethod === 'debit' ? 'var(--color-primary-600)' : 'var(--color-neutral-400)'} />
               <span style={{ fontWeight: 600, color: paymentMethod === 'debit' ? 'var(--color-primary-700)' : 'var(--color-neutral-700)' }}>Cartão de Débito</span>
-              {paymentMethod === 'debit' && <CheckCircle2 size={20} color="var(--color-primary-600)" style={{ position: 'absolute', marginTop: '-40px', marginLeft: '120px' }} />}
+              {paymentMethod === 'debit' && <CheckCircle2 size={24} color="var(--color-primary-600)" style={{ position: 'absolute', top: '16px', right: '16px' }} />}
             </div>
           </div>
 

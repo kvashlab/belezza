@@ -67,6 +67,7 @@ model ProfessionalProfile {
   socialLinks     String? // JSON string
   plan            String  @default("FREE") // "FREE" or "PREMIUM"
   requireDeposit  Boolean @default(false) // Whether to require 30% PIX deposit
+  autoConfirm     Boolean @default(true) // Whether to auto confirm appointments
   
   services     Service[]
   workingHours WorkingHour[]

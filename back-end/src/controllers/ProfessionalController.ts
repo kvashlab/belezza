@@ -141,6 +141,9 @@ export class ProfessionalController {
       if (rawBody.requireDeposit !== undefined) {
         dataToUpdate.requireDeposit = String(rawBody.requireDeposit) === 'true';
       }
+      if (rawBody.autoConfirm !== undefined) {
+        dataToUpdate.autoConfirm = String(rawBody.autoConfirm) === 'true';
+      }
 
       if (rawBody.categories !== undefined) {
         let cats: string[] = [];
