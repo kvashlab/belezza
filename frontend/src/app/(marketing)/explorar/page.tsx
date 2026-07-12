@@ -4,6 +4,7 @@ import { useSearchParams } from 'next/navigation';
 import { Search, MapPin, SlidersHorizontal } from 'lucide-react';
 import { ProfessionalCard } from '@/components/shared/ProfessionalCard';
 
+import { CityAutocomplete } from '@/components/ui/CityAutocomplete';
 import { Select } from '@/components/ui/Select';
 import { api } from '@/lib/api';
 import styles from './styles.module.css';
@@ -78,13 +79,16 @@ function ExplorarContent() {
       <div className={styles.topbar}>
         <div className={styles.searchForm}>
           <div className={styles.inputWrapper}>
-            <MapPin className={styles.searchIcon} size={18} />
-            <input 
-              type="text" 
-              placeholder="Digite a sua cidade (ex: São Paulo)" 
-              className={styles.searchInput}
-              value={cityTerm}
-              onChange={(e) => setCityTerm(e.target.value)}
+            <CityAutocomplete
+              initialValue={cityTerm}
+              placeholder="Digite a sua cidade (ex: São Paulo)"
+              icon="map-pin"
+              onCitySelected={(city) => {
+                setCityTerm(city);
+                const url = new URL(window.location.href);
+                url.searchParams.set('cidade', city);
+                window.history.pushState({}, '', url);
+              }}
             />
           </div>
           <div className={styles.filtersWrapper}>
